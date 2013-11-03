@@ -237,7 +237,7 @@ sub parse {
   #
   # If cache is enabled, compute the MD4 and check availability
   #
-  if (defined($self->{_cache})) {
+  if ($self->{_cache}) {
       my $md4 = md4_hex($source);
       my $hashp = $cache->get($md4) || {};
       my $transpile = $hashp->{$source} || undef;
