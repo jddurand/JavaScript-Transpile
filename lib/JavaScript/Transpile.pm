@@ -15,7 +15,7 @@ use Scalar::Util qw/blessed/;
 use Module::Util qw/find_installed/;
 use File::Spec;
 use File::Basename qw/dirname/;
-use Data::Structure::Util qw/unbless/;
+#use Data::Structure::Util qw/unbless/;
 
 our $distname = __PACKAGE__;
 $distname =~ s/::/-/g;
@@ -95,12 +95,14 @@ sub new {
   my ($class, %opts) = @_;
 
   my $cache       = $opts{cache} // 1;
+  my $astCache    = $opts{astCache}; # No pb if this is undef, we just proxy it
   my $indent      = $opts{indent} // '  ';
   my $newline     = $opts{newline} // "\n";
   my $space       = $opts{space} // " ";
 
   my $self  = {
       _cache       => $cache,
+      _astCache    => $astCache,
       _indent      => $indent,
       _newline     => $newline,
       _space       => $space,
@@ -145,12 +147,18 @@ sub _lhs2lexeme {
   #
   # C.f. "A little hack" section in the template
   #
+
+  #print STDERR "_lhs2lexeme => $ref->[0]->[2]\n";
+
+
   $ref->[0]->[2] = '';
   return $rc;
 }
 
 sub _lexeme {
   my ($self, $ref) = @_;
+
+  print STDERR "_lexeme($ref) => $ref->[2]\n";
 
   return $ref->[2];
 }
@@ -185,24 +193,82 @@ sub _space {
   return $self->{_space};
 }
 
+#
+# Note: this will FAIL if the original source have 100 successive '{' - is thqt going to happen...
+#
+sub _flat {
+  my ($self, $worklistp, $stopAtRcurlyb) = @_;
+
+  $stopAtRcurlyb //= 0;
+  my @flat = ();
+  my $prev = '';
+  do {
+    my $obj = shift @{$worklistp};
+    my $ref_type = ref $obj;
+    if (! $self->_blessed($obj) && $ref_type eq 'ARRAY') {
+      $prev = $obj->[2];
+      if ($prev eq '{') {
+        push(@flat, $prev, $self->_flat($worklistp, 1));
+      }
+      elsif ($prev eq '}' && $stopAtRcurlyb) {
+        #
+        # Push back the rcurly for our caller and remove it from our list
+        #
+        return( [ @flat ], $prev);
+      } else {
+        push(@flat, $prev);
+      }
+    }
+    if (blessed($obj) || $ref_type eq 'ARRAY') {
+      unshift(@{$worklistp}, @{$obj});
+    }
+  } while (@{$worklistp});
+
+  return [ @flat ];
+}
+
 sub _render {
-    my ($self, $tx, $target, $ast) = @_;
+    my ($self, $lexemeArrayp, $recursiveb) = @_;
 
     #
-    # This will fail if we hit perl deep recursion limit, i.e.
-    # the source would have 100 successive '{'. Is that
-    # a reasonnable source code -;
-    # C.f. $target.tx that is recursively call $self->_render().
+    # This can be true only when called within the template
     #
-    # In addition Text::Xslate wants an array reference, bit a blessed array
-    #
-    return $tx->render("$target.tx", {self => $self, target => $target, type => $self->_blessed($ast), arrayp => unbless($ast)});
+    $recursiveb //= 1;
+
+    $self->{_curIndent} += $recursiveb;
+
+    my $rc = $self->{_tx}->render($self->{_targettx},
+                                  {
+                                   self         => $self,
+                                   lexemeArrayp => $recursiveb ? [ @{$lexemeArrayp}] : $lexemeArrayp,
+                                  }
+                                 );
+
+    my $indent = $self->{_indent} x $self->{_curIndent};
+
+    $rc =~ s/^/$indent/smg;
+
+    $self->{_curIndent} -= $recursiveb;
+
+    return $rc;
 }
 
 sub _ast {
     my ($self, $source) = @_;
 
     return MarpaX::Languages::ECMAScript::AST->new(cache => $self->{_astCache}, grammarName => $self->{_grammarName})->parse($source);
+}
+
+sub _trace {
+  my ($self, @args) = @_;
+
+  print STDERR "@args\n"
+}
+
+sub _isArray {
+  my ($self, $obj) = @_;
+
+  return (ref($obj) eq 'ARRAY');
 }
 
 sub parse {
@@ -214,17 +280,15 @@ sub parse {
   my $tx = Text::Xslate->new(type => 'text',
 			     path => File::Spec->catdir(dirname($file_system_path), 'Transpile', 'Xslate'),
 			     function => {
-				 _blessed => \&_blessed,
-				 _lhs2lexeme => \&_lhs2lexeme,
-				 _lexeme => \&_lexeme,
-				 _indIndent => \&_incIndent,
-				 _decIndent => \&_decIndent,
-				 _newline => \&_newline,
-				 _space => \&_space,
-				 _render => \&_render,
+                                          _isArray => \&_isArray,
+                                          _render  => \&_render,
 			     },
       );
 
+  my $rc;
+  $self->{_curIndent} = 0;
+  $self->{_tx} = $tx;
+  $self->{_targettx} = "$target.tx";
   #
   # If cache is enabled, compute the MD4 and check availability
   #
@@ -235,12 +299,18 @@ sub parse {
       if (defined($transpile)) {
 	  return $transpile;
       }
-      $hashp->{$source} = $self->_render($tx, $target, $self->_ast($source));
+      $hashp->{$source} = $self->_render($self->_flat([ $self->_ast($source) ]), 0);
       $cache->set($md4, $hashp);
-      return $hashp->{$source};
+      $rc = $hashp->{$source};
   } else {
-      return $self->_render($tx, $target, $self->_ast($source));
+      $rc = $self->_render($self->_flat([ $self->_ast($source) ]), 0);
   }
+
+  delete($self->{_targettx});
+  delete($self->{_tx});
+  delete($self->{_curIndent});
+
+  return $rc;
 }
 
 =head1 SEE ALSO

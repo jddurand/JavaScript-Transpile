@@ -1,69 +1,10 @@
-Type: <: $type :>
-: for $ast -> $i {
-<: $i :>
-:   my $blessed = $self._blessed($i);
-:   given $blessed
-:   {
-:     when 'Program' {
-use strict;
-use warnings FATAL => 'all';
-
+: for $lexemeArrayp -> $lexeme {
+:   if ($self._isArray($lexeme)) {
+:     $self._render($lexeme);
+:   } else {
+:     given $lexeme {
+:       when [';', '{', '}'] { $lexeme ~ $self._newline }
+:       default  { $lexeme ~ $self._space}
 :     }
-:     # --------------------------------------------------
-:     # Lexemes that are to be processed with special care
-:     # have dedicated LHSs
-:     # --------------------------------------------------
-:     when 'DecimalLiteral'
-:     { $self._lhs2lexeme($i) }
-:
-:     when 'HexIntegerLiteral'
-:     { 'hex(' ~ $self._lhs2lexeme($i) ~ ')'   }
-:
-:     when 'OctalIntegerLiteral'
-:     { 'oct(' ~ $self._lhs2lexeme($i) ~ ')'   }
-:
-:     when 'Identifier'
-:     { '$self->_identifier(\'' ~ $self._lhs2lexeme($i) ~ '\')' }
-:
-:     default
-:     {
-:       # --------------------------------
-:       # Non-blessed elements are lexemes
-:       # --------------------------------
-:       if ($blessed == '')
-:       {
-:         my $lexeme = $self._lexeme($i);
-:         given $lexeme
-:         {
-:           #
-:           #  "A little hack", the 'when' before already eated the lexeme
-:           #  -----------------------------------------------------------
-:           when ''
-:           { }
-:           when 'this'
-:           { '$self' }
-:           when '{'
-:           {
-:             $self._newline;
-:             $self._incIndent; 
-:           }
-:           when '}'
-:           {
-:             $self._newline;
-:             $self._decIndent; 
-:           }
-:           when ';' {
-:             ';' ~ $self._newline;
-:           }
-:           default     { $lexeme }
-:         }
-:       }
-:     }
-:   }
-:   # -----------------------------------------------
-:   # Only lexemes has to have an explicit separation
-:   # -----------------------------------------------
-:   if ($blessed == '') {
-:     $self._space();
 :   }
 : }

@@ -22,12 +22,12 @@ BEGIN {
 }
 
 my $ecmaSourceCode = do {local $/; <DATA>};
-my $transpile = JavaScript::Transpile->new(cache => 1);
+my $transpile = JavaScript::Transpile->new(cache => 0);
 my $perl5;
 eval {$perl5 = $transpile->parse($ecmaSourceCode)};
 die $@ if (! defined($perl5));
 ok(defined($perl5));
-print STDERR "==> $perl5\n";
+print STDERR "==> \$perl5=\n$perl5\n";
 __DATA__
 //     Underscore.js 1.5.2
 //     http://underscorejs.org
