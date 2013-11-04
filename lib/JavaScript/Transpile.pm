@@ -15,6 +15,7 @@ use Scalar::Util qw/blessed/;
 use Module::Util qw/find_installed/;
 use File::Spec;
 use File::Basename qw/dirname/;
+use Data::Structure::Util qw/unbless/;
 
 our $distname = __PACKAGE__;
 $distname =~ s/::/-/g;
@@ -99,7 +100,6 @@ sub new {
   my $space       = $opts{space} // " ";
 
   my $self  = {
-      _ast         => undef,
       _cache       => $cache,
       _indent      => $indent,
       _newline     => $newline,
@@ -185,54 +185,45 @@ sub _space {
   return $self->{_space};
 }
 
+sub _render {
+    my ($self, $tx, $target, $ast) = @_;
+
+    #
+    # This will fail if we hit perl deep recursion limit, i.e.
+    # the source would have 100 successive '{'. Is that
+    # a reasonnable source code -;
+    # C.f. $target.tx that is recursively call $self->_render().
+    #
+    # In addition Text::Xslate wants an array reference, bit a blessed array
+    #
+    return $tx->render("$target.tx", {self => $self, target => $target, type => $self->_blessed($ast), arrayp => unbless($ast)});
+}
+
+sub _ast {
+    my ($self, $source) = @_;
+
+    return MarpaX::Languages::ECMAScript::AST->new(cache => $self->{_astCache}, grammarName => $self->{_grammarName})->parse($source);
+}
+
 sub parse {
   my ($self, $source, %options) = @_;
 
   my $target = $options{target} || 'perl5';
 
-  $self->{_curIndent} = 0;
-
-  my $ast = sub {
-      if (! defined($self->{_ast})) {
-	  $self->{_ast} = MarpaX::Languages::ECMAScript::AST->new(cache => $self->{_astCache}, grammarName => $self->{_grammarName});
-      }
-
-
-      my $file_system_path = find_installed(__PACKAGE__);
-
-      my $tx = Text::Xslate->new(type => 'text',
-				 path => File::Spec->catdir(dirname($file_system_path), 'Transpile', 'Xslate'),
-				 function => {
-				     _blessed => \&_blessed,
-				     _lhs2lexeme => \&_lhs2lexeme,
-				     _lexeme => \&_lexeme,
-				     _indIndent => \&_incIndent,
-				     _decIndent => \&_decIndent,
-				     _newline => \&_newline,
-				     _space => \&_space,
-				 },
-	  );
-
-      #
-      # Text::Xslate does not like recursion, so we flatten the AST
-      #
-      my @array = ();
-      my @worklist = ($self->{_ast}->parse($source));
-      do {
-	  my $obj = shift @worklist;
-	  my $ref_type = ref $obj;
-	  if (blessed($obj) || $ref_type eq 'ARRAY') {
-	      push(@array, $obj);
-	      unshift(@worklist, @{$obj});
-	  } else {
-	      croak "Unsupported object type $ref_type\n" if $ref_type;
-	  }
-      } while (@worklist);
-      $tx->render("$target.tx", {self => $self,
-				 arrayp => \@array});
-  };
-
-  delete($self->{_curIndent});
+  my $file_system_path = find_installed(__PACKAGE__);
+  my $tx = Text::Xslate->new(type => 'text',
+			     path => File::Spec->catdir(dirname($file_system_path), 'Transpile', 'Xslate'),
+			     function => {
+				 _blessed => \&_blessed,
+				 _lhs2lexeme => \&_lhs2lexeme,
+				 _lexeme => \&_lexeme,
+				 _indIndent => \&_incIndent,
+				 _decIndent => \&_decIndent,
+				 _newline => \&_newline,
+				 _space => \&_space,
+				 _render => \&_render,
+			     },
+      );
 
   #
   # If cache is enabled, compute the MD4 and check availability
@@ -244,11 +235,11 @@ sub parse {
       if (defined($transpile)) {
 	  return $transpile;
       }
-      $hashp->{$source} = &$ast();
+      $hashp->{$source} = $self->_render($tx, $target, $self->_ast($source));
       $cache->set($md4, $hashp);
       return $hashp->{$source};
   } else {
-      return &$ast();
+      return $self->_render($tx, $target, $self->_ast($source));
   }
 }
 

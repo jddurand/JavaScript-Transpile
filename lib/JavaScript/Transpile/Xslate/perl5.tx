@@ -1,6 +1,6 @@
-: for $arrayp -> $i {
-:   my $ncurly = 0;
-:   my $ident = '';
+Type: <: $type :>
+: for $ast -> $i {
+<: $i :>
 :   my $blessed = $self._blessed($i);
 :   given $blessed
 :   {
@@ -13,10 +13,18 @@ use warnings FATAL => 'all';
 :     # Lexemes that are to be processed with special care
 :     # have dedicated LHSs
 :     # --------------------------------------------------
-:     when 'DecimalLiteral'      {                           $self._lhs2lexeme($i)         }
-:     when 'HexIntegerLiteral'   { 'hex('                  ~ $self._lhs2lexeme($i) ~ ')'   }
-:     when 'OctalIntegerLiteral' { 'oct('                  ~ $self._lhs2lexeme($i) ~ ')'   }
-:     when 'Identifier'          { '$self->_identifier(\'' ~ $self._lhs2lexeme($i, $arrayp, ) ~ '\')' }
+:     when 'DecimalLiteral'
+:     { $self._lhs2lexeme($i) }
+:
+:     when 'HexIntegerLiteral'
+:     { 'hex(' ~ $self._lhs2lexeme($i) ~ ')'   }
+:
+:     when 'OctalIntegerLiteral'
+:     { 'oct(' ~ $self._lhs2lexeme($i) ~ ')'   }
+:
+:     when 'Identifier'
+:     { '$self->_identifier(\'' ~ $self._lhs2lexeme($i) ~ '\')' }
+:
 :     default
 :     {
 :       # --------------------------------
@@ -30,13 +38,17 @@ use warnings FATAL => 'all';
 :           #
 :           #  "A little hack", the 'when' before already eated the lexeme
 :           #  -----------------------------------------------------------
-:           when '' { }
-:           when 'this' { '$self' }
-:           when '{' {
+:           when ''
+:           { }
+:           when 'this'
+:           { '$self' }
+:           when '{'
+:           {
 :             $self._newline;
 :             $self._incIndent; 
 :           }
-:           when '}' {
+:           when '}'
+:           {
 :             $self._newline;
 :             $self._decIndent; 
 :           }
