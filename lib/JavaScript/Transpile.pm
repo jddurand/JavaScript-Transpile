@@ -360,10 +360,10 @@ sub parse {
   my ($self, $source, %options) = @_;
 
   my $target = $options{target} || 'perl5';
-
+  my $ast = MarpaX::Languages::ECMAScript::AST->new(cache => $self->{_astCache}, grammarName => $self->{_grammarName});
   my $file_system_path = find_installed(__PACKAGE__);
   my $tx = Text::Xslate->new(type => 'text',
-			     path => File::Spec->catdir(dirname($file_system_path), 'Transpile', 'Xslate'),
+			     path => File::Spec->catdir($ast->templatePath, 'Xslate'),
 			     function => {
                                           _isArray => \&_isArray,
                                           _render  => \&_render,
