@@ -10,7 +10,6 @@ use MarpaX::Languages::ECMAScript::AST qw//;
 use Digest::MD4 qw/md4_hex/;
 use CHI;
 use File::HomeDir;
-use Text::Xslate qw//;
 use Scalar::Util qw/blessed/;
 use Module::Util qw/find_installed/;
 use File::Spec;
@@ -124,7 +123,7 @@ sub new {
 
 # ----------------------------------------------------------------------------------------
 
-=head2 parse($self, $source, %options)
+=head2 transpile($self, $source, %options)
 
 Transpile an the ECMAScript source, pointed by $source, with the following options:
 
@@ -141,144 +140,6 @@ Source language target. Default is 'perl5'.
 =over
 
 =cut
-
-sub _blessed {
-  my ($self, $ref) = @_;
-
-  my $rc = blessed($ref) || '';
-  $rc =~ s/.*:://;
-  return $rc;
-}
-
-sub _lhs2lexeme {
-  my ($self, $ref) = @_;
-  my $rc = $ref->[0]->[2];
-  #
-  # C.f. "A little hack" section in the template
-  #
-
-  #print STDERR "_lhs2lexeme => $ref->[0]->[2]\n";
-
-
-  $ref->[0]->[2] = '';
-  return $rc;
-}
-
-sub _lexeme {
-  my ($self, $ref) = @_;
-
-  print STDERR "_lexeme($ref) => $ref->[2]\n";
-
-  return $ref->[2];
-}
-
-sub _curIndent {
-  my ($self) = @_;
-
-  return $self->{_indent} x $self->{_curIndent};
-}
-
-sub _incIndent {
-  my ($self) = @_;
-
-  return $self->{_indent} x ++$self->{_curIndent};
-}
-
-sub _decIndent {
-  my ($self) = @_;
-
-  return $self->{_indent} x --$self->{_curIndent};
-}
-
-sub _newline {
-  my ($self) = @_;
-
-  return $self->{_newline};
-}
-
-sub _space {
-  my ($self) = @_;
-
-  return $self->{_space};
-}
-
-#
-# Note: this will FAIL if the original source have 100 successive '{' - is thqt going to happen...
-#
-sub _flat {
-  my ($self, $worklistp, $stopAtRcurlyb) = @_;
-
-  $stopAtRcurlyb //= 0;
-  my @flat = ();
-  my $prev = '';
-  do {
-    my $obj = shift @{$worklistp};
-    my $ref_type = ref $obj;
-    if (! $self->_blessed($obj) && $ref_type eq 'ARRAY') {
-      $prev = $obj->[2];
-      if ($prev eq '{') {
-        push(@flat, $prev, $self->_flat($worklistp, 1));
-      }
-      elsif ($prev eq '}' && $stopAtRcurlyb) {
-        #
-        # Push back the rcurly for our caller and remove it from our list
-        #
-        return( [ @flat ], $prev);
-      } else {
-        push(@flat, $prev);
-      }
-    }
-    if (blessed($obj) || $ref_type eq 'ARRAY') {
-      unshift(@{$worklistp}, @{$obj});
-    }
-  } while (@{$worklistp});
-
-  return [ @flat ];
-}
-
-sub _render {
-    my ($self, $lexemeArrayp, $recursiveb) = @_;
-
-    #
-    # This can be true only when called within the template
-    #
-    $recursiveb //= 1;
-
-    $self->{_curIndent} += $recursiveb;
-
-    my $rc = $self->{_tx}->render($self->{_targettx},
-                                  {
-                                   self         => $self,
-                                   lexemeArrayp => $recursiveb ? [ @{$lexemeArrayp}] : $lexemeArrayp,
-                                  }
-                                 );
-
-    my $indent = $self->{_indent} x $self->{_curIndent};
-
-    $rc =~ s/^/$indent/smg;
-
-    $self->{_curIndent} -= $recursiveb;
-
-    return $rc;
-}
-
-sub _ast {
-    my ($self, $source) = @_;
-
-    return MarpaX::Languages::ECMAScript::AST->new(cache => $self->{_astCache}, grammarName => $self->{_grammarName})->parse($source);
-}
-
-sub _trace {
-  my ($self, @args) = @_;
-
-  print STDERR "@args\n"
-}
-
-sub _isArray {
-  my ($self, $obj) = @_;
-
-  return (ref($obj) eq 'ARRAY');
-}
 
 sub _getAndCheckHashFromCache {
   my ($self, $md4, $source, $transpilep, $fromCachep) = @_;
@@ -356,47 +217,38 @@ sub _getAndCheckHashFromCache {
   return $rc;
 }
 
-sub parse {
-  my ($self, $source, %options) = @_;
+sub _render {
+    my ($self, $ast, $source) = @_;
 
-  my $target = $options{target} || 'perl5';
-  my $ast = MarpaX::Languages::ECMAScript::AST->new(cache => $self->{_astCache}, grammarName => $self->{_grammarName});
-  my $file_system_path = find_installed(__PACKAGE__);
-  my $tx = Text::Xslate->new(type => 'text',
-			     path => File::Spec->catdir($ast->templatePath, 'Xslate'),
-			     function => {
-                                          _isArray => \&_isArray,
-                                          _render  => \&_render,
-			     },
-      );
+    return $ast->template->transpile($ast->parse($source));
+}
 
-  my $rc;
-  $self->{_curIndent} = 0;
-  $self->{_tx} = $tx;
-  $self->{_targettx} = "$target.tx";
-  #
-  # If cache is enabled, compute the MD4 and check availability
-  #
-  my $transpile;
-  if ($self->{_cache}) {
-    my $md4 = md4_hex($source);
-    my $fromCache = {};
-    if (! $self->_getAndCheckHashFromCache($md4, $source, \$transpile, \$fromCache)) {
-      $transpile = $self->_render($self->_flat([ $self->_ast($source) ]), 0);
-      if (defined($CURRENTVERSION)) {
-        $fromCache->{$source} = {transpile => $transpile, version => $CURRENTVERSION};
-        $CACHE->set($md4, $fromCache);
-      }
+sub transpile {
+    my ($self, $source, %options) = @_;
+
+    my $target = $options{target} || 'perl5';
+    my $ast = MarpaX::Languages::ECMAScript::AST->new(cache => $self->{_astCache}, grammarName => $self->{_grammarName});
+
+    my $rc;
+    #
+    # If cache is enabled, compute the MD4 and check availability
+    #
+    my $transpile;
+    if ($self->{_cache}) {
+	my $md4 = md4_hex($source);
+	my $fromCache = {};
+	if (! $self->_getAndCheckHashFromCache($md4, $source, \$transpile, \$fromCache)) {
+	    $transpile = $self->_render($ast, $source);
+	    if (defined($CURRENTVERSION)) {
+		$fromCache->{$source} = {transpile => $transpile, version => $CURRENTVERSION};
+		$CACHE->set($md4, $fromCache);
+	    }
+	}
+    } else {
+	$transpile = $self->_render($ast, $source);
     }
-  } else {
-    $transpile = $self->_render($self->_flat([ $self->_ast($source) ]), 0);
-  }
 
-  delete($self->{_targettx});
-  delete($self->{_tx});
-  delete($self->{_curIndent});
-
-  return $transpile;
+    return $transpile;
 }
 
 =head1 SEE ALSO
