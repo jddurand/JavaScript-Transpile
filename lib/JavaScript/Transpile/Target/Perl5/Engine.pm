@@ -65,7 +65,7 @@ sub new {
 
 =head1 SEE ALSO
 
-L<JavaScript::Transpile>
+L<JavaScript::Transpile>, L<MooseX::Prototype>
 
 =cut
 
