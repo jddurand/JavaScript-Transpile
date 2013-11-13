@@ -94,7 +94,7 @@ G1 callback. A reference to this method is given to the transpile method of Marp
 sub g1Callback {
   my ($self, $rcp, $ruleId, $value, $index, $lhs, @rhs) = @_;
 
-  print STDERR "G1 callback @_\n";
+  # print STDERR "G1 callback @_\n";
 
   return 1;
 
@@ -126,7 +126,7 @@ Lexeme callback. A reference to this method is given to the transpile method of 
 sub lexemeCallback {
   my ($self, $rcp, $name, $ruleId, $value, $index, $lhs, @rhs) = @_;
 
-  print STDERR "Lexeme callback $name\n";
+  # print STDERR "Lexeme callback $name\n";
 
   return 0;
 
