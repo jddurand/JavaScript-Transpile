@@ -2,6 +2,7 @@ use strict;
 use warnings FATAL => 'all';
 
 package JavaScript::Transpile;
+use JavaScript::Transpile::Target::Perl5;
 
 # ABSTRACT: Transpilation of JavaScript
 
@@ -82,18 +83,6 @@ Produced transpilations can be cached: very often the same ECMAScript is used ag
 
 JavaScript::Transpile is using the ASTs produced by MarpaX::Languages::ECMAScript::AST, that have also a cache option. astCache correspond to the MarpaX::Languages::ECMAScript::AST cache option.
 
-=item indent
-
-Indent style. Default to 2 spaces.
-
-=item newline
-
-Newline style. Default to "\n".
-
-=item space
-
-Space style. Default to " ".
-
 =back
 
 =cut
@@ -104,16 +93,10 @@ sub new {
 
   my $cache       = $opts{cache} // 0;
   my $astCache    = $opts{astCache}; # No pb if this is undef, we just proxy it
-  my $indent      = $opts{indent} // '  ';
-  my $newline     = $opts{newline} // "\n";
-  my $space       = $opts{space} // " ";
 
   my $self  = {
       _cache       => $cache,
       _astCache    => $astCache,
-      _indent      => $indent,
-      _newline     => $newline,
-      _space       => $space,
   };
 
   bless($self, $class);
@@ -136,6 +119,18 @@ ECMAScript grammar version. Default is the one supplied with MarpaX::Languages::
 =item target
 
 Source language target. Default is 'perl5'.
+
+=item indent
+
+Indent style. Default is target specific.
+
+=item newline
+
+Newline style. Default is target specific.
+
+=item space
+
+Space style. Default is target specific.
 
 =over
 
@@ -217,6 +212,19 @@ sub _getAndCheckHashFromCache {
   return $rc;
 }
 
+sub _ast {
+    my ($self, %options) = @_;
+
+    if (exists($options{cache})) {
+	delete($options{cache});
+    }
+    if (exists($options{grammarName})) {
+	delete($options{grammarName});
+    }
+
+    return MarpaX::Languages::ECMAScript::AST->new(cache => $self->{_astCache}, grammarName => $self->{_grammarName}, %options);
+}
+
 sub _render {
     my ($self, $ast, $source) = @_;
 
@@ -227,7 +235,13 @@ sub transpile {
     my ($self, $source, %options) = @_;
 
     my $target = $options{target} || 'perl5';
-    my $ast = MarpaX::Languages::ECMAScript::AST->new(cache => $self->{_astCache}, grammarName => $self->{_grammarName});
+    if ($target eq 'perl5') {
+	my $callback = JavaScript::Transpile::Target::Perl5->new(%options);
+	$options{g1Callback} = $callback->g1CallbackRef;
+	$options{g1CallbackArgs} = [ $callback ];
+	$options{lexemeCallback} = $callback->lexemeCallbackRef;
+	$options{lexemeCallbackArgs} = [ $callback ];
+    }
 
     my $rc;
     #
@@ -238,14 +252,14 @@ sub transpile {
 	my $md4 = md4_hex($source);
 	my $fromCache = {};
 	if (! $self->_getAndCheckHashFromCache($md4, $source, \$transpile, \$fromCache)) {
-	    $transpile = $self->_render($ast, $source);
+	    $transpile = $self->_render($self->_ast(%options), $source);
 	    if (defined($CURRENTVERSION)) {
 		$fromCache->{$source} = {transpile => $transpile, version => $CURRENTVERSION};
 		$CACHE->set($md4, $fromCache);
 	    }
 	}
     } else {
-	$transpile = $self->_render($ast, $source);
+	$transpile = $self->_render($self->_ast(%options), $source);
     }
 
     return $transpile;
