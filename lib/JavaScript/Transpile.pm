@@ -6,8 +6,9 @@ use JavaScript::Transpile::Target::Perl5;
 
 # ABSTRACT: Transpilation of JavaScript
 
-use Carp qw/croak/;
 use MarpaX::Languages::ECMAScript::AST qw//;
+use MarpaX::Languages::ECMAScript::AST::Exceptions qw/:all/;
+use Try::Tiny;
 use Digest::MD4 qw/md4_hex/;
 use CHI;
 use File::HomeDir;
@@ -228,10 +229,12 @@ sub _ast {
 sub _render {
     my ($self, $ast, $source) = @_;
 
+    print STDERR "Source is " . substr($source, 0, 50) . "...\n";
+
     return $ast->template->transpile($ast->parse($source));
 }
 
-sub transpile {
+sub _transpile {
     my ($self, $source, %options) = @_;
 
     my $target = $options{target} || 'perl5';
@@ -263,6 +266,23 @@ sub transpile {
     }
 
     return $transpile;
+}
+
+sub transpile {
+  my ($self, @args) = @_;
+
+  try {
+    $self->_transpile(@args);
+  } catch {
+    my $e = $_;
+    if (UNIVERSAL::isa($_, 'MarpaX::Languages::ECMAScript::AST::Exception::SyntaxError')) {
+      warn "SyntaxError: " . $e->error;
+    } elsif (UNIVERSAL::isa($_, 'MarpaX::Languages::ECMAScript::AST::Exception::InternalError')) {
+      warn "InternalError: " . $e->error;
+    } else {
+      warn "UnclassifiedError: $_";
+    }
+  }
 }
 
 =head1 SEE ALSO
