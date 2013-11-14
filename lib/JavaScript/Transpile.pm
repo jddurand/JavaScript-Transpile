@@ -8,15 +8,10 @@ use JavaScript::Transpile::Target::Perl5;
 
 use MarpaX::Languages::ECMAScript::AST qw//;
 use MarpaX::Languages::ECMAScript::AST::Exceptions qw/:all/;
-use Carp qw/croak/;
-use Try::Tiny;
 use Digest::MD4 qw/md4_hex/;
 use CHI;
 use File::HomeDir;
-use Scalar::Util qw/blessed/;
-use Module::Util qw/find_installed/;
 use File::Spec;
-use File::Basename qw/dirname/;
 use version 0.77;
 use Log::Any qw/$log/;
 
