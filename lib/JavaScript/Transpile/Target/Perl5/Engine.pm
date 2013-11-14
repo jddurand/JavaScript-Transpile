@@ -4,7 +4,9 @@ use warnings FATAL => 'all';
 package JavaScript::Transpile::Target::Perl5::Engine;
 
 use Log::Any qw/$log/;
+use Moose;
 use MooseX::Prototype;
+use JavaScript::Transpile::Target::Perl5::Engine::Types;
 
 # ABSTRACT: JavaScript Engine in Perl5
 
@@ -38,30 +40,6 @@ This module provides a JavaScript engine in a Perl5 environment.
     # Parse ECMAScript and use the higher-level JavaScript::Transpile module
     #
     my $engine = JavaScript::Transpile::Target::Perl5::Engine->new();
-
-=head1 SUBROUTINES/METHODS
-
-=head2 new($class, %options)
-
-Instantiate a new object. Takes as parameter an optional hash of options that can be:
-
-=over
-
-=back
-
-=cut
-
-# ----------------------------------------------------------------------------------------
-sub new {
-  my ($class, %opts) = @_;
-
-  my $self  = {
-  };
-
-  bless($self, $class);
-
-  return $self;
-}
 
 =head1 SEE ALSO
 

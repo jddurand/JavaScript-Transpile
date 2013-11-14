@@ -229,8 +229,6 @@ sub _ast {
 sub _render {
     my ($self, $ast, $source) = @_;
 
-    print STDERR "Source is " . substr($source, 0, 50) . "...\n";
-
     return $ast->template->transpile($ast->parse($source));
 }
 
@@ -271,8 +269,10 @@ sub _transpile {
 sub transpile {
   my ($self, @args) = @_;
 
+  $self->{_transpile} = undef;
+
   try {
-    $self->_transpile(@args);
+    $self->{_transpile} = $self->_transpile(@args);
   } catch {
     my $e = $_;
     if (UNIVERSAL::isa($_, 'MarpaX::Languages::ECMAScript::AST::Exception::SyntaxError')) {
@@ -283,7 +283,17 @@ sub transpile {
       warn "UnclassifiedError: $_";
     }
   }
+
+  return $self;
 }
+
+# ----------------------------------------------------------------------------------------
+
+=head2 run($self, $source)
+
+Transpile an the ECMAScript source, pointed by $source, with the following options:
+
+=cut
 
 =head1 SEE ALSO
 
