@@ -116,7 +116,8 @@ Transpile an the ECMAScript source, pointed by $source, with the following optio
 
 =item grammarName
 
-ECMAScript grammar version. Default is the one supplied with MarpaX::Languages::ECMAScript::AST.
+ECMAScript grammar version. Default is the one supplied with MarpaX::Languages::ECMAScript::AST. This later module can throw MarpaX::Languages::ECMAScript::AST::Exception::SyntaxError or MarpaX::Languages::ECMAScript::AST::Exception::InternalError Exception::Class errors.
+
 
 =item target
 
@@ -233,7 +234,7 @@ sub _render {
     return $ast->template->transpile($ast->parse($source));
 }
 
-sub _transpile {
+sub transpile {
     my ($self, $source, %options) = @_;
 
     my $target = $options{target} || 'perl5';
@@ -267,38 +268,7 @@ sub _transpile {
     return $transpile;
 }
 
-sub transpile {
-  my ($self, @args) = @_;
-
-  my $rc = undef;
-  eval { $rc = $self->_transpile(@args); };
-  my $errorString = $@;
-  my $e;
-  if ($e = Exception::Class->caught('MarpaX::Languages::ECMAScript::AST::Exception::SyntaxError')) {
-    warn "SyntaxError: " . $e->error;
-  }
-  elsif ($e = Exception::Class->caught('MarpaX::Languages::ECMAScript::AST::Exception::InternalError')) {
-    warn "InternalError: " . $e->error;
-  }
-  elsif ($errorString) {
-    $e = Exception::Class->caught();
-    if (ref($e)) {
-      $e->rethrow;
-    } else {
-      croak $e;
-    }
-  }
-
-  return $rc;
-}
-
 # ----------------------------------------------------------------------------------------
-
-=head2 run($self, $source)
-
-Transpile an the ECMAScript source, pointed by $source, with the following options:
-
-=cut
 
 =head1 SEE ALSO
 
