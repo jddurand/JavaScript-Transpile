@@ -8,6 +8,7 @@ use JavaScript::Transpile::Target::Perl5;
 
 use MarpaX::Languages::ECMAScript::AST qw//;
 use MarpaX::Languages::ECMAScript::AST::Exceptions qw/:all/;
+use Carp qw/croak/;
 use Try::Tiny;
 use Digest::MD4 qw/md4_hex/;
 use CHI;
@@ -269,22 +270,26 @@ sub _transpile {
 sub transpile {
   my ($self, @args) = @_;
 
-  $self->{_transpile} = undef;
-
-  try {
-    $self->{_transpile} = $self->_transpile(@args);
-  } catch {
-    my $e = $_;
-    if (UNIVERSAL::isa($_, 'MarpaX::Languages::ECMAScript::AST::Exception::SyntaxError')) {
-      warn "SyntaxError: " . $e->error;
-    } elsif (UNIVERSAL::isa($_, 'MarpaX::Languages::ECMAScript::AST::Exception::InternalError')) {
-      warn "InternalError: " . $e->error;
+  my $rc = undef;
+  eval { $rc = $self->_transpile(@args); };
+  my $errorString = $@;
+  my $e;
+  if ($e = Exception::Class->caught('MarpaX::Languages::ECMAScript::AST::Exception::SyntaxError')) {
+    warn "SyntaxError: " . $e->error;
+  }
+  elsif ($e = Exception::Class->caught('MarpaX::Languages::ECMAScript::AST::Exception::InternalError')) {
+    warn "InternalError: " . $e->error;
+  }
+  elsif ($errorString) {
+    $e = Exception::Class->caught();
+    if (ref($e)) {
+      $e->rethrow;
     } else {
-      warn "UnclassifiedError: $_";
+      croak $e;
     }
   }
 
-  return $self;
+  return $rc;
 }
 
 # ----------------------------------------------------------------------------------------

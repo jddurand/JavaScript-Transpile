@@ -8,7 +8,7 @@ use Test::More tests => 2;
     # Init log
     #
     our $defaultLog4perlConf = '
-    log4perl.rootLogger              = TRACE, Screen
+    log4perl.rootLogger              = WARN, Screen
     log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
     log4perl.appender.Screen.stderr  = 0
     log4perl.appender.Screen.layout  = PatternLayout
@@ -22,7 +22,10 @@ BEGIN {
 }
 
 my $ecmaSourceCode = do {local $/; <DATA>};
-ok(JavaScript::Transpile->new()->transpile($ecmaSourceCode));
+open(JDD, '>', 'C:\\Windows\\Temp\\jdd.js');
+my $rc = JavaScript::Transpile->new()->transpile($ecmaSourceCode);
+print JDD $rc;
+close(JDD);
 __DATA__
 /*!
  * jQuery JavaScript Library v1.10.2
