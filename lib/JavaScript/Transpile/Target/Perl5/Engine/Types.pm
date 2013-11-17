@@ -3,14 +3,19 @@ use warnings FATAL => 'all';
 
 package JavaScript::Transpile::Target::Perl5::Engine::Types;
 
-use Log::Any qw/$log/;
-use Unknown::Values;
-use Moose;
-use Moose::Util::TypeConstraints;
-
 # ABSTRACT: JavaScript Types in Perl5
 
 # VERSION
+
+use Unknown::Values;
+use Math::BigInt;
+use Moose::Util::TypeConstraints;
+Math::BigInt->config(
+    {
+	trap_inf => 0,         # No croak in inf
+	trap_nan => 0,         # No croak on NaN
+	round_mode => 'even'   # Rounds to the nearest value, except for 5 which is equidistant, in which case it rounds to the nearest even digit.
+    });
 
 =head1 DESCRIPTION
 
@@ -72,6 +77,15 @@ coerce 'Null', from 'Any', via { undef };
 # Boolean is mapped to two values 1 and 0
 coerce 'Boolean', from 'Any', via { $_ ? 1 : 0 };
 
+# Number is IEEE-754
+coerce 'Number',
+    from 'Boolean',   via { Math::BigInt->new($_ ? '1' : '0') };
+    from 'Null',      via { Math::BigInt->new(undef) };  # 0
+    from 'Reference', via { Math::BigInt->new("$_") };
+    from 'Undefined', via { Math::BigInt->new(unknown) };  # NaN
+    from 'String',    via { ($_ eq 'Infinity') ? Math::BigInt->binf() : Math::BigInt->new("$_") };
+
+# String coercions
 coerce 'String',
     from 'Boolean',   via { $_ ? trueAsString : falseAsString };
     from 'Null',      via { nullAsString };
