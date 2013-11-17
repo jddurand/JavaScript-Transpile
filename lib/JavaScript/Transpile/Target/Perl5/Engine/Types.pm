@@ -4,7 +4,9 @@ use warnings FATAL => 'all';
 package JavaScript::Transpile::Target::Perl5::Engine::Types;
 
 use Log::Any qw/$log/;
-use MooseX::Types;
+use Unknown::Values;
+use Moose;
+use Moose::Util::TypeConstraints;
 
 # ABSTRACT: JavaScript Types in Perl5
 
@@ -12,31 +14,70 @@ use MooseX::Types;
 
 =head1 DESCRIPTION
 
-This module provides JavaScript types in a Perl5 environment.
+This module provides JavaScript primitive types in a Perl5 environment.
 
 =cut
 
-use MooseX::Types -declare => [
-    qw/
-        Undefined
-        Null
-        Boolean
-        String
-        Number
-        Reference
-        /
-];
-use MooseX::Types::Moose qw/Undef Defined Bool Str Num Ref/;
+#
+# Types definitions
+# -----------------
+#
+class_type 'Undefined', {class => ref(unknown) };
+subtype 'Null',      as 'Undef';
+subtype 'Boolean',   as 'Bool';
+subtype 'String',    as 'ArrayRef[GreaterOrEqualThanZeroInt]';
+subtype 'Number',    as 'Num';
+#
+# Moose already provides the Object type
+#
+# subtype 'Object',    as 'Object';
 
 #
-# Note: for Object, we use Moose's Object directly
+# Types coercions
+# ---------------
+#         Any
+#             Item
+#                 Bool                               <=> Boolean
+#                 Maybe[`a]
+#                 Undef                              <=> Null
+#                 Defined
+#                     Value
+#                         Str                        <=> String
+#                             Num                    <=> Number
+#                                 Int
+#                             ClassName
+#                             RoleName
+#                     Ref                            <=> Reference
+#                         ScalarRef[`a]
+#                         ArrayRef[`a]
+#                         HashRef[`a]
+#                         CodeRef
+#                         RegexpRef
+#                         GlobRef
+#                         FileHandle
+#                         Object                     <=> Undefined
 
-subtype Undefined, as Undef;                 # JavaScript Undefined is really undef in perl
-subtype Null,      as Defined;               # JavaScript Null      is a defined value albeit null
-subtype Boolean,   as Bool;                  # JavaScript Boolean   maps to Bool
-subtype String,    as Str;                   # JavaScript String    maps to Str
-subtype Number,    as Num;                   # JavaScript Number    maps to Num
-subtype Reference, as Ref;                   # JavaScript Reference maps to Ref
+use constant trueAsString      => [ unpack('S*', 'true') ];
+use constant falseAsString     => [ unpack('S*', 'false') ];
+use constant undefinedAsString => [ unpack('S*', 'undefined') ];
+use constant nullAsString      => [ unpack('S*', 'null') ];
+use constant referenceAsString => [ unpack('S*', 'Reference') ];
+
+# Undefined is mapped to single value unknown
+coerce 'Undefined', from 'Any', via { unknown };
+
+# Null is mapped to single value undef
+coerce 'Null', from 'Any', via { undef };
+
+# Boolean is mapped to two values 1 and 0
+coerce 'Boolean', from 'Any', via { $_ ? 1 : 0 };
+
+coerce 'String',
+    from 'Boolean',   via { $_ ? trueAsString : falseAsString };
+    from 'Null',      via { nullAsString };
+    from 'Number',    via { [ unpack('S*', "$_") ] };
+    from 'Reference', via { [ unpack('S*', ref($_)) ] };
+    from 'Undefined', via { undefinedAsString };
 
 =head1 SEE ALSO
 
