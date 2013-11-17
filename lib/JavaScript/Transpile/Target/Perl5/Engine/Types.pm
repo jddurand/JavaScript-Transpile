@@ -16,7 +16,7 @@ Math::BigInt->config(
 	trap_nan => 0,         # No croak on NaN
 	round_mode => 'even'   # Rounds to the nearest value, except for 5 which is equidistant, in which case it rounds to the nearest even digit.
     });
-use Encode qw/encode decode from_to/;
+use Encode qw/encode/;
 
 =head1 DESCRIPTION
 
