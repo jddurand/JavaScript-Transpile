@@ -31,7 +31,8 @@ This module provides JavaScript primitive types in a Perl5 environment.
 class_type 'Undefined', {class => ref(unknown) };
 subtype 'Null',      as 'Undef';
 subtype 'Boolean',   as 'Bool';
-subtype 'String',    as 'ArrayRef[GreaterOrEqualThanZeroInt]';
+subtype 'IntGeZero', as 'Int', where { $_ >= 0 };
+subtype 'String',    as 'ArrayRef[IntGeZero]';
 subtype 'Number',    as 'Num';
 #
 # Moose already provides the Object type
