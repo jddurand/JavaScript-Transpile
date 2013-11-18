@@ -79,9 +79,7 @@ sub utf8ToArrayOfUnsignedShort {
 }
 
 sub arrayOfUnsignedShortToUtf8 {   # Note: this is NOT symmetric
-    my $rc = '';
-    map {$rc .= chr($_)} @{$_[0]};
-    return $rc;
+    return pack('W*', @{$_[0]});
 }
 
 use constant trueAsString      => utf8ToArrayOfUnsignedShort('true');
