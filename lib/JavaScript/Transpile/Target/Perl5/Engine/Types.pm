@@ -126,7 +126,7 @@ coerce 'Number',
                             } elsif ($s eq '+0' || $s eq '0')  {
                               return Math::BigFloat->bzero();
                             } elsif ($s eq '-0')  {
-                              return Math::BigFloat->new('-0');   # I believe this fallbacks to bzero()
+                              return Math::BigFloat->new('-0.0');   # I believe this fallbacks to bzero()
 			    } elsif (length($s) >= 2 &&
 				     substr($s, 0, 1) eq '0' &&
 				     (substr($s, 1, 1) ne 'x' && substr($s, 0, 1) ne 'X')) {
