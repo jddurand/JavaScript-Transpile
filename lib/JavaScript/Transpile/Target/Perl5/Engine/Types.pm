@@ -8,11 +8,11 @@ package JavaScript::Transpile::Target::Perl5::Engine::Types;
 # VERSION
 
 use Unknown::Values;
-use Math::BigFloat;
+use bignum;
 use Moose::Util::TypeConstraints;
 use Encode qw/encode/;
 
-Math::BigFloat->round_mode('even');  # Just to be sure
+Math::BigInt->round_mode('even');  # Just to be sure
 
 =head1 DESCRIPTION
 
@@ -29,7 +29,7 @@ subtype 'Null',      as 'Undef';
 subtype 'Boolean',   as 'Bool';
 subtype 'IntGeZero', as 'Int', where { $_ >= 0 };
 subtype 'String',    as 'ArrayRef[IntGeZero]';
-subtype 'Number',    as 'Num';
+subtype 'Number',    as 'Object', traits => [qw/Num/];
 #
 # Moose already provides the Object type
 #
@@ -46,7 +46,7 @@ subtype 'Number',    as 'Num';
 #                 Defined
 #                     Value
 #                         Str                        <=> String
-#                             Num                    <=> Number
+#                             Num
 #                                 Int
 #                             ClassName
 #                             RoleName
@@ -58,7 +58,7 @@ subtype 'Number',    as 'Num';
 #                         RegexpRef
 #                         GlobRef
 #                         FileHandle
-#                         Object                     <=> Undefined
+#                         Object                     <=> Undefined, Number
 
 #
 # Take care: String is a sequence of UTF-16 Code Units, NOT characters.
@@ -112,28 +112,25 @@ coerce 'Boolean', from 'Any', via { $_ ? 1 : 0 };
 #  0
 # -0
 coerce 'Number',
-    from 'Boolean',   via { Math::BigFloat->new($_ ? 1 : 0) };
-    from 'Null',      via { Math::BigFloat->new(undef) };  # 0
-    from 'Reference', via { Math::BigFloat->new("$_") };
-    from 'Undefined', via { Math::BigFloat->new(unknown) };  # NaN
+    from 'Boolean',   via { $_ ? 1 : 0 };
+    from 'Null',      via { 0 };
+    from 'Reference', via { int($_) };
+    from 'Undefined', via { NaN() };
     from 'String',    via { my $s = arrayOfUnsignedShortToUtf8($_);
-                            if ($s eq 'NaN') {
-                              return Math::BigFloat->bnan();
+                            if (! $s || $s eq 'NaN') {
+                              return NaN();
                             } elsif ($s eq '+Infinity' || $s eq 'Infinity')  {
-                              return Math::BigFloat->binf();
+                              return +inf();
                             } elsif ($s eq '-Infinity')  {
-                              return Math::BigFloat->binf('-');
+                              return -inf();
                             } elsif ($s eq '+0' || $s eq '0')  {
-                              return Math::BigFloat->bzero();
+                              return +0;
                             } elsif ($s eq '-0')  {
-                              return Math::BigFloat->new('-0.0');   # I believe this fallbacks to bzero()
-			    } elsif (length($s) >= 2 &&
-				     substr($s, 0, 1) eq '0' &&
-				     (substr($s, 1, 1) ne 'x' && substr($s, 0, 1) ne 'X')) {
-                              substr($s, 0, 1, '');
-                              return Math::BigFloat->new(oct($s));
+                              return -0;
+			    } elsif (substr($s, 0, 1) eq '0') {
+                              return oct($s);      # See perldoc, in fact oct() behaves like hex() if 0x or 0X
 			    } else {
-                              return Math::BigFloat->new("$s");
+                              return 0+$s;         # perl to do the magic
 			    }
 };
 
@@ -141,7 +138,7 @@ coerce 'Number',
 coerce 'String',
   from 'Boolean',   via { $_ ? trueAsString : falseAsString };
   from 'Null',      via { nullAsString };
-  from 'Number',    via {
+  from 'Number',    via {                          # Numbers are objects, c.f. Math::BigInt or Math::BigFloat
     if ($_->is_nan()) {
       return NaNStringValue;
     } elsif ($_->is_inf()) {
