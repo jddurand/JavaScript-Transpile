@@ -147,7 +147,7 @@ coerce 'String',
       return InfMStringValue;
     } elsif ($_->is_zero()) {
       #
-      # For the principle, I believe this is is_pos() always returns true...
+      # For the principle, I believe is_pos() always returns true
       #
       if ($_->is_pos()) {
         return ZeroPStringValue;
