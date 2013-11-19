@@ -124,9 +124,9 @@ coerce 'Number',
                             } elsif ($s eq '-Infinity')  {
                               return -inf();
                             } elsif ($s eq '+0' || $s eq '0')  {
-                              return +0;
+                              return +0.0;
                             } elsif ($s eq '-0')  {
-                              return -0;
+                              return -0.0;
 			    } elsif (substr($s, 0, 1) eq '0') {
                               return oct($s);      # See perldoc, in fact oct() behaves like hex() if 0x or 0X
 			    } else {
