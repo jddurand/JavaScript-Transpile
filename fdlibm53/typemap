@@ -1,0 +1,4 @@
+const int *					T_PTROBJ
+double *					T_PTROBJ
+int *						T_PTROBJ
+struct exception *				T_PTROBJ
