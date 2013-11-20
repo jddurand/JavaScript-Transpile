@@ -167,7 +167,7 @@ sub AUTOLOAD {
 }
 
 require XSLoader;
-XSLoader::load('JavaScript::Transpile::Fdlibm', $VERSION);
+XSLoader::load('JavaScript::Transpile', $VERSION);
 
 # Preloaded methods go here.
 
