@@ -131,11 +131,11 @@ my @names = (qw(FDLIBM_DOMAIN FDLIBM_HUGE FDLIBM_MAXFLOAT FDLIBM_OVERFLOW
 	       _FDLIBM_SVID_ _FDLIBM_XOPEN_));
 
 print constant_types(), "\n"; # macro defs
-foreach (C_constant ("JavaScript::Transpile::Fdlib", 'constant', 'NV', $types, undef, 3, @names) ) {
+foreach (C_constant ("JavaScript::Transpile::Fdlibm", 'constant', 'NV', $types, undef, 3, @names) ) {
     print $_, "\n"; # C constant subs
 }
 print "\n#### XS Section:\n";
-print XS_constant ("JavaScript::Transpile::Fdlib", $types);
+print XS_constant ("JavaScript::Transpile::Fdlibm", $types);
 __END__
    */
 
