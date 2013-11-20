@@ -11,6 +11,8 @@
 
 MODULE = JavaScript::Transpile::Fdlib		PACKAGE = JavaScript::Transpile::Fdlib		
 
+PROTOTYPES: ENABLE
+
 INCLUDE: const-xs.inc
 
 double
