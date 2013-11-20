@@ -9,7 +9,7 @@
 
 #include "const-c.inc"
 
-MODULE = JavaScript::Transpile::Fdlibm		PACKAGE = JavaScript::Transpile::Fdlibm		
+MODULE = JavaScript::Transpile::Fdlibm		PACKAGE = JavaScript::Transpile
 
 PROTOTYPES: ENABLE
 
