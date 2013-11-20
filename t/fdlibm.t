@@ -1,7 +1,7 @@
 #!perl
 use strict;
 use warnings FATAL => 'all';
-use Test::More tests;
+use Test::More;
 
 BEGIN {
     use_ok( 'JavaScript::Transpile::Fdlibm', qw/:all/ ) || print "Bail out!\n";
