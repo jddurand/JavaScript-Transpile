@@ -21,40 +21,40 @@ typedef double NV; /* 5.6 and later define NVTYPE, and typedef NV to it.  */
 #endif
 
 static int
-constant_6 (pTHX_ const char *name, IV *iv_return) {
+constant_13 (pTHX_ const char *name, NV *nv_return) {
   /* When generated this function returned values for the list of names given
      here.  However, subsequent manual editing may have added or removed some.
      FDLIBM_DOMAIN _FDLIBM_IEEE_ _FDLIBM_SVID_ */
-  /* Offset 4 gives the best switch position.  */
-  switch (name[4]) {
+  /* Offset 11 gives the best switch position.  */
+  switch (name[11]) {
   case 'D':
-    if (memEQ(name, "_FDLIBM_SVID_", 6)) {
-    /*                   ^       */
+    if (memEQ(name, "_FDLIBM_SVID_", 13)) {
+    /*                          ^        */
 #ifdef _FDLIBM_SVID_
-      *iv_return = _FDLIBM_SVID_;
-      return PERL_constant_ISIV;
+      *nv_return = _FDLIBM_SVID_;
+      return PERL_constant_ISNV;
 #else
       return PERL_constant_NOTDEF;
 #endif
     }
     break;
   case 'E':
-    if (memEQ(name, "_FDLIBM_IEEE_", 6)) {
-    /*                   ^       */
+    if (memEQ(name, "_FDLIBM_IEEE_", 13)) {
+    /*                          ^        */
 #ifdef _FDLIBM_IEEE_
-      *iv_return = _FDLIBM_IEEE_;
-      return PERL_constant_ISIV;
+      *nv_return = _FDLIBM_IEEE_;
+      return PERL_constant_ISNV;
 #else
       return PERL_constant_NOTDEF;
 #endif
     }
     break;
   case 'I':
-    if (memEQ(name, "FDLIBM_DOMAIN", 6)) {
-    /*                   ^       */
+    if (memEQ(name, "FDLIBM_DOMAIN", 13)) {
+    /*                          ^        */
 #ifdef FDLIBM_DOMAIN
-      *iv_return = FDLIBM_DOMAIN;
-      return PERL_constant_ISIV;
+      *nv_return = FDLIBM_DOMAIN;
+      return PERL_constant_ISNV;
 #else
       return PERL_constant_NOTDEF;
 #endif
@@ -65,40 +65,40 @@ constant_6 (pTHX_ const char *name, IV *iv_return) {
 }
 
 static int
-constant_7 (pTHX_ const char *name, IV *iv_return) {
+constant_14 (pTHX_ const char *name, NV *nv_return) {
   /* When generated this function returned values for the list of names given
      here.  However, subsequent manual editing may have added or removed some.
      FDLIBM_X_TLOSS _FDLIBM_POSIX_ _FDLIBM_XOPEN_ */
-  /* Offset 3 gives the best switch position.  */
-  switch (name[3]) {
+  /* Offset 10 gives the best switch position.  */
+  switch (name[10]) {
   case 'L':
-    if (memEQ(name, "FDLIBM_X_TLOSS", 7)) {
-    /*                  ^         */
+    if (memEQ(name, "FDLIBM_X_TLOSS", 14)) {
+    /*                         ^          */
 #ifdef FDLIBM_X_TLOSS
-      *iv_return = FDLIBM_X_TLOSS;
-      return PERL_constant_ISIV;
+      *nv_return = FDLIBM_X_TLOSS;
+      return PERL_constant_ISNV;
 #else
       return PERL_constant_NOTDEF;
 #endif
     }
     break;
   case 'P':
-    if (memEQ(name, "_FDLIBM_XOPEN_", 7)) {
-    /*                  ^         */
+    if (memEQ(name, "_FDLIBM_XOPEN_", 14)) {
+    /*                         ^          */
 #ifdef _FDLIBM_XOPEN_
-      *iv_return = _FDLIBM_XOPEN_;
-      return PERL_constant_ISIV;
+      *nv_return = _FDLIBM_XOPEN_;
+      return PERL_constant_ISNV;
 #else
       return PERL_constant_NOTDEF;
 #endif
     }
     break;
   case 'S':
-    if (memEQ(name, "_FDLIBM_POSIX_", 7)) {
-    /*                  ^         */
+    if (memEQ(name, "_FDLIBM_POSIX_", 14)) {
+    /*                         ^          */
 #ifdef _FDLIBM_POSIX_
-      *iv_return = _FDLIBM_POSIX_;
-      return PERL_constant_ISIV;
+      *nv_return = _FDLIBM_POSIX_;
+      return PERL_constant_ISNV;
 #else
       return PERL_constant_NOTDEF;
 #endif
@@ -109,7 +109,7 @@ constant_7 (pTHX_ const char *name, IV *iv_return) {
 }
 
 static int
-constant (pTHX_ const char *name, STRLEN len, IV *iv_return) {
+constant (pTHX_ const char *name, STRLEN len, NV *nv_return) {
   /* Initially switch on the length of the name.  */
   /* When generated this function returned values for the list of names given
      in this section of perl code.  Rather than manually editing these functions
@@ -124,13 +124,14 @@ constant (pTHX_ const char *name, STRLEN len, IV *iv_return) {
 #!/usr/bin/perl -w
 use ExtUtils::Constant qw (constant_types C_constant XS_constant);
 
-my $types = {map {($_, 1)} qw(IV)};
-my @names = (qw(FDLIBM_DOMAIN FDLIBM_HUGE FDLIBM_MAXFLOAT FDLIBM_OVERFLOW FDLIBM_PLOSS FDLIBM_SING FDLIBM_TLOSS FDLIBM_UNDERFLOW
-	       FDLIBM_X_TLOSS _FDLIBM_IEEE_ _FDLIBM_LIB_VERSION  _FDLIBM_POSIX_ _FDLIBM_SVID_
-	       _FDLIBM_XOPEN_));
+my $types = {map {($_, 1)} qw(NV)};
+my @names = (qw(FDLIBM_DOMAIN FDLIBM_HUGE FDLIBM_MAXFLOAT FDLIBM_OVERFLOW
+	       FDLIBM_PLOSS FDLIBM_SING FDLIBM_TLOSS FDLIBM_UNDERFLOW
+	       FDLIBM_X_TLOSS _FDLIBM_IEEE_ _FDLIBM_LIB_VERSION _FDLIBM_POSIX_
+	       _FDLIBM_SVID_ _FDLIBM_XOPEN_));
 
 print constant_types(), "\n"; # macro defs
-foreach (C_constant ("JavaScript::Transpile::Fdlib", 'constant', 'IV', $types, undef, 3, @names) ) {
+foreach (C_constant ("JavaScript::Transpile::Fdlib", 'constant', 'NV', $types, undef, 3, @names) ) {
     print $_, "\n"; # C constant subs
 }
 print "\n#### XS Section:\n";
@@ -139,28 +140,28 @@ __END__
    */
 
   switch (len) {
-  case 4:
-    /* Names all of length 4.  */
+  case 11:
+    /* Names all of length 11.  */
     /* FDLIBM_HUGE FDLIBM_SING */
-    /* Offset 3 gives the best switch position.  */
-    switch (name[3]) {
+    /* Offset 10 gives the best switch position.  */
+    switch (name[10]) {
     case 'E':
-      if (memEQ(name, "HUG", 3)) {
-      /*                  E     */
+      if (memEQ(name, "FDLIBM_HUG", 10)) {
+      /*                         E      */
 #ifdef FDLIBM_HUGE
-        *iv_return = FDLIBM_HUGE;
-        return PERL_constant_ISIV;
+        *nv_return = FDLIBM_HUGE;
+        return PERL_constant_ISNV;
 #else
         return PERL_constant_NOTDEF;
 #endif
       }
       break;
     case 'G':
-      if (memEQ(name, "SIN", 3)) {
-      /*                  G     */
+      if (memEQ(name, "FDLIBM_SIN", 10)) {
+      /*                         G      */
 #ifdef FDLIBM_SING
-        *iv_return = FDLIBM_SING;
-        return PERL_constant_ISIV;
+        *nv_return = FDLIBM_SING;
+        return PERL_constant_ISNV;
 #else
         return PERL_constant_NOTDEF;
 #endif
@@ -168,28 +169,28 @@ __END__
       break;
     }
     break;
-  case 5:
-    /* Names all of length 5.  */
+  case 12:
+    /* Names all of length 12.  */
     /* FDLIBM_PLOSS FDLIBM_TLOSS */
-    /* Offset 0 gives the best switch position.  */
-    switch (*name++) {
+    /* Offset 7 gives the best switch position.  */
+    switch (name[7]) {
     case 'P':
-      if (memEQ(name, "LOSS", 4)) {
-      /*                P          */
+      if (memEQ(name, "FDLIBM_PLOSS", 12)) {
+      /*                      ^           */
 #ifdef FDLIBM_PLOSS
-        *iv_return = FDLIBM_PLOSS;
-        return PERL_constant_ISIV;
+        *nv_return = FDLIBM_PLOSS;
+        return PERL_constant_ISNV;
 #else
         return PERL_constant_NOTDEF;
 #endif
       }
       break;
     case 'T':
-      if (memEQ(name, "LOSS", 4)) {
-      /*                T          */
+      if (memEQ(name, "FDLIBM_TLOSS", 12)) {
+      /*                      ^           */
 #ifdef FDLIBM_TLOSS
-        *iv_return = FDLIBM_TLOSS;
-        return PERL_constant_ISIV;
+        *nv_return = FDLIBM_TLOSS;
+        return PERL_constant_ISNV;
 #else
         return PERL_constant_NOTDEF;
 #endif
@@ -197,34 +198,34 @@ __END__
       break;
     }
     break;
-  case 6:
-    return constant_6 (aTHX_ name, iv_return);
+  case 13:
+    return constant_13 (aTHX_ name, nv_return);
     break;
-  case 7:
-    return constant_7 (aTHX_ name, iv_return);
+  case 14:
+    return constant_14 (aTHX_ name, nv_return);
     break;
-  case 8:
-    /* Names all of length 8.  */
+  case 15:
+    /* Names all of length 15.  */
     /* FDLIBM_MAXFLOAT FDLIBM_OVERFLOW */
-    /* Offset 0 gives the best switch position.  */
-    switch (*name++) {
+    /* Offset 7 gives the best switch position.  */
+    switch (name[7]) {
     case 'M':
-      if (memEQ(name, "AXFLOAT", 7)) {
-      /*                M             */
+      if (memEQ(name, "FDLIBM_MAXFLOAT", 15)) {
+      /*                      ^              */
 #ifdef FDLIBM_MAXFLOAT
-        *iv_return = FDLIBM_MAXFLOAT;
-        return PERL_constant_ISIV;
+        *nv_return = FDLIBM_MAXFLOAT;
+        return PERL_constant_ISNV;
 #else
         return PERL_constant_NOTDEF;
 #endif
       }
       break;
     case 'O':
-      if (memEQ(name, "VERFLOW", 7)) {
-      /*                O             */
+      if (memEQ(name, "FDLIBM_OVERFLOW", 15)) {
+      /*                      ^              */
 #ifdef FDLIBM_OVERFLOW
-        *iv_return = FDLIBM_OVERFLOW;
-        return PERL_constant_ISIV;
+        *nv_return = FDLIBM_OVERFLOW;
+        return PERL_constant_ISNV;
 #else
         return PERL_constant_NOTDEF;
 #endif
@@ -232,21 +233,21 @@ __END__
       break;
     }
     break;
-  case 9:
-    if (memEQ(name, "FDLIBM_UNDERFLOW", 9)) {
+  case 16:
+    if (memEQ(name, "FDLIBM_UNDERFLOW", 16)) {
 #ifdef FDLIBM_UNDERFLOW
-      *iv_return = FDLIBM_UNDERFLOW;
-      return PERL_constant_ISIV;
+      *nv_return = FDLIBM_UNDERFLOW;
+      return PERL_constant_ISNV;
 #else
       return PERL_constant_NOTDEF;
 #endif
     }
     break;
-  case 12:
-    if (memEQ(name, "_FDLIBM_LIB_VERSION", 12)) {
+  case 19:
+    if (memEQ(name, "_FDLIBM_LIB_VERSION", 19)) {
 #ifdef _FDLIBM_LIB_VERSION
-      *iv_return = _FDLIBM_LIB_VERSION;
-      return PERL_constant_ISIV;
+      *nv_return = _FDLIBM_LIB_VERSION;
+      return PERL_constant_ISNV;
 #else
       return PERL_constant_NOTDEF;
 #endif
