@@ -19,20 +19,20 @@
 
 
 #ifdef __STDC__
-	double acos(double x)		/* wrapper acos */
+	double fdlibm_acos(double x)		/* wrapper fdlibm_acos */
 #else
-	double acos(x)			/* wrapper acos */
+	double fdlibm_acos(x)			/* wrapper fdlibm_acos */
 	double x;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_acos(x);
+	return __fdlibm_ieee754_acos(x);
 #else
 	double z;
-	z = __ieee754_acos(x);
-	if(_LIB_VERSION == _IEEE_ || isnan(x)) return z;
-	if(fabs(x)>1.0) {
-	        return __kernel_standard(x,x,1); /* acos(|x|>1) */
+	z = __fdlibm_ieee754_acos(x);
+	if(_FDLIBM_LIB_VERSION == _FDLIBM_IEEE_ || fdlibm_isnan(x)) return z;
+	if(fdlibm_fabs(x)>1.0) {
+	        return __fdlibm_kernel_standard(x,x,1); /* fdlibm_acos(|x|>1) */
 	} else
 	    return z;
 #endif

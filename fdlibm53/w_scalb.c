@@ -12,9 +12,9 @@
  */
 
 /*
- * wrapper scalb(double x, double fn) is provide for
+ * wrapper fdlibm_scalb(double x, double fn) is provide for
  * passing various standard test suite. One 
- * should use scalbn() instead.
+ * should use fdlibm_scalbn() instead.
  */
 
 #include "fdlibm.h"
@@ -23,12 +23,12 @@
 
 #ifdef __STDC__
 #ifdef _SCALB_INT
-	double scalb(double x, int fn)		/* wrapper scalb */
+	double fdlibm_scalb(double x, int fn)		/* wrapper fdlibm_scalb */
 #else
-	double scalb(double x, double fn)	/* wrapper scalb */
+	double fdlibm_scalb(double x, double fn)	/* wrapper fdlibm_scalb */
 #endif
 #else
-	double scalb(x,fn)			/* wrapper scalb */
+	double fdlibm_scalb(x,fn)			/* wrapper fdlibm_scalb */
 #ifdef _SCALB_INT
 	double x; int fn;
 #else
@@ -37,19 +37,19 @@
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_scalb(x,fn);
+	return __fdlibm_ieee754_scalb(x,fn);
 #else
 	double z;
-	z = __ieee754_scalb(x,fn);
-	if(_LIB_VERSION == _IEEE_) return z;
-	if(!(finite(z)||isnan(z))&&finite(x)) {
-	    return __kernel_standard(x,(double)fn,32); /* scalb overflow */
+	z = __fdlibm_ieee754_scalb(x,fn);
+	if(_FDLIBM_LIB_VERSION == _FDLIBM_IEEE_) return z;
+	if(!(fdlibm_finite(z)||fdlibm_isnan(z))&&fdlibm_finite(x)) {
+	    return __fdlibm_kernel_standard(x,(double)fn,32); /* fdlibm_scalb overflow */
 	}
 	if(z==0.0&&z!=x) {
-	    return __kernel_standard(x,(double)fn,33); /* scalb underflow */
+	    return __fdlibm_kernel_standard(x,(double)fn,33); /* fdlibm_scalb underflow */
 	} 
 #ifndef _SCALB_INT
-	if(!finite(fn)) errno = ERANGE;
+	if(!fdlibm_finite(fn)) errno = ERANGE;
 #endif
 	return z;
 #endif 

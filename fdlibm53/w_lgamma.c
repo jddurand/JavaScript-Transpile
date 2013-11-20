@@ -12,34 +12,34 @@
  *
  */
 
-/* double lgamma(double x)
+/* double fdlibm_lgamma(double x)
  * Return the logarithm of the Gamma function of x.
  *
- * Method: call __ieee754_lgamma_r
+ * Method: call __fdlibm_ieee754_lgamma_r
  */
 
 #include "fdlibm.h"
 
-extern int signgam;
+extern int fdlibm_signgam;
 
 #ifdef __STDC__
-	double lgamma(double x)
+	double fdlibm_lgamma(double x)
 #else
-	double lgamma(x)
+	double fdlibm_lgamma(x)
 	double x;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_lgamma_r(x,&signgam);
+	return __fdlibm_ieee754_lgamma_r(x,&fdlibm_signgam);
 #else
         double y;
-        y = __ieee754_lgamma_r(x,&signgam);
-        if(_LIB_VERSION == _IEEE_) return y;
-        if(!finite(y)&&finite(x)) {
-            if(floor(x)==x&&x<=0.0)
-                return __kernel_standard(x,x,15); /* lgamma pole */
+        y = __fdlibm_ieee754_lgamma_r(x,&fdlibm_signgam);
+        if(_FDLIBM_LIB_VERSION == _FDLIBM_IEEE_) return y;
+        if(!fdlibm_finite(y)&&fdlibm_finite(x)) {
+            if(fdlibm_floor(x)==x&&x<=0.0)
+                return __fdlibm_kernel_standard(x,x,15); /* fdlibm_lgamma pole */
             else
-                return __kernel_standard(x,x,14); /* lgamma overflow */
+                return __fdlibm_kernel_standard(x,x,14); /* fdlibm_lgamma overflow */
         } else
             return y;
 #endif

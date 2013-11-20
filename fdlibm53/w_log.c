@@ -12,28 +12,28 @@
  */
 
 /*
- * wrapper log(x)
+ * wrapper fdlibm_log(x)
  */
 
 #include "fdlibm.h"
 
 
 #ifdef __STDC__
-	double log(double x)		/* wrapper log */
+	double fdlibm_log(double x)		/* wrapper fdlibm_log */
 #else
-	double log(x)			/* wrapper log */
+	double fdlibm_log(x)			/* wrapper fdlibm_log */
 	double x;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_log(x);
+	return __fdlibm_ieee754_log(x);
 #else
 	double z;
-	z = __ieee754_log(x);
-	if(_LIB_VERSION == _IEEE_ || isnan(x) || x > 0.0) return z;
+	z = __fdlibm_ieee754_log(x);
+	if(_FDLIBM_LIB_VERSION == _FDLIBM_IEEE_ || fdlibm_isnan(x) || x > 0.0) return z;
 	if(x==0.0)
-	    return __kernel_standard(x,x,16); /* log(0) */
+	    return __fdlibm_kernel_standard(x,x,16); /* fdlibm_log(0) */
 	else 
-	    return __kernel_standard(x,x,17); /* log(x<0) */
+	    return __fdlibm_kernel_standard(x,x,17); /* fdlibm_log(x<0) */
 #endif
 }

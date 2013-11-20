@@ -13,26 +13,26 @@
  */
 
 /* 
- * wrapper acosh(x)
+ * wrapper fdlibm_acosh(x)
  */
 
 #include "fdlibm.h"
 
 #ifdef __STDC__
-	double acosh(double x)		/* wrapper acosh */
+	double fdlibm_acosh(double x)		/* wrapper fdlibm_acosh */
 #else
-	double acosh(x)			/* wrapper acosh */
+	double fdlibm_acosh(x)			/* wrapper fdlibm_acosh */
 	double x;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_acosh(x);
+	return __fdlibm_ieee754_acosh(x);
 #else
 	double z;
-	z = __ieee754_acosh(x);
-	if(_LIB_VERSION == _IEEE_ || isnan(x)) return z;
+	z = __fdlibm_ieee754_acosh(x);
+	if(_FDLIBM_LIB_VERSION == _FDLIBM_IEEE_ || fdlibm_isnan(x)) return z;
 	if(x<1.0) {
-	        return __kernel_standard(x,x,29); /* acosh(x<1) */
+	        return __fdlibm_kernel_standard(x,x,29); /* fdlibm_acosh(x<1) */
 	} else
 	    return z;
 #endif

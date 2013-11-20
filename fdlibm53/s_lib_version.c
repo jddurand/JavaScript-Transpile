@@ -18,18 +18,18 @@
 #include "fdlibm.h"
 
 /*
- * define and initialize _LIB_VERSION
+ * define and initialize _FDLIBM_LIB_VERSION
  */
 #ifdef _POSIX_MODE
-_LIB_VERSION_TYPE _LIB_VERSION = _POSIX_;
+enum fdlibm_fdversion _FDLIBM_LIB_VERSION = _FDLIBM_POSIX_;
 #else
 #ifdef _XOPEN_MODE
-_LIB_VERSION_TYPE _LIB_VERSION = _XOPEN_;
+enum fdlibm_fdversion _FDLIBM_LIB_VERSION = _FDLIBM_XOPEN_;
 #else
 #ifdef _SVID3_MODE
-_LIB_VERSION_TYPE _LIB_VERSION = _SVID_;
+enum fdlibm_fdversion _FDLIBM_LIB_VERSION = _FDLIBM_SVID_;
 #else					/* default _IEEE_MODE */
-_LIB_VERSION_TYPE _LIB_VERSION = _IEEE_;
+enum fdlibm_fdversion _FDLIBM_LIB_VERSION = _FDLIBM_IEEE_;
 #endif
 #endif
 #endif

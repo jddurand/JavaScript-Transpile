@@ -12,26 +12,26 @@
  */
 
 /* 
- * wrapper remainder(x,p)
+ * wrapper fdlibm_remainder(x,p)
  */
 
 #include "fdlibm.h"
 
 #ifdef __STDC__
-	double remainder(double x, double y)	/* wrapper remainder */
+	double fdlibm_remainder(double x, double y)	/* wrapper fdlibm_remainder */
 #else
-	double remainder(x,y)			/* wrapper remainder */
+	double fdlibm_remainder(x,y)			/* wrapper fdlibm_remainder */
 	double x,y;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_remainder(x,y);
+	return __fdlibm_ieee754_remainder(x,y);
 #else
 	double z;
-	z = __ieee754_remainder(x,y);
-	if(_LIB_VERSION == _IEEE_ || isnan(y)) return z;
+	z = __fdlibm_ieee754_remainder(x,y);
+	if(_FDLIBM_LIB_VERSION == _FDLIBM_IEEE_ || fdlibm_isnan(y)) return z;
 	if(y==0.0) 
-	    return __kernel_standard(x,y,28); /* remainder(x,0) */
+	    return __fdlibm_kernel_standard(x,y,28); /* fdlibm_remainder(x,0) */
 	else
 	    return z;
 #endif

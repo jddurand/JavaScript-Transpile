@@ -13,27 +13,27 @@
  */
 
 /* 
- * wrapper atan2(y,x)
+ * wrapper fdlibm_atan2(y,x)
  */
 
 #include "fdlibm.h"
 
 
 #ifdef __STDC__
-	double atan2(double y, double x)	/* wrapper atan2 */
+	double fdlibm_atan2(double y, double x)	/* wrapper fdlibm_atan2 */
 #else
-	double atan2(y,x)			/* wrapper atan2 */
+	double fdlibm_atan2(y,x)			/* wrapper fdlibm_atan2 */
 	double y,x;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_atan2(y,x);
+	return __fdlibm_ieee754_atan2(y,x);
 #else
 	double z;
-	z = __ieee754_atan2(y,x);
-	if(_LIB_VERSION == _IEEE_||isnan(x)||isnan(y)) return z;
+	z = __fdlibm_ieee754_atan2(y,x);
+	if(_FDLIBM_LIB_VERSION == _FDLIBM_IEEE_||fdlibm_isnan(x)||fdlibm_isnan(y)) return z;
 	if(x==0.0&&y==0.0) {
-	        return __kernel_standard(y,x,3); /* atan2(+-0,+-0) */
+	        return __fdlibm_kernel_standard(y,x,3); /* fdlibm_atan2(+-0,+-0) */
 	} else
 	    return z;
 #endif

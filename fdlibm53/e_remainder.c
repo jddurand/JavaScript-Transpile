@@ -11,13 +11,13 @@
  * ====================================================
  */
 
-/* __ieee754_remainder(x,p)
+/* __fdlibm_ieee754_remainder(x,p)
  * Return :                  
  * 	returns  x REM p  =  x - [x/p]*p as if in infinite 
  * 	precise arithmetic, where [x/p] is the (infinite bit) 
  *	integer nearest x/p (in half way case choose the even one).
  * Method : 
- *	Based on fmod() return x-[x/p]chopped*p exactlp.
+ *	Based on fdlibm_fmod() return x-[x/p]chopped*p exactlp.
  */
 
 #include "fdlibm.h"
@@ -30,9 +30,9 @@ static double zero = 0.0;
 
 
 #ifdef __STDC__
-	double __ieee754_remainder(double x, double p)
+	double __fdlibm_ieee754_remainder(double x, double p)
 #else
-	double __ieee754_remainder(x,p)
+	double __fdlibm_ieee754_remainder(x,p)
 	double x,p;
 #endif
 {
@@ -40,26 +40,26 @@ static double zero = 0.0;
 	unsigned sx,lx,lp;
 	double p_half;
 
-	hx = __HI(x);		/* high word of x */
-	lx = __LO(x);		/* low  word of x */
-	hp = __HI(p);		/* high word of p */
-	lp = __LO(p);		/* low  word of p */
+	hx = __FDLIBM_HI(x);		/* high word of x */
+	lx = __FDLIBM_LO(x);		/* low  word of x */
+	hp = __FDLIBM_HI(p);		/* high word of p */
+	lp = __FDLIBM_LO(p);		/* low  word of p */
 	sx = hx&0x80000000;
 	hp &= 0x7fffffff;
 	hx &= 0x7fffffff;
 
     /* purge off exception values */
 	if((hp|lp)==0) return (x*p)/(x*p); 	/* p = 0 */
-	if((hx>=0x7ff00000)||			/* x not finite */
+	if((hx>=0x7ff00000)||			/* x not fdlibm_finite */
 	  ((hp>=0x7ff00000)&&			/* p is NaN */
 	  (((hp-0x7ff00000)|lp)!=0)))
 	    return (x*p)/(x*p);
 
 
-	if (hp<=0x7fdfffff) x = __ieee754_fmod(x,p+p);	/* now x < 2p */
+	if (hp<=0x7fdfffff) x = __fdlibm_ieee754_fmod(x,p+p);	/* now x < 2p */
 	if (((hx-hp)|(lx-lp))==0) return zero*x;
-	x  = fabs(x);
-	p  = fabs(p);
+	x  = fdlibm_fabs(x);
+	p  = fdlibm_fabs(p);
 	if (hp<0x00200000) {
 	    if(x+x>p) {
 		x-=p;
@@ -72,6 +72,6 @@ static double zero = 0.0;
 		if(x>=p_half) x -= p;
 	    }
 	}
-	__HI(x) ^= sx;
+	__FDLIBM_HI(x) ^= sx;
 	return x;
 }

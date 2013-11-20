@@ -12,18 +12,18 @@
  *
  */
 
-/* __ieee754_acosh(x)
+/* __fdlibm_ieee754_acosh(x)
  * Method :
  *	Based on 
- *		acosh(x) = log [ x + sqrt(x*x-1) ]
+ *		fdlibm_acosh(x) = fdlibm_log [ x + fdlibm_sqrt(x*x-1) ]
  *	we have
- *		acosh(x) := log(x)+ln2,	if x is large; else
- *		acosh(x) := log(2x-1/(sqrt(x*x-1)+x)) if x>2; else
- *		acosh(x) := log1p(t+sqrt(2.0*t+t*t)); where t=x-1.
+ *		fdlibm_acosh(x) := fdlibm_log(x)+ln2,	if x is large; else
+ *		fdlibm_acosh(x) := fdlibm_log(2x-1/(fdlibm_sqrt(x*x-1)+x)) if x>2; else
+ *		fdlibm_acosh(x) := fdlibm_log1p(t+fdlibm_sqrt(2.0*t+t*t)); where t=x-1.
  *
  * Special cases:
- *	acosh(x) is NaN with signal if x<1.
- *	acosh(NaN) is NaN without signal.
+ *	fdlibm_acosh(x) is NaN with signal if x<1.
+ *	fdlibm_acosh(NaN) is NaN without signal.
  */
 
 #include "fdlibm.h"
@@ -37,29 +37,29 @@ one	= 1.0,
 ln2	= 6.93147180559945286227e-01;  /* 0x3FE62E42, 0xFEFA39EF */
 
 #ifdef __STDC__
-	double __ieee754_acosh(double x)
+	double __fdlibm_ieee754_acosh(double x)
 #else
-	double __ieee754_acosh(x)
+	double __fdlibm_ieee754_acosh(x)
 	double x;
 #endif
 {	
 	double t;
 	int hx;
-	hx = __HI(x);
+	hx = __FDLIBM_HI(x);
 	if(hx<0x3ff00000) {		/* x < 1 */
 	    return (x-x)/(x-x);
 	} else if(hx >=0x41b00000) {	/* x > 2**28 */
 	    if(hx >=0x7ff00000) {	/* x is inf of NaN */
 	        return x+x;
 	    } else 
-		return __ieee754_log(x)+ln2;	/* acosh(huge)=log(2x) */
-	} else if(((hx-0x3ff00000)|__LO(x))==0) {
-	    return 0.0;			/* acosh(1) = 0 */
+		return __fdlibm_ieee754_log(x)+ln2;	/* fdlibm_acosh(huge)=fdlibm_log(2x) */
+	} else if(((hx-0x3ff00000)|__FDLIBM_LO(x))==0) {
+	    return 0.0;			/* fdlibm_acosh(1) = 0 */
 	} else if (hx > 0x40000000) {	/* 2**28 > x > 2 */
 	    t=x*x;
-	    return __ieee754_log(2.0*x-one/(x+sqrt(t-one)));
+	    return __fdlibm_ieee754_log(2.0*x-one/(x+fdlibm_sqrt(t-one)));
 	} else {			/* 1<x<2 */
 	    t = x-one;
-	    return log1p(t+sqrt(2.0*t+t*t));
+	    return fdlibm_log1p(t+fdlibm_sqrt(2.0*t+t*t));
 	}
 }

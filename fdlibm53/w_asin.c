@@ -13,7 +13,7 @@
  */
 
 /* 
- * wrapper asin(x)
+ * wrapper fdlibm_asin(x)
  */
 
 
@@ -21,20 +21,20 @@
 
 
 #ifdef __STDC__
-	double asin(double x)		/* wrapper asin */
+	double fdlibm_asin(double x)		/* wrapper fdlibm_asin */
 #else
-	double asin(x)			/* wrapper asin */
+	double fdlibm_asin(x)			/* wrapper fdlibm_asin */
 	double x;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_asin(x);
+	return __fdlibm_ieee754_asin(x);
 #else
 	double z;
-	z = __ieee754_asin(x);
-	if(_LIB_VERSION == _IEEE_ || isnan(x)) return z;
-	if(fabs(x)>1.0) {
-	        return __kernel_standard(x,x,2); /* asin(|x|>1) */
+	z = __fdlibm_ieee754_asin(x);
+	if(_FDLIBM_LIB_VERSION == _FDLIBM_IEEE_ || fdlibm_isnan(x)) return z;
+	if(fdlibm_fabs(x)>1.0) {
+	        return __fdlibm_kernel_standard(x,x,2); /* fdlibm_asin(|x|>1) */
 	} else
 	    return z;
 #endif

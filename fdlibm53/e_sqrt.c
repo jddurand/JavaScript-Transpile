@@ -10,19 +10,19 @@
  * ====================================================
  */
 
-/* __ieee754_sqrt(x)
- * Return correctly rounded sqrt.
+/* __fdlibm_ieee754_sqrt(x)
+ * Return correctly rounded fdlibm_sqrt.
  *           ------------------------------------------
- *	     |  Use the hardware sqrt if you have one |
+ *	     |  Use the hardware fdlibm_sqrt if you have one |
  *           ------------------------------------------
  * Method: 
  *   Bit by bit method using integer arithmetic. (Slow, but portable) 
  *   1. Normalization
  *	Scale x to y in [1,4) with even powers of 2: 
  *	find an integer k such that  1 <= (y=x*2^(2k)) < 4, then
- *		sqrt(x) = 2^k * sqrt(y)
+ *		fdlibm_sqrt(x) = 2^k * fdlibm_sqrt(y)
  *   2. Bit by bit computation
- *	Let q  = sqrt(y) truncated to i bit after binary point (q = 1),
+ *	Let q  = fdlibm_sqrt(y) truncated to i bit after binary point (q = 1),
  *	     i							 0
  *                                     i+1         2
  *	    s  = 2*q , and	y  =  2   * ( y - q  ).		(1)
@@ -63,7 +63,7 @@
  *	      in (3).
  *   3. Final rounding
  *	After generating the 53 bits result, we compute one more bit.
- *	Together with the remainder, we can decide whether the
+ *	Together with the fdlibm_remainder, we can decide whether the
  *	result is exact, bigger than 1/2ulp, or less than 1/2ulp
  *	(it will never equal to 1/2ulp).
  *	The rounding mode can be detected by checking whether
@@ -71,10 +71,10 @@
  *	equal to huge for some floating point number "huge" and "tiny".
  *		
  * Special cases:
- *	sqrt(+-0) = +-0 	... exact
- *	sqrt(inf) = inf
- *	sqrt(-ve) = NaN		... with invalid signal
- *	sqrt(NaN) = NaN		... with invalid signal for signaling NaN
+ *	fdlibm_sqrt(+-0) = +-0 	... exact
+ *	fdlibm_sqrt(inf) = inf
+ *	fdlibm_sqrt(-ve) = NaN		... with invalid signal
+ *	fdlibm_sqrt(NaN) = NaN		... with invalid signal for signaling NaN
  *
  * Other methods : see the appended file at the end of the program below.
  *---------------
@@ -89,9 +89,9 @@ static	double	one	= 1.0, tiny=1.0e-300;
 #endif
 
 #ifdef __STDC__
-	double __ieee754_sqrt(double x)
+	double __fdlibm_ieee754_sqrt(double x)
 #else
-	double __ieee754_sqrt(x)
+	double __fdlibm_ieee754_sqrt(x)
 	double x;
 #endif
 {
@@ -100,19 +100,19 @@ static	double	one	= 1.0, tiny=1.0e-300;
 	unsigned r,t1,s1,ix1,q1;
 	int ix0,s0,q,m,t,i;
 
-	ix0 = __HI(x);			/* high word of x */
-	ix1 = __LO(x);		/* low word of x */
+	ix0 = __FDLIBM_HI(x);			/* high word of x */
+	ix1 = __FDLIBM_LO(x);		/* low word of x */
 
     /* take care of Inf and NaN */
 	if((ix0&0x7ff00000)==0x7ff00000) {			
-	    return x*x+x;		/* sqrt(NaN)=NaN, sqrt(+inf)=+inf
-					   sqrt(-inf)=sNaN */
+	    return x*x+x;		/* fdlibm_sqrt(NaN)=NaN, fdlibm_sqrt(+inf)=+inf
+					   fdlibm_sqrt(-inf)=sNaN */
 	} 
     /* take care of zero */
 	if(ix0<=0) {
-	    if(((ix0&(~sign))|ix1)==0) return x;/* sqrt(+-0) = +-0 */
+	    if(((ix0&(~sign))|ix1)==0) return x;/* fdlibm_sqrt(+-0) = +-0 */
 	    else if(ix0<0)
-		return (x-x)/(x-x);		/* sqrt(-ve) = sNaN */
+		return (x-x)/(x-x);		/* fdlibm_sqrt(-ve) = sNaN */
 	}
     /* normalize x */
 	m = (ix0>>20);
@@ -134,10 +134,10 @@ static	double	one	= 1.0, tiny=1.0e-300;
 	}
 	m >>= 1;	/* m = [m/2] */
 
-    /* generate sqrt(x) bit by bit */
+    /* generate fdlibm_sqrt(x) bit by bit */
 	ix0 += ix0 + ((ix1&sign)>>31);
 	ix1 += ix1;
-	q = q1 = s0 = s1 = 0;	/* [q,q1] = sqrt(x) */
+	q = q1 = s0 = s1 = 0;	/* [q,q1] = fdlibm_sqrt(x) */
 	r = 0x00200000;		/* r = moving bit from right to left */
 
 	while(r!=0) {
@@ -186,8 +186,8 @@ static	double	one	= 1.0, tiny=1.0e-300;
 	ix1 =  q1>>1;
 	if ((q&1)==1) ix1 |= sign;
 	ix0 += (m <<20);
-	__HI(z) = ix0;
-	__LO(z) = ix1;
+	__FDLIBM_HI(z) = ix0;
+	__FDLIBM_LO(z) = ix1;
 	return z;
 }
 
@@ -197,9 +197,9 @@ Other methods  (use floating-point arithmetic)
 (This is a copy of a drafted paper by Prof W. Kahan 
 and K.C. Ng, written in May, 1986)
 
-	Two algorithms are given here to implement sqrt(x) 
+	Two algorithms are given here to implement fdlibm_sqrt(x) 
 	(IEEE double precision arithmetic) in software.
-	Both supply sqrt(x) correctly rounded. The first algorithm (in
+	Both supply fdlibm_sqrt(x) correctly rounded. The first algorithm (in
 	Section A) uses newton iterations and involves four divisions.
 	The second one uses reciproot iterations to avoid division, but
 	requires more multiplications. Both algorithms need the ability
@@ -210,7 +210,7 @@ and K.C. Ng, written in May, 1986)
 	subtract and logical AND operations upon 32-bit words is needed
 	too, though not part of the standard.
 
-A.  sqrt(x) by Newton Iteration
+A.  fdlibm_sqrt(x) by Newton Iteration
 
    (1)	Initial approximation
 
@@ -229,15 +229,15 @@ A.  sqrt(x) by Newton Iteration
 	     ------------------------  	     ------------------------
 
 	By performing shifts and subtracts on x0 and x1 (both regarded
-	as integers), we obtain an 8-bit approximation of sqrt(x) as
+	as integers), we obtain an 8-bit approximation of fdlibm_sqrt(x) as
 	follows.
 
 		k  := (x0>>1) + 0x1ff80000;
-		y0 := k - T1[31&(k>>15)].	... y ~ sqrt(x) to 8 bits
+		fdlibm_y0 := k - T1[31&(k>>15)].	... y ~ fdlibm_sqrt(x) to 8 bits
 	Here k is a 32-bit integer and T1[] is an integer array containing
 	correction terms. Now magically the floating value of y (y's
-	leading 32-bit word is y0, the value of its trailing word is 0)
-	approximates sqrt(x) to almost 8-bit.
+	leading 32-bit word is fdlibm_y0, the value of its trailing word is 0)
+	approximates fdlibm_sqrt(x) to almost 8-bit.
 
 	Value of T1:
 	static int T1[32]= {
@@ -249,7 +249,7 @@ A.  sqrt(x) by Newton Iteration
     (2)	Iterative refinement
 
 	Apply Heron's rule three times to y, we have y approximates 
-	sqrt(x) to within 1 ulp (Unit in the Last Place):
+	fdlibm_sqrt(x) to within 1 ulp (Unit in the Last Place):
 
 		y := (y+x/y)/2		... almost 17 sig. bits
 		y := (y+x/y)/2		... almost 35 sig. bits
@@ -259,8 +259,8 @@ A.  sqrt(x) by Newton Iteration
 	Remark 1.
 	    Another way to improve y to within 1 ulp is:
 
-		y := (y+x/y)		... almost 17 sig. bits to 2*sqrt(x)
-		y := y - 0x00100006	... almost 18 sig. bits to sqrt(x)
+		y := (y+x/y)		... almost 17 sig. bits to 2*fdlibm_sqrt(x)
+		y := y - 0x00100006	... almost 18 sig. bits to fdlibm_sqrt(x)
 
 				2
 			    (x-y )*y
@@ -284,7 +284,7 @@ A.  sqrt(x) by Newton Iteration
 	inexact flag before entering the square root program. Also we
 	use the expression y+-ulp for the next representable floating
 	numbers (up and down) of y. Note that y+-ulp = either fixed
-	point y+-1, or multiply y by nextafter(1,+-inf) in chopped
+	point y+-1, or multiply y by fdlibm_nextafter(1,+-inf) in chopped
 	mode.
 
 		I := FALSE;	... reset INEXACT flag I
@@ -294,21 +294,21 @@ A.  sqrt(x) by Newton Iteration
 		    if(z=y) {
 		        I := i;	 ... restore inexact flag
 		        R := r;  ... restore rounded mode
-		        return sqrt(x):=y.
+		        return fdlibm_sqrt(x):=y.
 		    } else {
 			z := z - ulp;	... special rounding
 		    }
 		}
-		i := TRUE;		... sqrt(x) is inexact
+		i := TRUE;		... fdlibm_sqrt(x) is inexact
 		If (r=RN) then z=z+ulp	... rounded-to-nearest
 		If (r=RP) then {	... round-toward-+inf
 		    y = y+ulp; z=z+ulp;
 		}
 		y := y+z;		... chopped sum
-		y0:=y0-0x00100000;	... y := y/2 is correctly rounded.
+		fdlibm_y0:=fdlibm_y0-0x00100000;	... y := y/2 is correctly rounded.
 	        I := i;	 		... restore inexact flag
 	        R := r;  		... restore rounded mode
-	        return sqrt(x):=y.
+	        return fdlibm_sqrt(x):=y.
 		    
     (4)	Special cases
 
@@ -316,22 +316,22 @@ A.  sqrt(x) by Newton Iteration
 	Square root of a negative number is NaN with invalid signal.
 
 
-B.  sqrt(x) by Reciproot Iteration
+B.  fdlibm_sqrt(x) by Reciproot Iteration
 
    (1)	Initial approximation
 
 	Let x0 and x1 be the leading and the trailing 32-bit words of
 	a floating point number x (in IEEE double format) respectively
-	(see section A). By performing shifs and subtracts on x0 and y0,
-	we obtain a 7.8-bit approximation of 1/sqrt(x) as follows.
+	(see section A). By performing shifs and subtracts on x0 and fdlibm_y0,
+	we obtain a 7.8-bit approximation of 1/fdlibm_sqrt(x) as follows.
 
 	    k := 0x5fe80000 - (x0>>1);
-	    y0:= k - T2[63&(k>>14)].	... y ~ 1/sqrt(x) to 7.8 bits
+	    fdlibm_y0:= k - T2[63&(k>>14)].	... y ~ 1/fdlibm_sqrt(x) to 7.8 bits
 
 	Here k is a 32-bit integer and T2[] is an integer array 
 	containing correction terms. Now magically the floating
-	value of y (y's leading 32-bit word is y0, the value of
-	its trailing word y1 is set to zero) approximates 1/sqrt(x)
+	value of y (y's leading 32-bit word is fdlibm_y0, the value of
+	its trailing word fdlibm_y1 is set to zero) approximates 1/fdlibm_sqrt(x)
 	to almost 7.8-bit.
 
 	Value of T2:
@@ -348,22 +348,22 @@ B.  sqrt(x) by Reciproot Iteration
     (2)	Iterative refinement
 
 	Apply Reciproot iteration three times to y and multiply the
-	result by x to get an approximation z that matches sqrt(x)
+	result by x to get an approximation z that matches fdlibm_sqrt(x)
 	to about 1 ulp. To be exact, we will have 
-		-1ulp < sqrt(x)-z<1.0625ulp.
+		-1ulp < fdlibm_sqrt(x)-z<1.0625ulp.
 	
 	... set rounding mode to Round-to-nearest
-	   y := y*(1.5-0.5*x*y*y)	... almost 15 sig. bits to 1/sqrt(x)
-	   y := y*((1.5-2^-30)+0.5*x*y*y)... about 29 sig. bits to 1/sqrt(x)
+	   y := y*(1.5-0.5*x*y*y)	... almost 15 sig. bits to 1/fdlibm_sqrt(x)
+	   y := y*((1.5-2^-30)+0.5*x*y*y)... about 29 sig. bits to 1/fdlibm_sqrt(x)
 	... special arrangement for better accuracy
-	   z := x*y			... 29 bits to sqrt(x), with z*y<1
-	   z := z + 0.5*z*(1-z*y)	... about 1 ulp to sqrt(x)
+	   z := x*y			... 29 bits to fdlibm_sqrt(x), with z*y<1
+	   z := z + 0.5*z*(1-z*y)	... about 1 ulp to fdlibm_sqrt(x)
 
 	Remark 2. The constant 1.5-2^-30 is chosen to bias the error so that
 	(a) the term z*y in the final iteration is always less than 1; 
 	(b) the error in the final result is biased upward so that
-		-1 ulp < sqrt(x) - z < 1.0625 ulp
-	    instead of |sqrt(x)-z|<1.03125ulp.
+		-1 ulp < fdlibm_sqrt(x) - z < 1.0625 ulp
+	    instead of |fdlibm_sqrt(x)-z|<1.03125ulp.
 
     (3)	Final adjustment
 
@@ -373,7 +373,7 @@ B.  sqrt(x) by Reciproot Iteration
 	inexact flag before entering the square root program. Also we
 	use the expression y+-ulp for the next representable floating
 	numbers (up and down) of y. Note that y+-ulp = either fixed
-	point y+-1, or multiply y by nextafter(1,+-inf) in chopped
+	point y+-1, or multiply y by fdlibm_nextafter(1,+-inf) in chopped
 	mode.
 
 	R := RZ;		... set rounding mode to round-toward-zero
@@ -406,13 +406,13 @@ B.  sqrt(x) by Reciproot Iteration
 	If ((z1&0x03ffffff)!=0)	... not exact if trailing 26 bits of z!=0
 	    I := 1;		... Raise Inexact flag: z is not exact
 	else {
-	    j := 1 - [(x0>>20)&1]	... j = logb(x) mod 2
+	    j := 1 - [(x0>>20)&1]	... j = fdlibm_logb(x) mod 2
 	    k := z1 >> 26;		... get z's 25-th and 26-th 
 					    fraction bits
 	    I := i or (k&j) or ((k&(j+j+1))!=(x1&3));
 	}
 	R:= r		... restore rounded mode
-	return sqrt(x):=z.
+	return fdlibm_sqrt(x):=z.
 
 	If multiplication is cheaper then the foregoing red tape, the 
 	Inexact flag can be evaluated by
@@ -432,10 +432,10 @@ B.  sqrt(x) by Reciproot Iteration
 		bit 31		   bit 0
 
 	Further more, bit 27 and 26 of z1, bit 0 and 1 of x1, and the odd
-	or even of logb(x) have the following relations:
+	or even of fdlibm_logb(x) have the following relations:
 
 	-------------------------------------------------
-	bit 27,26 of z1		bit 1,0 of x1	logb(x)
+	bit 27,26 of z1		bit 1,0 of x1	fdlibm_logb(x)
 	-------------------------------------------------
 	00			00		odd and even
 	01			01		even

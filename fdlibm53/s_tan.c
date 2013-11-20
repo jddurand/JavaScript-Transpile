@@ -11,20 +11,20 @@
  * ====================================================
  */
 
-/* tan(x)
+/* fdlibm_tan(x)
  * Return tangent function of x.
  *
  * kernel function:
- *	__kernel_tan		... tangent function on [-pi/4,pi/4]
- *	__ieee754_rem_pio2	... argument reduction routine
+ *	__fdlibm_kernel_tan		... tangent function on [-pi/4,pi/4]
+ *	__fdlibm_ieee754_rem_pio2	... argument reduction routine
  *
  * Method.
- *      Let S,C and T denote the sin, cos and tan respectively on 
- *	[-PI/4, +PI/4]. Reduce the argument x to y1+y2 = x-k*pi/2 
+ *      Let S,C and T denote the fdlibm_sin, fdlibm_cos and fdlibm_tan respectively on 
+ *	[-PI/4, +PI/4]. Reduce the argument x to fdlibm_y1+y2 = x-k*pi/2 
  *	in [-pi/4 , +pi/4], and let n = k mod 4.
  *	We have
  *
- *          n        sin(x)      cos(x)        tan(x)
+ *          n        fdlibm_sin(x)      fdlibm_cos(x)        fdlibm_tan(x)
  *     ----------------------------------------------------------
  *	    0	       S	   C		 T
  *	    1	       C	  -S		-1/T
@@ -33,7 +33,7 @@
  *     ----------------------------------------------------------
  *
  * Special cases:
- *      Let trig be any of sin, cos, or tan.
+ *      Let trig be any of fdlibm_sin, fdlibm_cos, or fdlibm_tan.
  *      trig(+-INF)  is NaN, with signals;
  *      trig(NaN)    is that NaN;
  *
@@ -44,9 +44,9 @@
 #include "fdlibm.h"
 
 #ifdef __STDC__
-	double tan(double x)
+	double fdlibm_tan(double x)
 #else
-	double tan(x)
+	double fdlibm_tan(x)
 	double x;
 #endif
 {
@@ -54,19 +54,19 @@
 	int n, ix;
 
     /* High word of x. */
-	ix = __HI(x);
+	ix = __FDLIBM_HI(x);
 
     /* |x| ~< pi/4 */
 	ix &= 0x7fffffff;
-	if(ix <= 0x3fe921fb) return __kernel_tan(x,z,1);
+	if(ix <= 0x3fe921fb) return __fdlibm_kernel_tan(x,z,1);
 
-    /* tan(Inf or NaN) is NaN */
+    /* fdlibm_tan(Inf or NaN) is NaN */
 	else if (ix>=0x7ff00000) return x-x;		/* NaN */
 
     /* argument reduction needed */
 	else {
-	    n = __ieee754_rem_pio2(x,y);
-	    return __kernel_tan(y[0],y[1],1-((n&1)<<1)); /*   1 -- n even
+	    n = __fdlibm_ieee754_rem_pio2(x,y);
+	    return __fdlibm_kernel_tan(y[0],y[1],1-((n&1)<<1)); /*   1 -- n even
 							-1 -- n odd */
 	}
 }

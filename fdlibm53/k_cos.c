@@ -12,35 +12,35 @@
  */
 
 /*
- * __kernel_cos( x,  y )
- * kernel cos function on [-pi/4, pi/4], pi/4 ~ 0.785398164
+ * __fdlibm_kernel_cos( x,  y )
+ * kernel fdlibm_cos function on [-pi/4, pi/4], pi/4 ~ 0.785398164
  * Input x is assumed to be bounded by ~pi/4 in magnitude.
  * Input y is the tail of x. 
  *
  * Algorithm
- *	1. Since cos(-x) = cos(x), we need only to consider positive x.
+ *	1. Since fdlibm_cos(-x) = fdlibm_cos(x), we need only to consider positive x.
  *	2. if x < 2^-27 (hx<0x3e400000 0), return 1 with inexact if x!=0.
- *	3. cos(x) is approximated by a polynomial of degree 14 on
+ *	3. fdlibm_cos(x) is approximated by a polynomial of degree 14 on
  *	   [0,pi/4]
  *		  	                 4            14
- *	   	cos(x) ~ 1 - x*x/2 + C1*x + ... + C6*x
+ *	   	fdlibm_cos(x) ~ 1 - x*x/2 + C1*x + ... + C6*x
  *	   where the Remes error is
  *	
  * 	|              2     4     6     8     10    12     14 |     -58
- * 	|cos(x)-(1-.5*x +C1*x +C2*x +C3*x +C4*x +C5*x  +C6*x  )| <= 2
+ * 	|fdlibm_cos(x)-(1-.5*x +C1*x +C2*x +C3*x +C4*x +C5*x  +C6*x  )| <= 2
  * 	|    					               | 
  * 
  * 	               4     6     8     10    12     14 
  *	4. let r = C1*x +C2*x +C3*x +C4*x +C5*x  +C6*x  , then
- *	       cos(x) = 1 - x*x/2 + r
- *	   since cos(x+y) ~ cos(x) - sin(x)*y 
- *			  ~ cos(x) - x*y,
- *	   a correction term is necessary in cos(x) and hence
- *		cos(x+y) = 1 - (x*x/2 - (r - x*y))
+ *	       fdlibm_cos(x) = 1 - x*x/2 + r
+ *	   since fdlibm_cos(x+y) ~ fdlibm_cos(x) - fdlibm_sin(x)*y 
+ *			  ~ fdlibm_cos(x) - x*y,
+ *	   a correction term is necessary in fdlibm_cos(x) and hence
+ *		fdlibm_cos(x+y) = 1 - (x*x/2 - (r - x*y))
  *	   For better accuracy when x > 0.3, let qx = |x|/4 with
  *	   the last 32 bits mask off, and if x > 0.78125, let qx = 0.28125.
  *	   Then
- *		cos(x+y) = (1-qx) - ((x*x/2-qx) - (r-x*y)).
+ *		fdlibm_cos(x+y) = (1-qx) - ((x*x/2-qx) - (r-x*y)).
  *	   Note that 1-qx and (x*x/2-qx) is EXACT here, and the
  *	   magnitude of the latter is at least a quarter of x*x/2,
  *	   thus, reducing the rounding error in the subtraction.
@@ -62,15 +62,15 @@ C5  =  2.08757232129817482790e-09, /* 0x3E21EE9E, 0xBDB4B1C4 */
 C6  = -1.13596475577881948265e-11; /* 0xBDA8FAE9, 0xBE8838D4 */
 
 #ifdef __STDC__
-	double __kernel_cos(double x, double y)
+	double __fdlibm_kernel_cos(double x, double y)
 #else
-	double __kernel_cos(x, y)
+	double __fdlibm_kernel_cos(x, y)
 	double x,y;
 #endif
 {
 	double a,hz,z,r,qx;
 	int ix;
-	ix = __HI(x)&0x7fffffff;	/* ix = |x|'s high word*/
+	ix = __FDLIBM_HI(x)&0x7fffffff;	/* ix = |x|'s high word*/
 	if(ix<0x3e400000) {			/* if x < 2**27 */
 	    if(((int)x)==0) return one;		/* generate inexact */
 	}
@@ -82,8 +82,8 @@ C6  = -1.13596475577881948265e-11; /* 0xBDA8FAE9, 0xBE8838D4 */
 	    if(ix > 0x3fe90000) {		/* x > 0.78125 */
 		qx = 0.28125;
 	    } else {
-	        __HI(qx) = ix-0x00200000;	/* x/4 */
-	        __LO(qx) = 0;
+	        __FDLIBM_HI(qx) = ix-0x00200000;	/* x/4 */
+	        __FDLIBM_LO(qx) = 0;
 	    }
 	    hz = 0.5*z-qx;
 	    a  = one-qx;

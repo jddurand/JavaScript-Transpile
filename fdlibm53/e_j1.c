@@ -11,48 +11,48 @@
  * ====================================================
  */
 
-/* __ieee754_j1(x), __ieee754_y1(x)
+/* __fdlibm_ieee754_j1(x), __fdlibm_ieee754_y1(x)
  * Bessel function of the first and second kinds of order zero.
- * Method -- j1(x):
- *	1. For tiny x, we use j1(x) = x/2 - x^3/16 + x^5/384 - ...
- *	2. Reduce x to |x| since j1(x)=-j1(-x),  and
+ * Method -- fdlibm_j1(x):
+ *	1. For tiny x, we use fdlibm_j1(x) = x/2 - x^3/16 + x^5/384 - ...
+ *	2. Reduce x to |x| since fdlibm_j1(x)=-fdlibm_j1(-x),  and
  *	   for x in (0,2)
- *		j1(x) = x/2 + x*z*R0/S0,  where z = x*x;
- *	   (precision:  |j1/x - 1/2 - R0/S0 |<2**-61.51 )
+ *		fdlibm_j1(x) = x/2 + x*z*R0/S0,  where z = x*x;
+ *	   (precision:  |fdlibm_j1/x - 1/2 - R0/S0 |<2**-61.51 )
  *	   for x in (2,inf)
- * 		j1(x) = sqrt(2/(pi*x))*(p1(x)*cos(x1)-q1(x)*sin(x1))
- * 		y1(x) = sqrt(2/(pi*x))*(p1(x)*sin(x1)+q1(x)*cos(x1))
- * 	   where x1 = x-3*pi/4. It is better to compute sin(x1),cos(x1)
+ * 		fdlibm_j1(x) = fdlibm_sqrt(2/(pi*x))*(p1(x)*fdlibm_cos(x1)-q1(x)*fdlibm_sin(x1))
+ * 		fdlibm_y1(x) = fdlibm_sqrt(2/(pi*x))*(p1(x)*fdlibm_sin(x1)+q1(x)*fdlibm_cos(x1))
+ * 	   where x1 = x-3*pi/4. It is better to compute fdlibm_sin(x1),fdlibm_cos(x1)
  *	   as follow:
- *		cos(x1) =  cos(x)cos(3pi/4)+sin(x)sin(3pi/4)
- *			=  1/sqrt(2) * (sin(x) - cos(x))
- *		sin(x1) =  sin(x)cos(3pi/4)-cos(x)sin(3pi/4)
- *			= -1/sqrt(2) * (sin(x) + cos(x))
+ *		fdlibm_cos(x1) =  fdlibm_cos(x)fdlibm_cos(3pi/4)+fdlibm_sin(x)fdlibm_sin(3pi/4)
+ *			=  1/fdlibm_sqrt(2) * (fdlibm_sin(x) - fdlibm_cos(x))
+ *		fdlibm_sin(x1) =  fdlibm_sin(x)fdlibm_cos(3pi/4)-fdlibm_cos(x)fdlibm_sin(3pi/4)
+ *			= -1/fdlibm_sqrt(2) * (fdlibm_sin(x) + fdlibm_cos(x))
  * 	   (To avoid cancellation, use
- *		sin(x) +- cos(x) = -cos(2x)/(sin(x) -+ cos(x))
+ *		fdlibm_sin(x) +- fdlibm_cos(x) = -fdlibm_cos(2x)/(fdlibm_sin(x) -+ fdlibm_cos(x))
  * 	    to compute the worse one.)
  *	   
  *	3 Special cases
- *		j1(nan)= nan
- *		j1(0) = 0
- *		j1(inf) = 0
+ *		fdlibm_j1(nan)= nan
+ *		fdlibm_j1(0) = 0
+ *		fdlibm_j1(inf) = 0
  *		
- * Method -- y1(x):
- *	1. screen out x<=0 cases: y1(0)=-inf, y1(x<0)=NaN 
+ * Method -- fdlibm_y1(x):
+ *	1. screen out x<=0 cases: fdlibm_y1(0)=-inf, fdlibm_y1(x<0)=NaN 
  *	2. For x<2.
  *	   Since 
- *		y1(x) = 2/pi*(j1(x)*(ln(x/2)+Euler)-1/x-x/2+5/64*x^3-...)
- *	   therefore y1(x)-2/pi*j1(x)*ln(x)-1/x is an odd function.
- *	   We use the following function to approximate y1,
- *		y1(x) = x*U(z)/V(z) + (2/pi)*(j1(x)*ln(x)-1/x), z= x^2
+ *		fdlibm_y1(x) = 2/pi*(fdlibm_j1(x)*(ln(x/2)+Euler)-1/x-x/2+5/64*x^3-...)
+ *	   therefore fdlibm_y1(x)-2/pi*fdlibm_j1(x)*ln(x)-1/x is an odd function.
+ *	   We use the following function to approximate fdlibm_y1,
+ *		fdlibm_y1(x) = x*U(z)/V(z) + (2/pi)*(fdlibm_j1(x)*ln(x)-1/x), z= x^2
  *	   where for x in [0,2] (abs err less than 2**-65.89)
  *		U(z) = U0[0] + U0[1]*z + ... + U0[4]*z^4
  *		V(z) = 1  + v0[0]*z + ... + v0[4]*z^5
- *	   Note: For tiny x, 1/x dominate y1 and hence
- *		y1(tiny) = -2/pi/tiny, (choose tiny<2**-54)
+ *	   Note: For tiny x, 1/x dominate fdlibm_y1 and hence
+ *		fdlibm_y1(tiny) = -2/pi/tiny, (choose tiny<2**-54)
  *	3. For x>=2.
- * 		y1(x) = sqrt(2/(pi*x))*(p1(x)*sin(x1)+q1(x)*cos(x1))
- * 	   where x1 = x-3*pi/4. It is better to compute sin(x1),cos(x1)
+ * 		fdlibm_y1(x) = fdlibm_sqrt(2/(pi*x))*(p1(x)*fdlibm_sin(x1)+q1(x)*fdlibm_cos(x1))
+ * 	   where x1 = x-3*pi/4. It is better to compute fdlibm_sin(x1),fdlibm_cos(x1)
  *	   by method mentioned above.
  */
 
@@ -87,37 +87,37 @@ s05  =  1.23542274426137913908e-11; /* 0x3DAB2ACF, 0xCFB97ED8 */
 static double zero    = 0.0;
 
 #ifdef __STDC__
-	double __ieee754_j1(double x) 
+	double __fdlibm_ieee754_j1(double x) 
 #else
-	double __ieee754_j1(x) 
+	double __fdlibm_ieee754_j1(x) 
 	double x;
 #endif
 {
 	double z, s,c,ss,cc,r,u,v,y;
 	int hx,ix;
 
-	hx = __HI(x);
+	hx = __FDLIBM_HI(x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x7ff00000) return one/x;
-	y = fabs(x);
+	y = fdlibm_fabs(x);
 	if(ix >= 0x40000000) {	/* |x| >= 2.0 */
-		s = sin(y);
-		c = cos(y);
+		s = fdlibm_sin(y);
+		c = fdlibm_cos(y);
 		ss = -s-c;
 		cc = s-c;
 		if(ix<0x7fe00000) {  /* make sure y+y not overflow */
-		    z = cos(y+y);
+		    z = fdlibm_cos(y+y);
 		    if ((s*c)>zero) cc = z/ss;
 		    else 	    ss = z/cc;
 		}
 	/*
-	 * j1(x) = 1/sqrt(pi) * (P(1,x)*cc - Q(1,x)*ss) / sqrt(x)
-	 * y1(x) = 1/sqrt(pi) * (P(1,x)*ss + Q(1,x)*cc) / sqrt(x)
+	 * fdlibm_j1(x) = 1/fdlibm_sqrt(pi) * (P(1,x)*cc - Q(1,x)*ss) / fdlibm_sqrt(x)
+	 * fdlibm_y1(x) = 1/fdlibm_sqrt(pi) * (P(1,x)*ss + Q(1,x)*cc) / fdlibm_sqrt(x)
 	 */
-		if(ix>0x48000000) z = (invsqrtpi*cc)/sqrt(y);
+		if(ix>0x48000000) z = (invsqrtpi*cc)/fdlibm_sqrt(y);
 		else {
 		    u = pone(y); v = qone(y);
-		    z = invsqrtpi*(u*cc-v*ss)/sqrt(y);
+		    z = invsqrtpi*(u*cc-v*ss)/fdlibm_sqrt(y);
 		}
 		if(hx<0) return -z;
 		else  	 return  z;
@@ -156,47 +156,47 @@ static double V0[5] = {
 };
 
 #ifdef __STDC__
-	double __ieee754_y1(double x) 
+	double __fdlibm_ieee754_y1(double x) 
 #else
-	double __ieee754_y1(x) 
+	double __fdlibm_ieee754_y1(x) 
 	double x;
 #endif
 {
 	double z, s,c,ss,cc,u,v;
 	int hx,ix,lx;
 
-        hx = __HI(x);
+        hx = __FDLIBM_HI(x);
         ix = 0x7fffffff&hx;
-        lx = __LO(x);
+        lx = __FDLIBM_LO(x);
     /* if Y1(NaN) is NaN, Y1(-inf) is NaN, Y1(inf) is 0 */
 	if(ix>=0x7ff00000) return  one/(x+x*x); 
         if((ix|lx)==0) return -one/zero;
         if(hx<0) return zero/zero;
         if(ix >= 0x40000000) {  /* |x| >= 2.0 */
-                s = sin(x);
-                c = cos(x);
+                s = fdlibm_sin(x);
+                c = fdlibm_cos(x);
                 ss = -s-c;
                 cc = s-c;
                 if(ix<0x7fe00000) {  /* make sure x+x not overflow */
-                    z = cos(x+x);
+                    z = fdlibm_cos(x+x);
                     if ((s*c)>zero) cc = z/ss;
                     else            ss = z/cc;
                 }
-        /* y1(x) = sqrt(2/(pi*x))*(p1(x)*sin(x0)+q1(x)*cos(x0))
+        /* fdlibm_y1(x) = fdlibm_sqrt(2/(pi*x))*(p1(x)*fdlibm_sin(x0)+q1(x)*fdlibm_cos(x0))
          * where x0 = x-3pi/4
          *      Better formula:
-         *              cos(x0) = cos(x)cos(3pi/4)+sin(x)sin(3pi/4)
-         *                      =  1/sqrt(2) * (sin(x) - cos(x))
-         *              sin(x0) = sin(x)cos(3pi/4)-cos(x)sin(3pi/4)
-         *                      = -1/sqrt(2) * (cos(x) + sin(x))
+         *              fdlibm_cos(x0) = fdlibm_cos(x)fdlibm_cos(3pi/4)+fdlibm_sin(x)fdlibm_sin(3pi/4)
+         *                      =  1/fdlibm_sqrt(2) * (fdlibm_sin(x) - fdlibm_cos(x))
+         *              fdlibm_sin(x0) = fdlibm_sin(x)fdlibm_cos(3pi/4)-fdlibm_cos(x)fdlibm_sin(3pi/4)
+         *                      = -1/fdlibm_sqrt(2) * (fdlibm_cos(x) + fdlibm_sin(x))
          * To avoid cancellation, use
-         *              sin(x) +- cos(x) = -cos(2x)/(sin(x) -+ cos(x))
+         *              fdlibm_sin(x) +- fdlibm_cos(x) = -fdlibm_cos(2x)/(fdlibm_sin(x) -+ fdlibm_cos(x))
          * to compute the worse one.
          */
-                if(ix>0x48000000) z = (invsqrtpi*ss)/sqrt(x);
+                if(ix>0x48000000) z = (invsqrtpi*ss)/fdlibm_sqrt(x);
                 else {
                     u = pone(x); v = qone(x);
-                    z = invsqrtpi*(u*ss+v*cc)/sqrt(x);
+                    z = invsqrtpi*(u*ss+v*cc)/fdlibm_sqrt(x);
                 }
                 return z;
         } 
@@ -206,7 +206,7 @@ static double V0[5] = {
         z = x*x;
         u = U0[0]+z*(U0[1]+z*(U0[2]+z*(U0[3]+z*U0[4])));
         v = one+z*(V0[0]+z*(V0[1]+z*(V0[2]+z*(V0[3]+z*V0[4]))));
-        return(x*(u/v) + tpi*(__ieee754_j1(x)*__ieee754_log(x)-one/x));
+        return(x*(u/v) + tpi*(__fdlibm_ieee754_j1(x)*__fdlibm_ieee754_log(x)-one/x));
 }
 
 /* For x >= 8, the asymptotic expansions of pone is
@@ -329,7 +329,7 @@ static double ps2[5] = {
 #endif
 	double z,r,s;
         int ix;
-        ix = 0x7fffffff&__HI(x);
+        ix = 0x7fffffff&__FDLIBM_HI(x);
         if(ix>=0x40200000)     {p = pr8; q= ps8;}
         else if(ix>=0x40122E8B){p = pr5; q= ps5;}
         else if(ix>=0x4006DB6D){p = pr3; q= ps3;}
@@ -465,7 +465,7 @@ static double qs2[6] = {
 #endif
 	double  s,r,z;
 	int ix;
-	ix = 0x7fffffff&__HI(x);
+	ix = 0x7fffffff&__FDLIBM_HI(x);
 	if(ix>=0x40200000)     {p = qr8; q= qs8;}
 	else if(ix>=0x40122E8B){p = qr5; q= qs5;}
 	else if(ix>=0x4006DB6D){p = qr3; q= qs3;}

@@ -12,10 +12,10 @@
  *
  */
 
-/* __ieee754_rem_pio2(x,y)
+/* __fdlibm_ieee754_rem_pio2(x,y)
  * 
- * return the remainder of x rem pi/2 in y[0]+y[1] 
- * use __kernel_rem_pio2()
+ * return the fdlibm_remainder of x rem pi/2 in y[0]+y[1] 
+ * use __fdlibm_kernel_rem_pio2()
  */
 
 #include "fdlibm.h"
@@ -81,9 +81,9 @@ pio2_3  =  2.02226624871116645580e-21, /* 0x3BA3198A, 0x2E000000 */
 pio2_3t =  8.47842766036889956997e-32; /* 0x397B839A, 0x252049C1 */
 
 #ifdef __STDC__
-	int __ieee754_rem_pio2(double x, double *y)
+	int __fdlibm_ieee754_rem_pio2(double x, double *y)
 #else
-	int __ieee754_rem_pio2(x,y)
+	int __fdlibm_ieee754_rem_pio2(x,y)
 	double x,y[];
 #endif
 {
@@ -91,7 +91,7 @@ pio2_3t =  8.47842766036889956997e-32; /* 0x397B839A, 0x252049C1 */
 	double tx[3];
 	int e0,i,j,nx,n,ix,hx;
 
-	hx = __HI(x);		/* high word of x */
+	hx = __FDLIBM_HI(x);		/* high word of x */
 	ix = hx&0x7fffffff;
 	if(ix<=0x3fe921fb)   /* |x| ~<= pi/4 , no need for reduction */
 	    {y[0] = x; y[1] = 0; return 0;}
@@ -121,7 +121,7 @@ pio2_3t =  8.47842766036889956997e-32; /* 0x397B839A, 0x252049C1 */
 	    }
 	}
 	if(ix<=0x413921fb) { /* |x| ~<= 2^19*(pi/2), medium size */
-	    t  = fabs(x);
+	    t  = fdlibm_fabs(x);
 	    n  = (int) (t*invpio2+half);
 	    fn = (double)n;
 	    r  = t-fn*pio2_1;
@@ -131,14 +131,14 @@ pio2_3t =  8.47842766036889956997e-32; /* 0x397B839A, 0x252049C1 */
 	    } else {
 	        j  = ix>>20;
 	        y[0] = r-w; 
-	        i = j-(((__HI(y[0]))>>20)&0x7ff);
+	        i = j-(((__FDLIBM_HI(y[0]))>>20)&0x7ff);
 	        if(i>16) {  /* 2nd iteration needed, good to 118 */
 		    t  = r;
 		    w  = fn*pio2_2;	
 		    r  = t-w;
 		    w  = fn*pio2_2t-((t-r)-w);	
 		    y[0] = r-w;
-		    i = j-(((__HI(y[0]))>>20)&0x7ff);
+		    i = j-(((__FDLIBM_HI(y[0]))>>20)&0x7ff);
 		    if(i>49)  {	/* 3rd iteration need, 151 bits acc */
 		    	t  = r;	/* will cover all possible cases */
 		    	w  = fn*pio2_3;	
@@ -158,10 +158,10 @@ pio2_3t =  8.47842766036889956997e-32; /* 0x397B839A, 0x252049C1 */
 	if(ix>=0x7ff00000) {		/* x is inf or NaN */
 	    y[0]=y[1]=x-x; return 0;
 	}
-    /* set z = scalbn(|x|,ilogb(x)-23) */
-	__LO(z) = __LO(x);
-	e0 	= (ix>>20)-1046;	/* e0 = ilogb(z)-23; */
-	__HI(z) = ix - (e0<<20);
+    /* set z = fdlibm_scalbn(|x|,fdlibm_ilogb(x)-23) */
+	__FDLIBM_LO(z) = __FDLIBM_LO(x);
+	e0 	= (ix>>20)-1046;	/* e0 = fdlibm_ilogb(z)-23; */
+	__FDLIBM_HI(z) = ix - (e0<<20);
 	for(i=0;i<2;i++) {
 		tx[i] = (double)((int)(z));
 		z     = (z-tx[i])*two24;
@@ -169,7 +169,7 @@ pio2_3t =  8.47842766036889956997e-32; /* 0x397B839A, 0x252049C1 */
 	tx[2] = z;
 	nx = 3;
 	while(tx[nx-1]==zero) nx--;	/* skip zero term */
-	n  =  __kernel_rem_pio2(tx,y,e0,nx,2,two_over_pi);
+	n  =  __fdlibm_kernel_rem_pio2(tx,y,e0,nx,2,two_over_pi);
 	if(hx<0) {y[0] = -y[0]; y[1] = -y[1]; return -n;}
 	return n;
 }

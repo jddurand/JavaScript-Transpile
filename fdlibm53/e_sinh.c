@@ -11,22 +11,22 @@
  * ====================================================
  */
 
-/* __ieee754_sinh(x)
+/* __fdlibm_ieee754_sinh(x)
  * Method : 
- * mathematically sinh(x) if defined to be (exp(x)-exp(-x))/2
- *	1. Replace x by |x| (sinh(-x) = -sinh(x)). 
+ * mathematically fdlibm_sinh(x) if defined to be (fdlibm_exp(x)-fdlibm_exp(-x))/2
+ *	1. Replace x by |x| (fdlibm_sinh(-x) = -fdlibm_sinh(x)). 
  *	2. 
  *		                                    E + E/(E+1)
- *	    0        <= x <= 22     :  sinh(x) := --------------, E=expm1(x)
+ *	    0        <= x <= 22     :  fdlibm_sinh(x) := --------------, E=fdlibm_expm1(x)
  *			       			        2
  *
- *	    22       <= x <= lnovft :  sinh(x) := exp(x)/2 
- *	    lnovft   <= x <= ln2ovft:  sinh(x) := exp(x/2)/2 * exp(x/2)
- *	    ln2ovft  <  x	    :  sinh(x) := x*shuge (overflow)
+ *	    22       <= x <= lnovft :  fdlibm_sinh(x) := fdlibm_exp(x)/2 
+ *	    lnovft   <= x <= ln2ovft:  fdlibm_sinh(x) := fdlibm_exp(x/2)/2 * fdlibm_exp(x/2)
+ *	    ln2ovft  <  x	    :  fdlibm_sinh(x) := x*shuge (overflow)
  *
  * Special cases:
- *	sinh(x) is |x| if x is +INF, -INF, or NaN.
- *	only sinh(0)=0 is exact for finite x.
+ *	fdlibm_sinh(x) is |x| if x is +INF, -INF, or NaN.
+ *	only fdlibm_sinh(0)=0 is exact for fdlibm_finite x.
  */
 
 #include "fdlibm.h"
@@ -38,9 +38,9 @@ static double one = 1.0, shuge = 1.0e307;
 #endif
 
 #ifdef __STDC__
-	double __ieee754_sinh(double x)
+	double __fdlibm_ieee754_sinh(double x)
 #else
-	double __ieee754_sinh(x)
+	double __fdlibm_ieee754_sinh(x)
 	double x;
 #endif
 {	
@@ -49,7 +49,7 @@ static double one = 1.0, shuge = 1.0e307;
 	unsigned lx;
 
     /* High word of |x|. */
-	jx = __HI(x);
+	jx = __FDLIBM_HI(x);
 	ix = jx&0x7fffffff;
 
     /* x is INF or NaN */
@@ -60,23 +60,23 @@ static double one = 1.0, shuge = 1.0e307;
     /* |x| in [0,22], return sign(x)*0.5*(E+E/(E+1))) */
 	if (ix < 0x40360000) {		/* |x|<22 */
 	    if (ix<0x3e300000) 		/* |x|<2**-28 */
-		if(shuge+x>one) return x;/* sinh(tiny) = tiny with inexact */
-	    t = expm1(fabs(x));
+		if(shuge+x>one) return x;/* fdlibm_sinh(tiny) = tiny with inexact */
+	    t = fdlibm_expm1(fdlibm_fabs(x));
 	    if(ix<0x3ff00000) return h*(2.0*t-t*t/(t+one));
 	    return h*(t+t/(t+one));
 	}
 
-    /* |x| in [22, log(maxdouble)] return 0.5*exp(|x|) */
-	if (ix < 0x40862E42)  return h*__ieee754_exp(fabs(x));
+    /* |x| in [22, fdlibm_log(maxdouble)] return 0.5*fdlibm_exp(|x|) */
+	if (ix < 0x40862E42)  return h*__fdlibm_ieee754_exp(fdlibm_fabs(x));
 
-    /* |x| in [log(maxdouble), overflowthresold] */
+    /* |x| in [fdlibm_log(maxdouble), overflowthresold] */
 	lx = *( (((*(unsigned*)&one)>>29)) + (unsigned*)&x);
 	if (ix<0x408633CE || (ix==0x408633ce)&&(lx<=(unsigned)0x8fb9f87d)) {
-	    w = __ieee754_exp(0.5*fabs(x));
+	    w = __fdlibm_ieee754_exp(0.5*fdlibm_fabs(x));
 	    t = h*w;
 	    return t*w;
 	}
 
-    /* |x| > overflowthresold, sinh(x) overflow */
+    /* |x| > overflowthresold, fdlibm_sinh(x) overflow */
 	return x*shuge;
 }

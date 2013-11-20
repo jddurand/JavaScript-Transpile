@@ -12,18 +12,18 @@
  */
 
 /*
- * wrapper jn(int n, double x), yn(int n, double x)
+ * wrapper fdlibm_jn(int n, double x), fdlibm_yn(int n, double x)
  * floating point Bessel's function of the 1st and 2nd kind
  * of order n
  *          
  * Special cases:
- *	y0(0)=y1(0)=yn(n,0) = -inf with division by zero signal;
- *	y0(-ve)=y1(-ve)=yn(n,-ve) are NaN with invalid signal.
- * Note 2. About jn(n,x), yn(n,x)
- *	For n=0, j0(x) is called,
- *	for n=1, j1(x) is called,
+ *	fdlibm_y0(0)=fdlibm_y1(0)=fdlibm_yn(n,0) = -inf with division by zero signal;
+ *	fdlibm_y0(-ve)=fdlibm_y1(-ve)=fdlibm_yn(n,-ve) are NaN with invalid signal.
+ * Note 2. About fdlibm_jn(n,x), fdlibm_yn(n,x)
+ *	For n=0, fdlibm_j0(x) is called,
+ *	for n=1, fdlibm_j1(x) is called,
  *	for n<x, forward recursion us used starting
- *	from values of j0(x) and j1(x).
+ *	from values of fdlibm_j0(x) and fdlibm_j1(x).
  *	for n>x, a continued fraction approximation to
  *	j(n,x)/j(n-1,x) is evaluated and then backward
  *	recursion is used starting from a supposed value
@@ -31,7 +31,7 @@
  *	compared with the actual value to correct the
  *	supposed value of j(n,x).
  *
- *	yn(n,x) is similar in all respects, except
+ *	fdlibm_yn(n,x) is similar in all respects, except
  *	that forward recursion is used for all
  *	values of n>1.
  *	
@@ -40,48 +40,48 @@
 #include "fdlibm.h"
 
 #ifdef __STDC__
-	double jn(int n, double x)	/* wrapper jn */
+	double fdlibm_jn(int n, double x)	/* wrapper fdlibm_jn */
 #else
-	double jn(n,x)			/* wrapper jn */
+	double fdlibm_jn(n,x)			/* wrapper fdlibm_jn */
 	double x; int n;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_jn(n,x);
+	return __fdlibm_ieee754_jn(n,x);
 #else
 	double z;
-	z = __ieee754_jn(n,x);
-	if(_LIB_VERSION == _IEEE_ || isnan(x) ) return z;
-	if(fabs(x)>X_TLOSS) {
-	    return __kernel_standard((double)n,x,38); /* jn(|x|>X_TLOSS,n) */
+	z = __fdlibm_ieee754_jn(n,x);
+	if(_FDLIBM_LIB_VERSION == _FDLIBM_IEEE_ || fdlibm_isnan(x) ) return z;
+	if(fdlibm_fabs(x)>FDLIBM_X_TLOSS) {
+	    return __fdlibm_kernel_standard((double)n,x,38); /* fdlibm_jn(|x|>FDLIBM_X_TLOSS,n) */
 	} else
 	    return z;
 #endif
 }
 
 #ifdef __STDC__
-	double yn(int n, double x)	/* wrapper yn */
+	double fdlibm_yn(int n, double x)	/* wrapper fdlibm_yn */
 #else
-	double yn(n,x)			/* wrapper yn */
+	double fdlibm_yn(n,x)			/* wrapper fdlibm_yn */
 	double x; int n;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_yn(n,x);
+	return __fdlibm_ieee754_yn(n,x);
 #else
 	double z;
-	z = __ieee754_yn(n,x);
-	if(_LIB_VERSION == _IEEE_ || isnan(x) ) return z;
+	z = __fdlibm_ieee754_yn(n,x);
+	if(_FDLIBM_LIB_VERSION == _FDLIBM_IEEE_ || fdlibm_isnan(x) ) return z;
         if(x <= 0.0){
                 if(x==0.0)
                     /* d= -one/(x-x); */
-                    return __kernel_standard((double)n,x,12);
+                    return __fdlibm_kernel_standard((double)n,x,12);
                 else
                     /* d = zero/(x-x); */
-                    return __kernel_standard((double)n,x,13);
+                    return __fdlibm_kernel_standard((double)n,x,13);
         }
-	if(x>X_TLOSS) {
-	    return __kernel_standard((double)n,x,39); /* yn(x>X_TLOSS,n) */
+	if(x>FDLIBM_X_TLOSS) {
+	    return __fdlibm_kernel_standard((double)n,x,39); /* fdlibm_yn(x>FDLIBM_X_TLOSS,n) */
 	} else
 	    return z;
 #endif

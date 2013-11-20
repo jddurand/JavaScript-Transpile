@@ -10,7 +10,7 @@
  * ====================================================
  */
 
-/* __ieee754_exp(x)
+/* __fdlibm_ieee754_exp(x)
  * Returns the exponential of x.
  *
  * Method
@@ -23,10 +23,10 @@
  *      Here r will be represented as r = hi-lo for better 
  *	accuracy.
  *
- *   2. Approximation of exp(r) by a special rational function on
+ *   2. Approximation of fdlibm_exp(r) by a special rational function on
  *	the interval [0,0.34658]:
  *	Write
- *	    R(r**2) = r*(exp(r)+1)/(exp(r)-1) = 2 + r*r/6 - r**4/360 + ...
+ *	    R(r**2) = r*(fdlibm_exp(r)+1)/(fdlibm_exp(r)-1) = 2 + r*r/6 - r**4/360 + ...
  *      We use a special Remes algorithm on [0,0.34658] to generate 
  * 	a polynomial of degree 5 to approximate R. The maximum error 
  *	of this polynomial approximation is bounded by 2**-59. In
@@ -37,9 +37,9 @@
  *	    |                  5          |     -59
  *	    | 2.0+P1*z+...+P5*z   -  R(z) | <= 2 
  *	    |                             |
- *	The computation of exp(r) thus becomes
+ *	The computation of fdlibm_exp(r) thus becomes
  *                             2*r
- *		exp(r) = 1 + -------
+ *		fdlibm_exp(r) = 1 + -------
  *		              R - r
  *                                 r*R1(r)	
  *		       = 1 + r + ----------- (for better accuracy)
@@ -48,14 +48,14 @@
  *			         2       4             10
  *		R1(r) = r - (P1*r  + P2*r  + ... + P5*r   ).
  *	
- *   3. Scale back to obtain exp(x):
+ *   3. Scale back to obtain fdlibm_exp(x):
  *	From step 1, we have
- *	   exp(x) = 2^k * exp(r)
+ *	   fdlibm_exp(x) = 2^k * fdlibm_exp(r)
  *
  * Special cases:
- *	exp(INF) is INF, exp(NaN) is NaN;
- *	exp(-INF) is 0, and
- *	for finite argument, only exp(0)=1 is exact.
+ *	fdlibm_exp(INF) is INF, fdlibm_exp(NaN) is NaN;
+ *	fdlibm_exp(-INF) is 0, and
+ *	for fdlibm_finite argument, only fdlibm_exp(0)=1 is exact.
  *
  * Accuracy:
  *	according to an error analysis, the error is always less than
@@ -63,8 +63,8 @@
  *
  * Misc. info.
  *	For IEEE double 
- *	    if x >  7.09782712893383973096e+02 then exp(x) overflow
- *	    if x < -7.45133219101941108420e+02 then exp(x) underflow
+ *	    if x >  7.09782712893383973096e+02 then fdlibm_exp(x) overflow
+ *	    if x < -7.45133219101941108420e+02 then fdlibm_exp(x) underflow
  *
  * Constants:
  * The hexadecimal values are the intended ones for the following 
@@ -99,9 +99,9 @@ P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
 
 
 #ifdef __STDC__
-	double __ieee754_exp(double x)	/* default IEEE double exp */
+	double __fdlibm_ieee754_exp(double x)	/* default IEEE double fdlibm_exp */
 #else
-	double __ieee754_exp(x)	/* default IEEE double exp */
+	double __fdlibm_ieee754_exp(x)	/* default IEEE double fdlibm_exp */
 	double x;
 #endif
 {
@@ -109,16 +109,16 @@ P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
 	int k,xsb;
 	unsigned hx;
 
-	hx  = __HI(x);	/* high word of x */
+	hx  = __FDLIBM_HI(x);	/* high word of x */
 	xsb = (hx>>31)&1;		/* sign bit of x */
 	hx &= 0x7fffffff;		/* high word of |x| */
 
-    /* filter out non-finite argument */
+    /* filter out non-fdlibm_finite argument */
 	if(hx >= 0x40862E42) {			/* if |x|>=709.78... */
             if(hx>=0x7ff00000) {
-		if(((hx&0xfffff)|__LO(x))!=0) 
+		if(((hx&0xfffff)|__FDLIBM_LO(x))!=0) 
 		     return x+x; 		/* NaN */
-		else return (xsb==0)? x:0.0;	/* exp(+-inf)={inf,0} */
+		else return (xsb==0)? x:0.0;	/* fdlibm_exp(+-inf)={inf,0} */
 	    }
 	    if(x > o_threshold) return huge*huge; /* overflow */
 	    if(x < u_threshold) return twom1000*twom1000; /* underflow */
@@ -147,10 +147,10 @@ P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
 	if(k==0) 	return one-((x*c)/(c-2.0)-x); 
 	else 		y = one-((lo-(x*c)/(2.0-c))-hi);
 	if(k >= -1021) {
-	    __HI(y) += (k<<20);	/* add k to y's exponent */
+	    __FDLIBM_HI(y) += (k<<20);	/* add k to y's exponent */
 	    return y;
 	} else {
-	    __HI(y) += ((k+1000)<<20);/* add k to y's exponent */
+	    __FDLIBM_HI(y) += ((k+1000)<<20);/* add k to y's exponent */
 	    return y*twom1000;
 	}
 }

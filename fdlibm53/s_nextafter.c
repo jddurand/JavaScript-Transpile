@@ -12,7 +12,7 @@
  */
 
 /* IEEE functions
- *	nextafter(x,y)
+ *	fdlibm_nextafter(x,y)
  *	return the next machine floating-point number of x in the
  *	direction toward y.
  *   Special cases:
@@ -21,19 +21,19 @@
 #include "fdlibm.h"
 
 #ifdef __STDC__
-	double nextafter(double x, double y)
+	double fdlibm_nextafter(double x, double y)
 #else
-	double nextafter(x,y)
+	double fdlibm_nextafter(x,y)
 	double x,y;
 #endif
 {
 	int	hx,hy,ix,iy;
 	unsigned lx,ly;
 
-	hx = __HI(x);		/* high word of x */
-	lx = __LO(x);		/* low  word of x */
-	hy = __HI(y);		/* high word of y */
-	ly = __LO(y);		/* low  word of y */
+	hx = __FDLIBM_HI(x);		/* high word of x */
+	lx = __FDLIBM_LO(x);		/* low  word of x */
+	hy = __FDLIBM_HI(y);		/* high word of y */
+	ly = __FDLIBM_LO(y);		/* low  word of y */
 	ix = hx&0x7fffffff;		/* |x| */
 	iy = hy&0x7fffffff;		/* |y| */
 
@@ -42,8 +42,8 @@
 	   return x+y;				
 	if(x==y) return x;		/* x=y, return x */
 	if((ix|lx)==0) {			/* x == 0 */
-	    __HI(x) = hy&0x80000000;	/* return +-minsubnormal */
-	    __LO(x) = 1;
+	    __FDLIBM_HI(x) = hy&0x80000000;	/* return +-minsubnormal */
+	    __FDLIBM_LO(x) = 1;
 	    y = x*x;
 	    if(y==x) return y; else return x;	/* raise underflow flag */
 	} 
@@ -69,10 +69,10 @@
 	if(hy<0x00100000) {		/* underflow */
 	    y = x*x;
 	    if(y!=x) {		/* raise underflow flag */
-		__HI(y) = hx; __LO(y) = lx;
+		__FDLIBM_HI(y) = hx; __FDLIBM_LO(y) = lx;
 		return y;
 	    }
 	}
-	__HI(x) = hx; __LO(x) = lx;
+	__FDLIBM_HI(x) = hx; __FDLIBM_LO(x) = lx;
 	return x;
 }

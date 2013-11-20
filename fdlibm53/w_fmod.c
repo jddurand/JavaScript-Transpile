@@ -12,27 +12,27 @@
  */
 
 /* 
- * wrapper fmod(x,y)
+ * wrapper fdlibm_fmod(x,y)
  */
 
 #include "fdlibm.h"
 
 
 #ifdef __STDC__
-	double fmod(double x, double y)	/* wrapper fmod */
+	double fdlibm_fmod(double x, double y)	/* wrapper fdlibm_fmod */
 #else
-	double fmod(x,y)		/* wrapper fmod */
+	double fdlibm_fmod(x,y)		/* wrapper fdlibm_fmod */
 	double x,y;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_fmod(x,y);
+	return __fdlibm_ieee754_fmod(x,y);
 #else
 	double z;
-	z = __ieee754_fmod(x,y);
-	if(_LIB_VERSION == _IEEE_ ||isnan(y)||isnan(x)) return z;
+	z = __fdlibm_ieee754_fmod(x,y);
+	if(_FDLIBM_LIB_VERSION == _FDLIBM_IEEE_ ||fdlibm_isnan(y)||fdlibm_isnan(x)) return z;
 	if(y==0.0) {
-	        return __kernel_standard(x,y,27); /* fmod(x,0) */
+	        return __fdlibm_kernel_standard(x,y,27); /* fdlibm_fmod(x,0) */
 	} else
 	    return z;
 #endif

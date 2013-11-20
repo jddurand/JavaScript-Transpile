@@ -29,64 +29,64 @@ static double zero = 0.0;	/* used as const */
 /* 
  * Standard conformance (non-IEEE) on exception cases.
  * Mapping:
- *	1 -- acos(|x|>1)
- *	2 -- asin(|x|>1)
- *	3 -- atan2(+-0,+-0)
- *	4 -- hypot overflow
- *	5 -- cosh overflow
- *	6 -- exp overflow
- *	7 -- exp underflow
- *	8 -- y0(0)
- *	9 -- y0(-ve)
- *	10-- y1(0)
- *	11-- y1(-ve)
- *	12-- yn(0)
- *	13-- yn(-ve)
- *	14-- lgamma(finite) overflow
- *	15-- lgamma(-integer)
- *	16-- log(0)
- *	17-- log(x<0)
- *	18-- log10(0)
- *	19-- log10(x<0)
- *	20-- pow(0.0,0.0)
- *	21-- pow(x,y) overflow
- *	22-- pow(x,y) underflow
- *	23-- pow(0,negative) 
- *	24-- pow(neg,non-integral)
- *	25-- sinh(finite) overflow
- *	26-- sqrt(negative)
- *      27-- fmod(x,0)
- *      28-- remainder(x,0)
- *	29-- acosh(x<1)
- *	30-- atanh(|x|>1)
- *	31-- atanh(|x|=1)
- *	32-- scalb overflow
- *	33-- scalb underflow
- *	34-- j0(|x|>X_TLOSS)
- *	35-- y0(x>X_TLOSS)
- *	36-- j1(|x|>X_TLOSS)
- *	37-- y1(x>X_TLOSS)
- *	38-- jn(|x|>X_TLOSS, n)
- *	39-- yn(x>X_TLOSS, n)
- *	40-- gamma(finite) overflow
- *	41-- gamma(-integer)
- *	42-- pow(NaN,0.0)
+ *	1 -- fdlibm_acos(|x|>1)
+ *	2 -- fdlibm_asin(|x|>1)
+ *	3 -- fdlibm_atan2(+-0,+-0)
+ *	4 -- fdlibm_hypot overflow
+ *	5 -- fdlibm_cosh overflow
+ *	6 -- fdlibm_exp overflow
+ *	7 -- fdlibm_exp underflow
+ *	8 -- fdlibm_y0(0)
+ *	9 -- fdlibm_y0(-ve)
+ *	10-- fdlibm_y1(0)
+ *	11-- fdlibm_y1(-ve)
+ *	12-- fdlibm_yn(0)
+ *	13-- fdlibm_yn(-ve)
+ *	14-- fdlibm_lgamma(fdlibm_finite) overflow
+ *	15-- fdlibm_lgamma(-integer)
+ *	16-- fdlibm_log(0)
+ *	17-- fdlibm_log(x<0)
+ *	18-- fdlibm_log10(0)
+ *	19-- fdlibm_log10(x<0)
+ *	20-- fdlibm_pow(0.0,0.0)
+ *	21-- fdlibm_pow(x,y) overflow
+ *	22-- fdlibm_pow(x,y) underflow
+ *	23-- fdlibm_pow(0,negative) 
+ *	24-- fdlibm_pow(neg,non-integral)
+ *	25-- fdlibm_sinh(fdlibm_finite) overflow
+ *	26-- fdlibm_sqrt(negative)
+ *      27-- fdlibm_fmod(x,0)
+ *      28-- fdlibm_remainder(x,0)
+ *	29-- fdlibm_acosh(x<1)
+ *	30-- fdlibm_atanh(|x|>1)
+ *	31-- fdlibm_atanh(|x|=1)
+ *	32-- fdlibm_scalb overflow
+ *	33-- fdlibm_scalb underflow
+ *	34-- fdlibm_j0(|x|>FDLIBM_X_TLOSS)
+ *	35-- fdlibm_y0(x>FDLIBM_X_TLOSS)
+ *	36-- fdlibm_j1(|x|>FDLIBM_X_TLOSS)
+ *	37-- fdlibm_y1(x>FDLIBM_X_TLOSS)
+ *	38-- fdlibm_jn(|x|>FDLIBM_X_TLOSS, n)
+ *	39-- fdlibm_yn(x>FDLIBM_X_TLOSS, n)
+ *	40-- fdlibm_gamma(fdlibm_finite) overflow
+ *	41-- fdlibm_gamma(-integer)
+ *	42-- fdlibm_pow(NaN,0.0)
  */
 
 
 #ifdef __STDC__
-	double __kernel_standard(double x, double y, int type) 
+	double __fdlibm_kernel_standard(double x, double y, int type) 
 #else
-	double __kernel_standard(x,y,type) 
+	double __fdlibm_kernel_standard(x,y,type) 
 	double x,y; int type;
 #endif
 {
-	struct exception exc;
+	struct fdlibm_exception exc;
 #ifndef HUGE_VAL	/* this is the only routine that uses HUGE_VAL */ 
 #define HUGE_VAL inf
 	double inf = 0.0;
 
-	__HI(inf) = 0x7ff00000;	/* set inf to infinite */
+	__FDLIBM_HI(inf) = 0x7ff00000;	/* set inf to infinite */
 #endif
 
 #ifdef _USE_WRITE
@@ -96,635 +96,635 @@ static double zero = 0.0;	/* used as const */
 	exc.arg2 = y;
 	switch(type) {
 	    case 1:
-		/* acos(|x|>1) */
-		exc.type = DOMAIN;
-		exc.name = "acos";
+		/* fdlibm_acos(|x|>1) */
+		exc.type = FDLIBM_DOMAIN;
+		exc.name = "fdlibm_acos";
 		exc.retval = zero;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
-		  if(_LIB_VERSION == _SVID_) {
-		    (void) WRITE2("acos: DOMAIN error\n", 19);
+		else if (!fdlibm_matherr(&exc)) {
+		  if(_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+		    (void) WRITE2("fdlibm_acos: FDLIBM_DOMAIN error\n", 19);
 		  }
 		  errno = EDOM;
 		}
 		break;
 	    case 2:
-		/* asin(|x|>1) */
-		exc.type = DOMAIN;
-		exc.name = "asin";
+		/* fdlibm_asin(|x|>1) */
+		exc.type = FDLIBM_DOMAIN;
+		exc.name = "fdlibm_asin";
 		exc.retval = zero;
-		if(_LIB_VERSION == _POSIX_)
+		if(_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
-		  if(_LIB_VERSION == _SVID_) {
-		    	(void) WRITE2("asin: DOMAIN error\n", 19);
+		else if (!fdlibm_matherr(&exc)) {
+		  if(_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+		    	(void) WRITE2("fdlibm_asin: FDLIBM_DOMAIN error\n", 19);
 		  }
 		  errno = EDOM;
 		}
 		break;
 	    case 3:
-		/* atan2(+-0,+-0) */
+		/* fdlibm_atan2(+-0,+-0) */
 		exc.arg1 = y;
 		exc.arg2 = x;
-		exc.type = DOMAIN;
-		exc.name = "atan2";
+		exc.type = FDLIBM_DOMAIN;
+		exc.name = "fdlibm_atan2";
 		exc.retval = zero;
-		if(_LIB_VERSION == _POSIX_)
+		if(_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
-		  if(_LIB_VERSION == _SVID_) {
-			(void) WRITE2("atan2: DOMAIN error\n", 20);
+		else if (!fdlibm_matherr(&exc)) {
+		  if(_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+			(void) WRITE2("fdlibm_atan2: FDLIBM_DOMAIN error\n", 20);
 		      }
 		  errno = EDOM;
 		}
 		break;
 	    case 4:
-		/* hypot(finite,finite) overflow */
-		exc.type = OVERFLOW;
-		exc.name = "hypot";
-		if (_LIB_VERSION == _SVID_)
-		  exc.retval = HUGE;
+		/* fdlibm_hypot(fdlibm_finite,fdlibm_finite) overflow */
+		exc.type = FDLIBM_OVERFLOW;
+		exc.name = "fdlibm_hypot";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+		  exc.retval = FDLIBM_HUGE;
 		else
 		  exc.retval = HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = ERANGE;
-		else if (!matherr(&exc)) {
+		else if (!fdlibm_matherr(&exc)) {
 			errno = ERANGE;
 		}
 		break;
 	    case 5:
-		/* cosh(finite) overflow */
-		exc.type = OVERFLOW;
-		exc.name = "cosh";
-		if (_LIB_VERSION == _SVID_)
-		  exc.retval = HUGE;
+		/* fdlibm_cosh(fdlibm_finite) overflow */
+		exc.type = FDLIBM_OVERFLOW;
+		exc.name = "fdlibm_cosh";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+		  exc.retval = FDLIBM_HUGE;
 		else
 		  exc.retval = HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = ERANGE;
-		else if (!matherr(&exc)) {
+		else if (!fdlibm_matherr(&exc)) {
 			errno = ERANGE;
 		}
 		break;
 	    case 6:
-		/* exp(finite) overflow */
-		exc.type = OVERFLOW;
-		exc.name = "exp";
-		if (_LIB_VERSION == _SVID_)
-		  exc.retval = HUGE;
+		/* fdlibm_exp(fdlibm_finite) overflow */
+		exc.type = FDLIBM_OVERFLOW;
+		exc.name = "fdlibm_exp";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+		  exc.retval = FDLIBM_HUGE;
 		else
 		  exc.retval = HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = ERANGE;
-		else if (!matherr(&exc)) {
+		else if (!fdlibm_matherr(&exc)) {
 			errno = ERANGE;
 		}
 		break;
 	    case 7:
-		/* exp(finite) underflow */
-		exc.type = UNDERFLOW;
-		exc.name = "exp";
+		/* fdlibm_exp(fdlibm_finite) underflow */
+		exc.type = FDLIBM_UNDERFLOW;
+		exc.name = "fdlibm_exp";
 		exc.retval = zero;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = ERANGE;
-		else if (!matherr(&exc)) {
+		else if (!fdlibm_matherr(&exc)) {
 			errno = ERANGE;
 		}
 		break;
 	    case 8:
-		/* y0(0) = -inf */
-		exc.type = DOMAIN;	/* should be SING for IEEE */
-		exc.name = "y0";
-		if (_LIB_VERSION == _SVID_)
-		  exc.retval = -HUGE;
+		/* fdlibm_y0(0) = -inf */
+		exc.type = FDLIBM_DOMAIN;	/* should be FDLIBM_SING for IEEE */
+		exc.name = "fdlibm_y0";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+		  exc.retval = -FDLIBM_HUGE;
 		else
 		  exc.retval = -HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
-		  if (_LIB_VERSION == _SVID_) {
-			(void) WRITE2("y0: DOMAIN error\n", 17);
+		else if (!fdlibm_matherr(&exc)) {
+		  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+			(void) WRITE2("fdlibm_y0: FDLIBM_DOMAIN error\n", 17);
 		      }
 		  errno = EDOM;
 		}
 		break;
 	    case 9:
-		/* y0(x<0) = NaN */
-		exc.type = DOMAIN;
-		exc.name = "y0";
-		if (_LIB_VERSION == _SVID_)
-		  exc.retval = -HUGE;
+		/* fdlibm_y0(x<0) = NaN */
+		exc.type = FDLIBM_DOMAIN;
+		exc.name = "fdlibm_y0";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+		  exc.retval = -FDLIBM_HUGE;
 		else
 		  exc.retval = -HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
-		  if (_LIB_VERSION == _SVID_) {
-			(void) WRITE2("y0: DOMAIN error\n", 17);
+		else if (!fdlibm_matherr(&exc)) {
+		  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+			(void) WRITE2("fdlibm_y0: FDLIBM_DOMAIN error\n", 17);
 		      }
 		  errno = EDOM;
 		}
 		break;
 	    case 10:
-		/* y1(0) = -inf */
-		exc.type = DOMAIN;	/* should be SING for IEEE */
-		exc.name = "y1";
-		if (_LIB_VERSION == _SVID_)
-		  exc.retval = -HUGE;
+		/* fdlibm_y1(0) = -inf */
+		exc.type = FDLIBM_DOMAIN;	/* should be FDLIBM_SING for IEEE */
+		exc.name = "fdlibm_y1";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+		  exc.retval = -FDLIBM_HUGE;
 		else
 		  exc.retval = -HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
-		  if (_LIB_VERSION == _SVID_) {
-			(void) WRITE2("y1: DOMAIN error\n", 17);
+		else if (!fdlibm_matherr(&exc)) {
+		  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+			(void) WRITE2("fdlibm_y1: FDLIBM_DOMAIN error\n", 17);
 		      }
 		  errno = EDOM;
 		}
 		break;
 	    case 11:
-		/* y1(x<0) = NaN */
-		exc.type = DOMAIN;
-		exc.name = "y1";
-		if (_LIB_VERSION == _SVID_)
-		  exc.retval = -HUGE;
+		/* fdlibm_y1(x<0) = NaN */
+		exc.type = FDLIBM_DOMAIN;
+		exc.name = "fdlibm_y1";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+		  exc.retval = -FDLIBM_HUGE;
 		else
 		  exc.retval = -HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
-		  if (_LIB_VERSION == _SVID_) {
-			(void) WRITE2("y1: DOMAIN error\n", 17);
+		else if (!fdlibm_matherr(&exc)) {
+		  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+			(void) WRITE2("fdlibm_y1: FDLIBM_DOMAIN error\n", 17);
 		      }
 		  errno = EDOM;
 		}
 		break;
 	    case 12:
-		/* yn(n,0) = -inf */
-		exc.type = DOMAIN;	/* should be SING for IEEE */
-		exc.name = "yn";
-		if (_LIB_VERSION == _SVID_)
-		  exc.retval = -HUGE;
+		/* fdlibm_yn(n,0) = -inf */
+		exc.type = FDLIBM_DOMAIN;	/* should be FDLIBM_SING for IEEE */
+		exc.name = "fdlibm_yn";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+		  exc.retval = -FDLIBM_HUGE;
 		else
 		  exc.retval = -HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
-		  if (_LIB_VERSION == _SVID_) {
-			(void) WRITE2("yn: DOMAIN error\n", 17);
+		else if (!fdlibm_matherr(&exc)) {
+		  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+			(void) WRITE2("fdlibm_yn: FDLIBM_DOMAIN error\n", 17);
 		      }
 		  errno = EDOM;
 		}
 		break;
 	    case 13:
-		/* yn(x<0) = NaN */
-		exc.type = DOMAIN;
-		exc.name = "yn";
-		if (_LIB_VERSION == _SVID_)
-		  exc.retval = -HUGE;
+		/* fdlibm_yn(x<0) = NaN */
+		exc.type = FDLIBM_DOMAIN;
+		exc.name = "fdlibm_yn";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+		  exc.retval = -FDLIBM_HUGE;
 		else
 		  exc.retval = -HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
-		  if (_LIB_VERSION == _SVID_) {
-			(void) WRITE2("yn: DOMAIN error\n", 17);
+		else if (!fdlibm_matherr(&exc)) {
+		  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+			(void) WRITE2("fdlibm_yn: FDLIBM_DOMAIN error\n", 17);
 		      }
 		  errno = EDOM;
 		}
 		break;
 	    case 14:
-		/* lgamma(finite) overflow */
-		exc.type = OVERFLOW;
-		exc.name = "lgamma";
-                if (_LIB_VERSION == _SVID_)
-                  exc.retval = HUGE;
+		/* fdlibm_lgamma(fdlibm_finite) overflow */
+		exc.type = FDLIBM_OVERFLOW;
+		exc.name = "fdlibm_lgamma";
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+                  exc.retval = FDLIBM_HUGE;
                 else
                   exc.retval = HUGE_VAL;
-                if (_LIB_VERSION == _POSIX_)
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 			errno = ERANGE;
-                else if (!matherr(&exc)) {
+                else if (!fdlibm_matherr(&exc)) {
                         errno = ERANGE;
 		}
 		break;
 	    case 15:
-		/* lgamma(-integer) or lgamma(0) */
-		exc.type = SING;
-		exc.name = "lgamma";
-                if (_LIB_VERSION == _SVID_)
-                  exc.retval = HUGE;
+		/* fdlibm_lgamma(-integer) or fdlibm_lgamma(0) */
+		exc.type = FDLIBM_SING;
+		exc.name = "fdlibm_lgamma";
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+                  exc.retval = FDLIBM_HUGE;
                 else
                   exc.retval = HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
-		  if (_LIB_VERSION == _SVID_) {
-			(void) WRITE2("lgamma: SING error\n", 19);
+		else if (!fdlibm_matherr(&exc)) {
+		  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+			(void) WRITE2("fdlibm_lgamma: FDLIBM_SING error\n", 19);
 		      }
 		  errno = EDOM;
 		}
 		break;
 	    case 16:
-		/* log(0) */
-		exc.type = SING;
-		exc.name = "log";
-		if (_LIB_VERSION == _SVID_)
-		  exc.retval = -HUGE;
+		/* fdlibm_log(0) */
+		exc.type = FDLIBM_SING;
+		exc.name = "fdlibm_log";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+		  exc.retval = -FDLIBM_HUGE;
 		else
 		  exc.retval = -HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = ERANGE;
-		else if (!matherr(&exc)) {
-		  if (_LIB_VERSION == _SVID_) {
-			(void) WRITE2("log: SING error\n", 16);
+		else if (!fdlibm_matherr(&exc)) {
+		  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+			(void) WRITE2("fdlibm_log: FDLIBM_SING error\n", 16);
 		      }
 		  errno = EDOM;
 		}
 		break;
 	    case 17:
-		/* log(x<0) */
-		exc.type = DOMAIN;
-		exc.name = "log";
-		if (_LIB_VERSION == _SVID_)
-		  exc.retval = -HUGE;
+		/* fdlibm_log(x<0) */
+		exc.type = FDLIBM_DOMAIN;
+		exc.name = "fdlibm_log";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+		  exc.retval = -FDLIBM_HUGE;
 		else
 		  exc.retval = -HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
-		  if (_LIB_VERSION == _SVID_) {
-			(void) WRITE2("log: DOMAIN error\n", 18);
+		else if (!fdlibm_matherr(&exc)) {
+		  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+			(void) WRITE2("fdlibm_log: FDLIBM_DOMAIN error\n", 18);
 		      }
 		  errno = EDOM;
 		}
 		break;
 	    case 18:
-		/* log10(0) */
-		exc.type = SING;
-		exc.name = "log10";
-		if (_LIB_VERSION == _SVID_)
-		  exc.retval = -HUGE;
+		/* fdlibm_log10(0) */
+		exc.type = FDLIBM_SING;
+		exc.name = "fdlibm_log10";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+		  exc.retval = -FDLIBM_HUGE;
 		else
 		  exc.retval = -HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = ERANGE;
-		else if (!matherr(&exc)) {
-		  if (_LIB_VERSION == _SVID_) {
-			(void) WRITE2("log10: SING error\n", 18);
+		else if (!fdlibm_matherr(&exc)) {
+		  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+			(void) WRITE2("fdlibm_log10: FDLIBM_SING error\n", 18);
 		      }
 		  errno = EDOM;
 		}
 		break;
 	    case 19:
-		/* log10(x<0) */
-		exc.type = DOMAIN;
-		exc.name = "log10";
-		if (_LIB_VERSION == _SVID_)
-		  exc.retval = -HUGE;
+		/* fdlibm_log10(x<0) */
+		exc.type = FDLIBM_DOMAIN;
+		exc.name = "fdlibm_log10";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+		  exc.retval = -FDLIBM_HUGE;
 		else
 		  exc.retval = -HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
-		  if (_LIB_VERSION == _SVID_) {
-			(void) WRITE2("log10: DOMAIN error\n", 20);
+		else if (!fdlibm_matherr(&exc)) {
+		  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+			(void) WRITE2("fdlibm_log10: FDLIBM_DOMAIN error\n", 20);
 		      }
 		  errno = EDOM;
 		}
 		break;
 	    case 20:
-		/* pow(0.0,0.0) */
-		/* error only if _LIB_VERSION == _SVID_ */
-		exc.type = DOMAIN;
-		exc.name = "pow";
+		/* fdlibm_pow(0.0,0.0) */
+		/* error only if _FDLIBM_LIB_VERSION == _FDLIBM_SVID_ */
+		exc.type = FDLIBM_DOMAIN;
+		exc.name = "fdlibm_pow";
 		exc.retval = zero;
-		if (_LIB_VERSION != _SVID_) exc.retval = 1.0;
-		else if (!matherr(&exc)) {
-			(void) WRITE2("pow(0,0): DOMAIN error\n", 23);
+		if (_FDLIBM_LIB_VERSION != _FDLIBM_SVID_) exc.retval = 1.0;
+		else if (!fdlibm_matherr(&exc)) {
+			(void) WRITE2("fdlibm_pow(0,0): FDLIBM_DOMAIN error\n", 23);
 			errno = EDOM;
 		}
 		break;
 	    case 21:
-		/* pow(x,y) overflow */
-		exc.type = OVERFLOW;
-		exc.name = "pow";
-		if (_LIB_VERSION == _SVID_) {
-		  exc.retval = HUGE;
+		/* fdlibm_pow(x,y) overflow */
+		exc.type = FDLIBM_OVERFLOW;
+		exc.name = "fdlibm_pow";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+		  exc.retval = FDLIBM_HUGE;
 		  y *= 0.5;
-		  if(x<zero&&rint(y)!=y) exc.retval = -HUGE;
+		  if(x<zero&&fdlibm_rint(y)!=y) exc.retval = -FDLIBM_HUGE;
 		} else {
 		  exc.retval = HUGE_VAL;
 		  y *= 0.5;
-		  if(x<zero&&rint(y)!=y) exc.retval = -HUGE_VAL;
+		  if(x<zero&&fdlibm_rint(y)!=y) exc.retval = -HUGE_VAL;
 		}
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = ERANGE;
-		else if (!matherr(&exc)) {
+		else if (!fdlibm_matherr(&exc)) {
 			errno = ERANGE;
 		}
 		break;
 	    case 22:
-		/* pow(x,y) underflow */
-		exc.type = UNDERFLOW;
-		exc.name = "pow";
+		/* fdlibm_pow(x,y) underflow */
+		exc.type = FDLIBM_UNDERFLOW;
+		exc.name = "fdlibm_pow";
 		exc.retval =  zero;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = ERANGE;
-		else if (!matherr(&exc)) {
+		else if (!fdlibm_matherr(&exc)) {
 			errno = ERANGE;
 		}
 		break;
 	    case 23:
 		/* 0**neg */
-		exc.type = DOMAIN;
-		exc.name = "pow";
-		if (_LIB_VERSION == _SVID_) 
+		exc.type = FDLIBM_DOMAIN;
+		exc.name = "fdlibm_pow";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) 
 		  exc.retval = zero;
 		else
 		  exc.retval = -HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
-		  if (_LIB_VERSION == _SVID_) {
-			(void) WRITE2("pow(0,neg): DOMAIN error\n", 25);
+		else if (!fdlibm_matherr(&exc)) {
+		  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+			(void) WRITE2("fdlibm_pow(0,neg): FDLIBM_DOMAIN error\n", 25);
 		      }
 		  errno = EDOM;
 		}
 		break;
 	    case 24:
 		/* neg**non-integral */
-		exc.type = DOMAIN;
-		exc.name = "pow";
-		if (_LIB_VERSION == _SVID_) 
+		exc.type = FDLIBM_DOMAIN;
+		exc.name = "fdlibm_pow";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) 
 		    exc.retval = zero;
 		else 
 		    exc.retval = zero/zero;	/* X/Open allow NaN */
-		if (_LIB_VERSION == _POSIX_) 
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_) 
 		   errno = EDOM;
-		else if (!matherr(&exc)) {
-		  if (_LIB_VERSION == _SVID_) {
-			(void) WRITE2("neg**non-integral: DOMAIN error\n", 32);
+		else if (!fdlibm_matherr(&exc)) {
+		  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+			(void) WRITE2("neg**non-integral: FDLIBM_DOMAIN error\n", 32);
 		      }
 		  errno = EDOM;
 		}
 		break;
 	    case 25:
-		/* sinh(finite) overflow */
-		exc.type = OVERFLOW;
-		exc.name = "sinh";
-		if (_LIB_VERSION == _SVID_)
-		  exc.retval = ( (x>zero) ? HUGE : -HUGE);
+		/* fdlibm_sinh(fdlibm_finite) overflow */
+		exc.type = FDLIBM_OVERFLOW;
+		exc.name = "fdlibm_sinh";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+		  exc.retval = ( (x>zero) ? FDLIBM_HUGE : -FDLIBM_HUGE);
 		else
 		  exc.retval = ( (x>zero) ? HUGE_VAL : -HUGE_VAL);
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = ERANGE;
-		else if (!matherr(&exc)) {
+		else if (!fdlibm_matherr(&exc)) {
 			errno = ERANGE;
 		}
 		break;
 	    case 26:
-		/* sqrt(x<0) */
-		exc.type = DOMAIN;
-		exc.name = "sqrt";
-		if (_LIB_VERSION == _SVID_)
+		/* fdlibm_sqrt(x<0) */
+		exc.type = FDLIBM_DOMAIN;
+		exc.name = "fdlibm_sqrt";
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
 		  exc.retval = zero;
 		else
 		  exc.retval = zero/zero;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
-		  if (_LIB_VERSION == _SVID_) {
-			(void) WRITE2("sqrt: DOMAIN error\n", 19);
+		else if (!fdlibm_matherr(&exc)) {
+		  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+			(void) WRITE2("fdlibm_sqrt: FDLIBM_DOMAIN error\n", 19);
 		      }
 		  errno = EDOM;
 		}
 		break;
             case 27:
-                /* fmod(x,0) */
-                exc.type = DOMAIN;
-                exc.name = "fmod";
-                if (_LIB_VERSION == _SVID_)
+                /* fdlibm_fmod(x,0) */
+                exc.type = FDLIBM_DOMAIN;
+                exc.name = "fdlibm_fmod";
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
                     exc.retval = x;
 		else
 		    exc.retval = zero/zero;
-                if (_LIB_VERSION == _POSIX_)
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
                   errno = EDOM;
-                else if (!matherr(&exc)) {
-                  if (_LIB_VERSION == _SVID_) {
-                    (void) WRITE2("fmod:  DOMAIN error\n", 20);
+                else if (!fdlibm_matherr(&exc)) {
+                  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+                    (void) WRITE2("fdlibm_fmod:  FDLIBM_DOMAIN error\n", 20);
                   }
                   errno = EDOM;
                 }
                 break;
             case 28:
-                /* remainder(x,0) */
-                exc.type = DOMAIN;
-                exc.name = "remainder";
+                /* fdlibm_remainder(x,0) */
+                exc.type = FDLIBM_DOMAIN;
+                exc.name = "fdlibm_remainder";
                 exc.retval = zero/zero;
-                if (_LIB_VERSION == _POSIX_)
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
                   errno = EDOM;
-                else if (!matherr(&exc)) {
-                  if (_LIB_VERSION == _SVID_) {
-                    (void) WRITE2("remainder: DOMAIN error\n", 24);
+                else if (!fdlibm_matherr(&exc)) {
+                  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+                    (void) WRITE2("fdlibm_remainder: FDLIBM_DOMAIN error\n", 24);
                   }
                   errno = EDOM;
                 }
                 break;
             case 29:
-                /* acosh(x<1) */
-                exc.type = DOMAIN;
-                exc.name = "acosh";
+                /* fdlibm_acosh(x<1) */
+                exc.type = FDLIBM_DOMAIN;
+                exc.name = "fdlibm_acosh";
                 exc.retval = zero/zero;
-                if (_LIB_VERSION == _POSIX_)
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
                   errno = EDOM;
-                else if (!matherr(&exc)) {
-                  if (_LIB_VERSION == _SVID_) {
-                    (void) WRITE2("acosh: DOMAIN error\n", 20);
+                else if (!fdlibm_matherr(&exc)) {
+                  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+                    (void) WRITE2("fdlibm_acosh: FDLIBM_DOMAIN error\n", 20);
                   }
                   errno = EDOM;
                 }
                 break;
             case 30:
-                /* atanh(|x|>1) */
-                exc.type = DOMAIN;
-                exc.name = "atanh";
+                /* fdlibm_atanh(|x|>1) */
+                exc.type = FDLIBM_DOMAIN;
+                exc.name = "fdlibm_atanh";
                 exc.retval = zero/zero;
-                if (_LIB_VERSION == _POSIX_)
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
                   errno = EDOM;
-                else if (!matherr(&exc)) {
-                  if (_LIB_VERSION == _SVID_) {
-                    (void) WRITE2("atanh: DOMAIN error\n", 20);
+                else if (!fdlibm_matherr(&exc)) {
+                  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+                    (void) WRITE2("fdlibm_atanh: FDLIBM_DOMAIN error\n", 20);
                   }
                   errno = EDOM;
                 }
                 break;
             case 31:
-                /* atanh(|x|=1) */
-                exc.type = SING;
-                exc.name = "atanh";
+                /* fdlibm_atanh(|x|=1) */
+                exc.type = FDLIBM_SING;
+                exc.name = "fdlibm_atanh";
 		exc.retval = x/zero;	/* sign(x)*inf */
-                if (_LIB_VERSION == _POSIX_)
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
                   errno = EDOM;
-                else if (!matherr(&exc)) {
-                  if (_LIB_VERSION == _SVID_) {
-                    (void) WRITE2("atanh: SING error\n", 18);
+                else if (!fdlibm_matherr(&exc)) {
+                  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+                    (void) WRITE2("fdlibm_atanh: FDLIBM_SING error\n", 18);
                   }
                   errno = EDOM;
                 }
                 break;
 	    case 32:
-		/* scalb overflow; SVID also returns +-HUGE_VAL */
-		exc.type = OVERFLOW;
-		exc.name = "scalb";
+		/* fdlibm_scalb overflow; SVID also returns +-HUGE_VAL */
+		exc.type = FDLIBM_OVERFLOW;
+		exc.name = "fdlibm_scalb";
 		exc.retval = x > zero ? HUGE_VAL : -HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = ERANGE;
-		else if (!matherr(&exc)) {
+		else if (!fdlibm_matherr(&exc)) {
 			errno = ERANGE;
 		}
 		break;
 	    case 33:
-		/* scalb underflow */
-		exc.type = UNDERFLOW;
-		exc.name = "scalb";
-		exc.retval = copysign(zero,x);
-		if (_LIB_VERSION == _POSIX_)
+		/* fdlibm_scalb underflow */
+		exc.type = FDLIBM_UNDERFLOW;
+		exc.name = "fdlibm_scalb";
+		exc.retval = fdlibm_copysign(zero,x);
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = ERANGE;
-		else if (!matherr(&exc)) {
+		else if (!fdlibm_matherr(&exc)) {
 			errno = ERANGE;
 		}
 		break;
 	    case 34:
-		/* j0(|x|>X_TLOSS) */
-                exc.type = TLOSS;
-                exc.name = "j0";
+		/* fdlibm_j0(|x|>FDLIBM_X_TLOSS) */
+                exc.type = FDLIBM_TLOSS;
+                exc.name = "fdlibm_j0";
                 exc.retval = zero;
-                if (_LIB_VERSION == _POSIX_)
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
                         errno = ERANGE;
-                else if (!matherr(&exc)) {
-                        if (_LIB_VERSION == _SVID_) {
+                else if (!fdlibm_matherr(&exc)) {
+                        if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
                                 (void) WRITE2(exc.name, 2);
-                                (void) WRITE2(": TLOSS error\n", 14);
+                                (void) WRITE2(": FDLIBM_TLOSS error\n", 14);
                         }
                         errno = ERANGE;
                 }        
 		break;
 	    case 35:
-		/* y0(x>X_TLOSS) */
-                exc.type = TLOSS;
-                exc.name = "y0";
+		/* fdlibm_y0(x>FDLIBM_X_TLOSS) */
+                exc.type = FDLIBM_TLOSS;
+                exc.name = "fdlibm_y0";
                 exc.retval = zero;
-                if (_LIB_VERSION == _POSIX_)
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
                         errno = ERANGE;
-                else if (!matherr(&exc)) {
-                        if (_LIB_VERSION == _SVID_) {
+                else if (!fdlibm_matherr(&exc)) {
+                        if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
                                 (void) WRITE2(exc.name, 2);
-                                (void) WRITE2(": TLOSS error\n", 14);
+                                (void) WRITE2(": FDLIBM_TLOSS error\n", 14);
                         }
                         errno = ERANGE;
                 }        
 		break;
 	    case 36:
-		/* j1(|x|>X_TLOSS) */
-                exc.type = TLOSS;
-                exc.name = "j1";
+		/* fdlibm_j1(|x|>FDLIBM_X_TLOSS) */
+                exc.type = FDLIBM_TLOSS;
+                exc.name = "fdlibm_j1";
                 exc.retval = zero;
-                if (_LIB_VERSION == _POSIX_)
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
                         errno = ERANGE;
-                else if (!matherr(&exc)) {
-                        if (_LIB_VERSION == _SVID_) {
+                else if (!fdlibm_matherr(&exc)) {
+                        if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
                                 (void) WRITE2(exc.name, 2);
-                                (void) WRITE2(": TLOSS error\n", 14);
+                                (void) WRITE2(": FDLIBM_TLOSS error\n", 14);
                         }
                         errno = ERANGE;
                 }        
 		break;
 	    case 37:
-		/* y1(x>X_TLOSS) */
-                exc.type = TLOSS;
-                exc.name = "y1";
+		/* fdlibm_y1(x>FDLIBM_X_TLOSS) */
+                exc.type = FDLIBM_TLOSS;
+                exc.name = "fdlibm_y1";
                 exc.retval = zero;
-                if (_LIB_VERSION == _POSIX_)
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
                         errno = ERANGE;
-                else if (!matherr(&exc)) {
-                        if (_LIB_VERSION == _SVID_) {
+                else if (!fdlibm_matherr(&exc)) {
+                        if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
                                 (void) WRITE2(exc.name, 2);
-                                (void) WRITE2(": TLOSS error\n", 14);
+                                (void) WRITE2(": FDLIBM_TLOSS error\n", 14);
                         }
                         errno = ERANGE;
                 }        
 		break;
 	    case 38:
-		/* jn(|x|>X_TLOSS) */
-                exc.type = TLOSS;
-                exc.name = "jn";
+		/* fdlibm_jn(|x|>FDLIBM_X_TLOSS) */
+                exc.type = FDLIBM_TLOSS;
+                exc.name = "fdlibm_jn";
                 exc.retval = zero;
-                if (_LIB_VERSION == _POSIX_)
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
                         errno = ERANGE;
-                else if (!matherr(&exc)) {
-                        if (_LIB_VERSION == _SVID_) {
+                else if (!fdlibm_matherr(&exc)) {
+                        if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
                                 (void) WRITE2(exc.name, 2);
-                                (void) WRITE2(": TLOSS error\n", 14);
+                                (void) WRITE2(": FDLIBM_TLOSS error\n", 14);
                         }
                         errno = ERANGE;
                 }        
 		break;
 	    case 39:
-		/* yn(x>X_TLOSS) */
-                exc.type = TLOSS;
-                exc.name = "yn";
+		/* fdlibm_yn(x>FDLIBM_X_TLOSS) */
+                exc.type = FDLIBM_TLOSS;
+                exc.name = "fdlibm_yn";
                 exc.retval = zero;
-                if (_LIB_VERSION == _POSIX_)
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
                         errno = ERANGE;
-                else if (!matherr(&exc)) {
-                        if (_LIB_VERSION == _SVID_) {
+                else if (!fdlibm_matherr(&exc)) {
+                        if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
                                 (void) WRITE2(exc.name, 2);
-                                (void) WRITE2(": TLOSS error\n", 14);
+                                (void) WRITE2(": FDLIBM_TLOSS error\n", 14);
                         }
                         errno = ERANGE;
                 }        
 		break;
 	    case 40:
-		/* gamma(finite) overflow */
-		exc.type = OVERFLOW;
-		exc.name = "gamma";
-                if (_LIB_VERSION == _SVID_)
-                  exc.retval = HUGE;
+		/* fdlibm_gamma(fdlibm_finite) overflow */
+		exc.type = FDLIBM_OVERFLOW;
+		exc.name = "fdlibm_gamma";
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+                  exc.retval = FDLIBM_HUGE;
                 else
                   exc.retval = HUGE_VAL;
-                if (_LIB_VERSION == _POSIX_)
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = ERANGE;
-                else if (!matherr(&exc)) {
+                else if (!fdlibm_matherr(&exc)) {
                   errno = ERANGE;
                 }
 		break;
 	    case 41:
-		/* gamma(-integer) or gamma(0) */
-		exc.type = SING;
-		exc.name = "gamma";
-                if (_LIB_VERSION == _SVID_)
-                  exc.retval = HUGE;
+		/* fdlibm_gamma(-integer) or fdlibm_gamma(0) */
+		exc.type = FDLIBM_SING;
+		exc.name = "fdlibm_gamma";
+                if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_)
+                  exc.retval = FDLIBM_HUGE;
                 else
                   exc.retval = HUGE_VAL;
-		if (_LIB_VERSION == _POSIX_)
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_POSIX_)
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
-		  if (_LIB_VERSION == _SVID_) {
-			(void) WRITE2("gamma: SING error\n", 18);
+		else if (!fdlibm_matherr(&exc)) {
+		  if (_FDLIBM_LIB_VERSION == _FDLIBM_SVID_) {
+			(void) WRITE2("fdlibm_gamma: FDLIBM_SING error\n", 18);
 		      }
 		  errno = EDOM;
 		}
 		break;
 	    case 42:
-		/* pow(NaN,0.0) */
-		/* error only if _LIB_VERSION == _SVID_ & _XOPEN_ */
-		exc.type = DOMAIN;
-		exc.name = "pow";
+		/* fdlibm_pow(NaN,0.0) */
+		/* error only if _FDLIBM_LIB_VERSION == _FDLIBM_SVID_ & _FDLIBM_XOPEN_ */
+		exc.type = FDLIBM_DOMAIN;
+		exc.name = "fdlibm_pow";
 		exc.retval = x;
-		if (_LIB_VERSION == _IEEE_ ||
-		    _LIB_VERSION == _POSIX_) exc.retval = 1.0;
-		else if (!matherr(&exc)) {
+		if (_FDLIBM_LIB_VERSION == _FDLIBM_IEEE_ ||
+		    _FDLIBM_LIB_VERSION == _FDLIBM_POSIX_) exc.retval = 1.0;
+		else if (!fdlibm_matherr(&exc)) {
 			errno = EDOM;
 		}
 		break;

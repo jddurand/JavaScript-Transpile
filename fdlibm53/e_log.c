@@ -11,16 +11,16 @@
  * ====================================================
  */
 
-/* __ieee754_log(x)
+/* __fdlibm_ieee754_log(x)
  * Return the logrithm of x
  *
  * Method :                  
  *   1. Argument Reduction: find k and f such that 
  *			x = 2^k * (1+f), 
- *	   where  sqrt(2)/2 < 1+f < sqrt(2) .
+ *	   where  fdlibm_sqrt(2)/2 < 1+f < fdlibm_sqrt(2) .
  *
- *   2. Approximation of log(1+f).
- *	Let s = f/(2+f) ; based on log(1+f) = log(1+s) - log(1-s)
+ *   2. Approximation of fdlibm_log(1+f).
+ *	Let s = f/(2+f) ; based on fdlibm_log(1+f) = fdlibm_log(1+s) - fdlibm_log(1-s)
  *		 = 2s + 2/3 s**3 + 2/5 s**5 + .....,
  *	     	 = 2s + s*R
  *      We use a special Remes algorithm on [0,0.1716] to generate 
@@ -35,21 +35,21 @@
  *	    | Lg1*s +...+Lg7*s    -  R(z) | <= 2 
  *	    |                             |
  *	Note that 2s = f - s*f = f - hfsq + s*hfsq, where hfsq = f*f/2.
- *	In order to guarantee error in log below 1ulp, we compute log
+ *	In order to guarantee error in fdlibm_log below 1ulp, we compute fdlibm_log
  *	by
- *		log(1+f) = f - s*(f - R)	(if f is not too large)
- *		log(1+f) = f - (hfsq - s*(hfsq+R)).	(better accuracy)
+ *		fdlibm_log(1+f) = f - s*(f - R)	(if f is not too large)
+ *		fdlibm_log(1+f) = f - (hfsq - s*(hfsq+R)).	(better accuracy)
  *	
- *	3. Finally,  log(x) = k*ln2 + log(1+f).  
+ *	3. Finally,  fdlibm_log(x) = k*ln2 + fdlibm_log(1+f).  
  *			    = k*ln2_hi+(f-(hfsq-(s*(hfsq+R)+k*ln2_lo)))
  *	   Here ln2 is split into two floating point number: 
  *			ln2_hi + ln2_lo,
  *	   where n*ln2_hi is always exact for |n| < 2000.
  *
  * Special cases:
- *	log(x) is NaN with signal if x < 0 (including -INF) ; 
- *	log(+INF) is +INF; log(0) is -INF with signal;
- *	log(NaN) is that NaN with no signal.
+ *	fdlibm_log(x) is NaN with signal if x < 0 (including -INF) ; 
+ *	fdlibm_log(+INF) is +INF; fdlibm_log(0) is -INF with signal;
+ *	fdlibm_log(NaN) is that NaN with no signal.
  *
  * Accuracy:
  *	according to an error analysis, the error is always less than
@@ -83,9 +83,9 @@ Lg7 = 1.479819860511658591e-01;  /* 3FC2F112 DF3E5244 */
 static double zero   =  0.0;
 
 #ifdef __STDC__
-	double __ieee754_log(double x)
+	double __fdlibm_ieee754_log(double x)
 #else
-	double __ieee754_log(x)
+	double __fdlibm_ieee754_log(x)
 	double x;
 #endif
 {
@@ -93,22 +93,22 @@ static double zero   =  0.0;
 	int k,hx,i,j;
 	unsigned lx;
 
-	hx = __HI(x);		/* high word of x */
-	lx = __LO(x);		/* low  word of x */
+	hx = __FDLIBM_HI(x);		/* high word of x */
+	lx = __FDLIBM_LO(x);		/* low  word of x */
 
 	k=0;
 	if (hx < 0x00100000) {			/* x < 2**-1022  */
 	    if (((hx&0x7fffffff)|lx)==0) 
-		return -two54/zero;		/* log(+-0)=-inf */
-	    if (hx<0) return (x-x)/zero;	/* log(-#) = NaN */
+		return -two54/zero;		/* fdlibm_log(+-0)=-inf */
+	    if (hx<0) return (x-x)/zero;	/* fdlibm_log(-#) = NaN */
 	    k -= 54; x *= two54; /* subnormal number, scale up x */
-	    hx = __HI(x);		/* high word of x */
+	    hx = __FDLIBM_HI(x);		/* high word of x */
 	} 
 	if (hx >= 0x7ff00000) return x+x;
 	k += (hx>>20)-1023;
 	hx &= 0x000fffff;
 	i = (hx+0x95f64)&0x100000;
-	__HI(x) = hx|(i^0x3ff00000);	/* normalize x or x/2 */
+	__FDLIBM_HI(x) = hx|(i^0x3ff00000);	/* normalize x or x/2 */
 	k += (i>>20);
 	f = x-1.0;
 	if((0x000fffff&(2+hx))<3) {	/* |f| < 2**-20 */

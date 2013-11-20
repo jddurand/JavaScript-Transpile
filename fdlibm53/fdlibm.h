@@ -25,51 +25,51 @@
 */
 
 #ifdef __LITTLE_ENDIAN
-#define __HI(x) *(1+(int*)&x)
-#define __LO(x) *(int*)&x
-#define __HIp(x) *(1+(int*)x)
-#define __LOp(x) *(int*)x
+#define __FDLIBM_HI(x) *(1+(int*)&x)
+#define __FDLIBM_LO(x) *(int*)&x
+#define __FDLIBM_HIp(x) *(1+(int*)x)
+#define __FDLIBM_LOp(x) *(int*)x
 #else
-#define __HI(x) *(int*)&x
-#define __LO(x) *(1+(int*)&x)
-#define __HIp(x) *(int*)x
-#define __LOp(x) *(1+(int*)x)
+#define __FDLIBM_HI(x) *(int*)&x
+#define __FDLIBM_LO(x) *(1+(int*)&x)
+#define __FDLIBM_HIp(x) *(int*)x
+#define __FDLIBM_LOp(x) *(1+(int*)x)
 #endif
 
 #ifdef __STDC__
-#define	__P(p)	p
+#define	__FDLIBM_P(p)	p
 #else
-#define	__P(p)	()
+#define	__FDLIBM_P(p)	()
 #endif
 
 /*
  * ANSI/POSIX
  */
 
-extern int signgam;
+extern int fdlibm_signgam;
 
-#define	MAXFLOAT	((float)3.40282346638528860e+38)
+#define	FDLIBM_MAXFLOAT	((float)3.40282346638528860e+38)
 
-enum fdversion {fdlibm_ieee = -1, fdlibm_svid, fdlibm_xopen, fdlibm_posix};
+enum fdlibm_fdversion {fdlibm_ieee = -1, fdlibm_svid, fdlibm_xopen, fdlibm_posix};
 
-#define _LIB_VERSION_TYPE enum fdversion
-#define _LIB_VERSION _fdlib_version  
+/* #define _FDLIBM_LIB_VERSION_TYPE enum fdlibm_fdversion */
+#define _FDLIBM_LIB_VERSION _fdlib_version  
 
-/* if global variable _LIB_VERSION is not desirable, one may 
+/* if global variable _FDLIBM_LIB_VERSION is not desirable, one may 
  * change the following to be a constant by: 
- *	#define _LIB_VERSION_TYPE const enum version
- * In that case, after one initializes the value _LIB_VERSION (see
+ *	#define _FDLIBM_LIB_VERSION_TYPE const enum version
+ * In that case, after one initializes the value _FDLIBM_LIB_VERSION (see
  * s_lib_version.c) during compile time, it cannot be modified
  * in the middle of a program
  */ 
-extern  _LIB_VERSION_TYPE  _LIB_VERSION;
+extern  enum fdlibm_fdversion _FDLIBM_LIB_VERSION;
 
-#define _IEEE_  fdlibm_ieee
-#define _SVID_  fdlibm_svid
-#define _XOPEN_ fdlibm_xopen
-#define _POSIX_ fdlibm_posix
+#define _FDLIBM_IEEE_  fdlibm_ieee
+#define _FDLIBM_SVID_  fdlibm_svid
+#define _FDLIBM_XOPEN_ fdlibm_xopen
+#define _FDLIBM_POSIX_ fdlibm_posix
 
-struct exception {
+struct fdlibm_exception {
 	int type;
 	char *name;
 	double arg1;
@@ -77,145 +77,145 @@ struct exception {
 	double retval;
 };
 
-#define	HUGE		MAXFLOAT
+#define	FDLIBM_HUGE		FDLIBM_MAXFLOAT
 
 /* 
- * set X_TLOSS = pi*2**52, which is possibly defined in <values.h>
+ * set FDLIBM_X_TLOSS = pi*2**52, which is possibly defined in <values.h>
  * (one may replace the following line by "#include <values.h>")
  */
 
-#define X_TLOSS		1.41484755040568800000e+16 
+#define FDLIBM_X_TLOSS		1.41484755040568800000e+16 
 
-#define	DOMAIN		1
-#define	SING		2
-#define	OVERFLOW	3
-#define	UNDERFLOW	4
-#define	TLOSS		5
-#define	PLOSS		6
+#define	FDLIBM_DOMAIN		1
+#define	FDLIBM_SING		2
+#define	FDLIBM_OVERFLOW	3
+#define	FDLIBM_UNDERFLOW	4
+#define	FDLIBM_TLOSS		5
+#define	FDLIBM_PLOSS		6
 
 /*
  * ANSI/POSIX
  */
-extern double acos __P((double));
-extern double asin __P((double));
-extern double atan __P((double));
-extern double atan2 __P((double, double));
-extern double cos __P((double));
-extern double sin __P((double));
-extern double tan __P((double));
+extern double fdlibm_acos __FDLIBM_P((double));
+extern double fdlibm_asin __FDLIBM_P((double));
+extern double fdlibm_atan __FDLIBM_P((double));
+extern double fdlibm_atan2 __FDLIBM_P((double, double));
+extern double fdlibm_cos __FDLIBM_P((double));
+extern double fdlibm_sin __FDLIBM_P((double));
+extern double fdlibm_tan __FDLIBM_P((double));
 
-extern double cosh __P((double));
-extern double sinh __P((double));
-extern double tanh __P((double));
+extern double fdlibm_cosh __FDLIBM_P((double));
+extern double fdlibm_sinh __FDLIBM_P((double));
+extern double fdlibm_tanh __FDLIBM_P((double));
 
-extern double exp __P((double));
-extern double frexp __P((double, int *));
-extern double ldexp __P((double, int));
-extern double log __P((double));
-extern double log10 __P((double));
-extern double modf __P((double, double *));
+extern double fdlibm_exp __FDLIBM_P((double));
+extern double fdlibm_frexp __FDLIBM_P((double, int *));
+extern double fdlibm_ldexp __FDLIBM_P((double, int));
+extern double fdlibm_log __FDLIBM_P((double));
+extern double fdlibm_log10 __FDLIBM_P((double));
+extern double fdlibm_modf __FDLIBM_P((double, double *));
 
-extern double pow __P((double, double));
-extern double sqrt __P((double));
+extern double fdlibm_pow __FDLIBM_P((double, double));
+extern double fdlibm_sqrt __FDLIBM_P((double));
 
-extern double ceil __P((double));
-extern double fabs __P((double));
-extern double floor __P((double));
-extern double fmod __P((double, double));
+extern double fdlibm_ceil __FDLIBM_P((double));
+extern double fdlibm_fabs __FDLIBM_P((double));
+extern double fdlibm_floor __FDLIBM_P((double));
+extern double fdlibm_fmod __FDLIBM_P((double, double));
 
-extern double erf __P((double));
-extern double erfc __P((double));
-extern double gamma __P((double));
-extern double hypot __P((double, double));
-extern int isnan __P((double));
-extern int finite __P((double));
-extern double j0 __P((double));
-extern double j1 __P((double));
-extern double jn __P((int, double));
-extern double lgamma __P((double));
-extern double y0 __P((double));
-extern double y1 __P((double));
-extern double yn __P((int, double));
+extern double fdlibm_erf __FDLIBM_P((double));
+extern double fdlibm_erfc __FDLIBM_P((double));
+extern double fdlibm_gamma __FDLIBM_P((double));
+extern double fdlibm_hypot __FDLIBM_P((double, double));
+extern int fdlibm_isnan __FDLIBM_P((double));
+extern int fdlibm_finite __FDLIBM_P((double));
+extern double fdlibm_j0 __FDLIBM_P((double));
+extern double fdlibm_j1 __FDLIBM_P((double));
+extern double fdlibm_jn __FDLIBM_P((int, double));
+extern double fdlibm_lgamma __FDLIBM_P((double));
+extern double fdlibm_y0 __FDLIBM_P((double));
+extern double fdlibm_y1 __FDLIBM_P((double));
+extern double fdlibm_yn __FDLIBM_P((int, double));
 
-extern double acosh __P((double));
-extern double asinh __P((double));
-extern double atanh __P((double));
-extern double cbrt __P((double));
-extern double logb __P((double));
-extern double nextafter __P((double, double));
-extern double remainder __P((double, double));
+extern double fdlibm_acosh __FDLIBM_P((double));
+extern double fdlibm_asinh __FDLIBM_P((double));
+extern double fdlibm_atanh __FDLIBM_P((double));
+extern double fdlibm_cbrt __FDLIBM_P((double));
+extern double fdlibm_logb __FDLIBM_P((double));
+extern double fdlibm_nextafter __FDLIBM_P((double, double));
+extern double fdlibm_remainder __FDLIBM_P((double, double));
 #ifdef _SCALB_INT
-extern double scalb __P((double, int));
+extern double fdlibm_scalb __FDLIBM_P((double, int));
 #else
-extern double scalb __P((double, double));
+extern double fdlibm_scalb __FDLIBM_P((double, double));
 #endif
 
-extern int matherr __P((struct exception *));
+extern int fdlibm_matherr __FDLIBM_P((struct fdlibm_exception *));
 
 /*
  * IEEE Test Vector
  */
-extern double significand __P((double));
+extern double fdlibm_significand __FDLIBM_P((double));
 
 /*
  * Functions callable from C, intended to support IEEE arithmetic.
  */
-extern double copysign __P((double, double));
-extern int ilogb __P((double));
-extern double rint __P((double));
-extern double scalbn __P((double, int));
+extern double fdlibm_copysign __FDLIBM_P((double, double));
+extern int fdlibm_ilogb __FDLIBM_P((double));
+extern double fdlibm_rint __FDLIBM_P((double));
+extern double fdlibm_scalbn __FDLIBM_P((double, int));
 
 /*
  * BSD math library entry points
  */
-extern double expm1 __P((double));
-extern double log1p __P((double));
+extern double fdlibm_expm1 __FDLIBM_P((double));
+extern double fdlibm_log1p __FDLIBM_P((double));
 
 /*
- * Reentrant version of gamma & lgamma; passes signgam back by reference
- * as the second argument; user must allocate space for signgam.
+ * Reentrant version of fdlibm_gamma & fdlibm_lgamma; passes fdlibm_signgam back by reference
+ * as the second argument; user must allocate space for fdlibm_signgam.
  */
 #ifdef _REENTRANT
-extern double gamma_r __P((double, int *));
-extern double lgamma_r __P((double, int *));
+extern double fdlibm_gamma_r __FDLIBM_P((double, int *));
+extern double fdlibm_lgamma_r __FDLIBM_P((double, int *));
 #endif	/* _REENTRANT */
 
 /* ieee style elementary functions */
-extern double __ieee754_sqrt __P((double));			
-extern double __ieee754_acos __P((double));			
-extern double __ieee754_acosh __P((double));			
-extern double __ieee754_log __P((double));			
-extern double __ieee754_atanh __P((double));			
-extern double __ieee754_asin __P((double));			
-extern double __ieee754_atan2 __P((double,double));			
-extern double __ieee754_exp __P((double));
-extern double __ieee754_cosh __P((double));
-extern double __ieee754_fmod __P((double,double));
-extern double __ieee754_pow __P((double,double));
-extern double __ieee754_lgamma_r __P((double,int *));
-extern double __ieee754_gamma_r __P((double,int *));
-extern double __ieee754_lgamma __P((double));
-extern double __ieee754_gamma __P((double));
-extern double __ieee754_log10 __P((double));
-extern double __ieee754_sinh __P((double));
-extern double __ieee754_hypot __P((double,double));
-extern double __ieee754_j0 __P((double));
-extern double __ieee754_j1 __P((double));
-extern double __ieee754_y0 __P((double));
-extern double __ieee754_y1 __P((double));
-extern double __ieee754_jn __P((int,double));
-extern double __ieee754_yn __P((int,double));
-extern double __ieee754_remainder __P((double,double));
-extern int    __ieee754_rem_pio2 __P((double,double*));
+extern double __fdlibm_ieee754_sqrt __FDLIBM_P((double));			
+extern double __fdlibm_ieee754_acos __FDLIBM_P((double));			
+extern double __fdlibm_ieee754_acosh __FDLIBM_P((double));			
+extern double __fdlibm_ieee754_log __FDLIBM_P((double));			
+extern double __fdlibm_ieee754_atanh __FDLIBM_P((double));			
+extern double __fdlibm_ieee754_asin __FDLIBM_P((double));			
+extern double __fdlibm_ieee754_atan2 __FDLIBM_P((double,double));			
+extern double __fdlibm_ieee754_exp __FDLIBM_P((double));
+extern double __fdlibm_ieee754_cosh __FDLIBM_P((double));
+extern double __fdlibm_ieee754_fmod __FDLIBM_P((double,double));
+extern double __fdlibm_ieee754_pow __FDLIBM_P((double,double));
+extern double __fdlibm_ieee754_lgamma_r __FDLIBM_P((double,int *));
+extern double __fdlibm_ieee754_gamma_r __FDLIBM_P((double,int *));
+extern double __fdlibm_ieee754_lgamma __FDLIBM_P((double));
+extern double __fdlibm_ieee754_gamma __FDLIBM_P((double));
+extern double __fdlibm_ieee754_log10 __FDLIBM_P((double));
+extern double __fdlibm_ieee754_sinh __FDLIBM_P((double));
+extern double __fdlibm_ieee754_hypot __FDLIBM_P((double,double));
+extern double __fdlibm_ieee754_j0 __FDLIBM_P((double));
+extern double __fdlibm_ieee754_j1 __FDLIBM_P((double));
+extern double __fdlibm_ieee754_y0 __FDLIBM_P((double));
+extern double __fdlibm_ieee754_y1 __FDLIBM_P((double));
+extern double __fdlibm_ieee754_jn __FDLIBM_P((int,double));
+extern double __fdlibm_ieee754_yn __FDLIBM_P((int,double));
+extern double __fdlibm_ieee754_remainder __FDLIBM_P((double,double));
+extern int    __fdlibm_ieee754_rem_pio2 __FDLIBM_P((double,double*));
 #ifdef _SCALB_INT
-extern double __ieee754_scalb __P((double,int));
+extern double __fdlibm_ieee754_scalb __FDLIBM_P((double,int));
 #else
-extern double __ieee754_scalb __P((double,double));
+extern double __fdlibm_ieee754_scalb __FDLIBM_P((double,double));
 #endif
 
 /* fdlibm kernel function */
-extern double __kernel_standard __P((double,double,int));	
-extern double __kernel_sin __P((double,double,int));
-extern double __kernel_cos __P((double,double));
-extern double __kernel_tan __P((double,double,int));
-extern int    __kernel_rem_pio2 __P((double*,double*,int,int,int,const int*));
+extern double __fdlibm_kernel_standard __FDLIBM_P((double,double,int));	
+extern double __fdlibm_kernel_sin __FDLIBM_P((double,double,int));
+extern double __fdlibm_kernel_cos __FDLIBM_P((double,double));
+extern double __fdlibm_kernel_tan __FDLIBM_P((double,double,int));
+extern int    __fdlibm_kernel_rem_pio2 __FDLIBM_P((double*,double*,int,int,int,const int*));

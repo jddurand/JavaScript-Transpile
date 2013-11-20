@@ -12,70 +12,70 @@
  *
  */
 
-/* __ieee754_lgamma_r(x, signgamp)
+/* __fdlibm_ieee754_lgamma_r(x, signgamp)
  * Reentrant version of the logarithm of the Gamma function 
  * with user provide pointer for the sign of Gamma(x). 
  *
  * Method:
  *   1. Argument Reduction for 0 < x <= 8
- * 	Since gamma(1+s)=s*gamma(s), for x in [0,8], we may 
+ * 	Since fdlibm_gamma(1+s)=s*fdlibm_gamma(s), for x in [0,8], we may 
  * 	reduce x to a number in [1.5,2.5] by
- * 		lgamma(1+s) = log(s) + lgamma(s)
+ * 		fdlibm_lgamma(1+s) = fdlibm_log(s) + fdlibm_lgamma(s)
  *	for example,
- *		lgamma(7.3) = log(6.3) + lgamma(6.3)
- *			    = log(6.3*5.3) + lgamma(5.3)
- *			    = log(6.3*5.3*4.3*3.3*2.3) + lgamma(2.3)
- *   2. Polynomial approximation of lgamma around its
+ *		fdlibm_lgamma(7.3) = fdlibm_log(6.3) + fdlibm_lgamma(6.3)
+ *			    = fdlibm_log(6.3*5.3) + fdlibm_lgamma(5.3)
+ *			    = fdlibm_log(6.3*5.3*4.3*3.3*2.3) + fdlibm_lgamma(2.3)
+ *   2. Polynomial approximation of fdlibm_lgamma around its
  *	minimun ymin=1.461632144968362245 to maintain monotonicity.
  *	On [ymin-0.23, ymin+0.27] (i.e., [1.23164,1.73163]), use
  *		Let z = x-ymin;
- *		lgamma(x) = -1.214862905358496078218 + z^2*poly(z)
+ *		fdlibm_lgamma(x) = -1.214862905358496078218 + z^2*poly(z)
  *	where
  *		poly(z) is a 14 degree polynomial.
  *   2. Rational approximation in the primary interval [2,3]
  *	We use the following approximation:
  *		s = x-2.0;
- *		lgamma(x) = 0.5*s + s*P(s)/Q(s)
+ *		fdlibm_lgamma(x) = 0.5*s + s*P(s)/Q(s)
  *	with accuracy
- *		|P/Q - (lgamma(x)-0.5s)| < 2**-61.71
+ *		|P/Q - (fdlibm_lgamma(x)-0.5s)| < 2**-61.71
  *	Our algorithms are based on the following observation
  *
  *                             zeta(2)-1    2    zeta(3)-1    3
- * lgamma(2+s) = s*(1-Euler) + --------- * s  -  --------- * s  + ...
+ * fdlibm_lgamma(2+s) = s*(1-Euler) + --------- * s  -  --------- * s  + ...
  *                                 2                 3
  *
  *	where Euler = 0.5771... is the Euler constant, which is very
  *	close to 0.5.
  *
  *   3. For x>=8, we have
- *	lgamma(x)~(x-0.5)log(x)-x+0.5*log(2pi)+1/(12x)-1/(360x**3)+....
+ *	fdlibm_lgamma(x)~(x-0.5)fdlibm_log(x)-x+0.5*fdlibm_log(2pi)+1/(12x)-1/(360x**3)+....
  *	(better formula:
- *	   lgamma(x)~(x-0.5)*(log(x)-1)-.5*(log(2pi)-1) + ...)
+ *	   fdlibm_lgamma(x)~(x-0.5)*(fdlibm_log(x)-1)-.5*(fdlibm_log(2pi)-1) + ...)
  *	Let z = 1/x, then we approximation
- *		f(z) = lgamma(x) - (x-0.5)(log(x)-1)
+ *		f(z) = fdlibm_lgamma(x) - (x-0.5)(fdlibm_log(x)-1)
  *	by
  *	  			    3       5             11
  *		w = w0 + w1*z + w2*z  + w3*z  + ... + w6*z
  *	where 
  *		|w - f(z)| < 2**-58.74
  *		
- *   4. For negative x, since (G is gamma function)
- *		-x*G(-x)*G(x) = pi/sin(pi*x),
+ *   4. For negative x, since (G is fdlibm_gamma function)
+ *		-x*G(-x)*G(x) = pi/fdlibm_sin(pi*x),
  * 	we have
- * 		G(x) = pi/(sin(pi*x)*(-x)*G(-x))
- *	since G(-x) is positive, sign(G(x)) = sign(sin(pi*x)) for x<0
- *	Hence, for x<0, signgam = sign(sin(pi*x)) and 
- *		lgamma(x) = log(|Gamma(x)|)
- *			  = log(pi/(|x*sin(pi*x)|)) - lgamma(-x);
+ * 		G(x) = pi/(fdlibm_sin(pi*x)*(-x)*G(-x))
+ *	since G(-x) is positive, sign(G(x)) = sign(fdlibm_sin(pi*x)) for x<0
+ *	Hence, for x<0, fdlibm_signgam = sign(fdlibm_sin(pi*x)) and 
+ *		fdlibm_lgamma(x) = fdlibm_log(|Gamma(x)|)
+ *			  = fdlibm_log(pi/(|x*fdlibm_sin(pi*x)|)) - fdlibm_lgamma(-x);
  *	Note: one should avoid compute pi*(-x) directly in the 
- *	      computation of sin(pi*(-x)).
+ *	      computation of fdlibm_sin(pi*(-x)).
  *		
  *   5. Special Cases
- *		lgamma(2+s) ~ s*(1-Euler) for tiny s
- *		lgamma(1)=lgamma(2)=0
- *		lgamma(x) ~ -log(x) for tiny x
- *		lgamma(0) = lgamma(inf) = inf
- *	 	lgamma(-integer) = +-inf
+ *		fdlibm_lgamma(2+s) ~ s*(1-Euler) for tiny s
+ *		fdlibm_lgamma(1)=fdlibm_lgamma(2)=0
+ *		fdlibm_lgamma(x) ~ -fdlibm_log(x) for tiny x
+ *		fdlibm_lgamma(0) = fdlibm_lgamma(inf) = inf
+ *	 	fdlibm_lgamma(-integer) = +-inf
  *	
  */
 
@@ -165,74 +165,74 @@ static double zero=  0.00000000000000000000e+00;
 	double y,z;
 	int n,ix;
 
-	ix = 0x7fffffff&__HI(x);
+	ix = 0x7fffffff&__FDLIBM_HI(x);
 
-	if(ix<0x3fd00000) return __kernel_sin(pi*x,zero,0);
+	if(ix<0x3fd00000) return __fdlibm_kernel_sin(pi*x,zero,0);
 	y = -x;		/* x is assume negative */
 
     /*
      * argument reduction, make sure inexact flag not raised if input
      * is an integer
      */
-	z = floor(y);
+	z = fdlibm_floor(y);
 	if(z!=y) {				/* inexact anyway */
 	    y  *= 0.5;
-	    y   = 2.0*(y - floor(y));		/* y = |x| mod 2.0 */
+	    y   = 2.0*(y - fdlibm_floor(y));		/* y = |x| mod 2.0 */
 	    n   = (int) (y*4.0);
 	} else {
             if(ix>=0x43400000) {
                 y = zero; n = 0;                 /* y must be even */
             } else {
                 if(ix<0x43300000) z = y+two52;	/* exact */
-                n   = __LO(z)&1;        /* lower word of z */
+                n   = __FDLIBM_LO(z)&1;        /* lower word of z */
                 y  = n;
                 n<<= 2;
             }
         }
 	switch (n) {
-	    case 0:   y =  __kernel_sin(pi*y,zero,0); break;
+	    case 0:   y =  __fdlibm_kernel_sin(pi*y,zero,0); break;
 	    case 1:   
-	    case 2:   y =  __kernel_cos(pi*(0.5-y),zero); break;
+	    case 2:   y =  __fdlibm_kernel_cos(pi*(0.5-y),zero); break;
 	    case 3:  
-	    case 4:   y =  __kernel_sin(pi*(one-y),zero,0); break;
+	    case 4:   y =  __fdlibm_kernel_sin(pi*(one-y),zero,0); break;
 	    case 5:
-	    case 6:   y = -__kernel_cos(pi*(y-1.5),zero); break;
-	    default:  y =  __kernel_sin(pi*(y-2.0),zero,0); break;
+	    case 6:   y = -__fdlibm_kernel_cos(pi*(y-1.5),zero); break;
+	    default:  y =  __fdlibm_kernel_sin(pi*(y-2.0),zero,0); break;
 	    }
 	return -y;
 }
 
 
 #ifdef __STDC__
-	double __ieee754_lgamma_r(double x, int *signgamp)
+	double __fdlibm_ieee754_lgamma_r(double x, int *signgamp)
 #else
-	double __ieee754_lgamma_r(x,signgamp)
+	double __fdlibm_ieee754_lgamma_r(x,signgamp)
 	double x; int *signgamp;
 #endif
 {
 	double t,y,z,nadj,p,p1,p2,p3,q,r,w;
 	int i,hx,lx,ix;
 
-	hx = __HI(x);
-	lx = __LO(x);
+	hx = __FDLIBM_HI(x);
+	lx = __FDLIBM_LO(x);
 
     /* purge off +-inf, NaN, +-0, and negative arguments */
 	*signgamp = 1;
 	ix = hx&0x7fffffff;
 	if(ix>=0x7ff00000) return x*x;
 	if((ix|lx)==0) return one/zero;
-	if(ix<0x3b900000) {	/* |x|<2**-70, return -log(|x|) */
+	if(ix<0x3b900000) {	/* |x|<2**-70, return -fdlibm_log(|x|) */
 	    if(hx<0) {
 	        *signgamp = -1;
-	        return -__ieee754_log(-x);
-	    } else return -__ieee754_log(x);
+	        return -__fdlibm_ieee754_log(-x);
+	    } else return -__fdlibm_ieee754_log(x);
 	}
 	if(hx<0) {
 	    if(ix>=0x43300000) 	/* |x|>=2**52, must be -integer */
 		return one/zero;
 	    t = sin_pi(x);
 	    if(t==zero) return one/zero; /* -integer */
-	    nadj = __ieee754_log(pi/fabs(t*x));
+	    nadj = __fdlibm_ieee754_log(pi/fdlibm_fabs(t*x));
 	    if(t<zero) *signgamp = -1;
 	    x = -x;
 	}
@@ -241,8 +241,8 @@ static double zero=  0.00000000000000000000e+00;
 	if((((ix-0x3ff00000)|lx)==0)||(((ix-0x40000000)|lx)==0)) r = 0;
     /* for x < 2.0 */
 	else if(ix<0x40000000) {
-	    if(ix<=0x3feccccc) { 	/* lgamma(x) = lgamma(x+1)-log(x) */
-		r = -__ieee754_log(x);
+	    if(ix<=0x3feccccc) { 	/* fdlibm_lgamma(x) = fdlibm_lgamma(x+1)-fdlibm_log(x) */
+		r = -__fdlibm_ieee754_log(x);
 		if(ix>=0x3FE76944) {y = one-x; i= 0;}
 		else if(ix>=0x3FCDA661) {y= x-(tc-one); i=1;}
 	  	else {y = x; i=2;}
@@ -280,25 +280,25 @@ static double zero=  0.00000000000000000000e+00;
 	    p = y*(s0+y*(s1+y*(s2+y*(s3+y*(s4+y*(s5+y*s6))))));
 	    q = one+y*(r1+y*(r2+y*(r3+y*(r4+y*(r5+y*r6)))));
 	    r = half*y+p/q;
-	    z = one;	/* lgamma(1+s) = log(s) + lgamma(s) */
+	    z = one;	/* fdlibm_lgamma(1+s) = fdlibm_log(s) + fdlibm_lgamma(s) */
 	    switch(i) {
 	    case 7: z *= (y+6.0);	/* FALLTHRU */
 	    case 6: z *= (y+5.0);	/* FALLTHRU */
 	    case 5: z *= (y+4.0);	/* FALLTHRU */
 	    case 4: z *= (y+3.0);	/* FALLTHRU */
 	    case 3: z *= (y+2.0);	/* FALLTHRU */
-		    r += __ieee754_log(z); break;
+		    r += __fdlibm_ieee754_log(z); break;
 	    }
     /* 8.0 <= x < 2**58 */
 	} else if (ix < 0x43900000) {
-	    t = __ieee754_log(x);
+	    t = __fdlibm_ieee754_log(x);
 	    z = one/x;
 	    y = z*z;
 	    w = w0+z*(w1+y*(w2+y*(w3+y*(w4+y*(w5+y*w6)))));
 	    r = (x-half)*(t-one)+w;
 	} else 
     /* 2**58 <= x <= inf */
-	    r =  x*(__ieee754_log(x)-one);
+	    r =  x*(__fdlibm_ieee754_log(x)-one);
 	if(hx<0) r = nadj - r;
 	return r;
 }

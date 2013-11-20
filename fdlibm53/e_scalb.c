@@ -12,40 +12,40 @@
  */
 
 /*
- * __ieee754_scalb(x, fn) is provide for
+ * __fdlibm_ieee754_scalb(x, fn) is provide for
  * passing various standard test suite. One 
- * should use scalbn() instead.
+ * should use fdlibm_scalbn() instead.
  */
 
 #include "fdlibm.h"
 
 #ifdef _SCALB_INT
 #ifdef __STDC__
-	double __ieee754_scalb(double x, int fn)
+	double __fdlibm_ieee754_scalb(double x, int fn)
 #else
-	double __ieee754_scalb(x,fn)
+	double __fdlibm_ieee754_scalb(x,fn)
 	double x; int fn;
 #endif
 #else
 #ifdef __STDC__
-	double __ieee754_scalb(double x, double fn)
+	double __fdlibm_ieee754_scalb(double x, double fn)
 #else
-	double __ieee754_scalb(x,fn)
+	double __fdlibm_ieee754_scalb(x,fn)
 	double x, fn;
 #endif
 #endif
 {
 #ifdef _SCALB_INT
-	return scalbn(x,fn);
+	return fdlibm_scalbn(x,fn);
 #else
-	if (isnan(x)||isnan(fn)) return x*fn;
-	if (!finite(fn)) {
+	if (fdlibm_isnan(x)||fdlibm_isnan(fn)) return x*fn;
+	if (!fdlibm_finite(fn)) {
 	    if(fn>0.0) return x*fn;
 	    else       return x/(-fn);
 	}
-	if (rint(fn)!=fn) return (fn-fn)/(fn-fn);
-	if ( fn > 65000.0) return scalbn(x, 65000);
-	if (-fn > 65000.0) return scalbn(x,-65000);
-	return scalbn(x,(int)fn);
+	if (fdlibm_rint(fn)!=fn) return (fn-fn)/(fn-fn);
+	if ( fn > 65000.0) return fdlibm_scalbn(x, 65000);
+	if (-fn > 65000.0) return fdlibm_scalbn(x,-65000);
+	return fdlibm_scalbn(x,(int)fn);
 #endif
 }

@@ -12,19 +12,19 @@
  */
 
 /*
- * significand(x) computes just
- * 	scalb(x, (double) -ilogb(x)),
+ * fdlibm_significand(x) computes just
+ * 	fdlibm_scalb(x, (double) -fdlibm_ilogb(x)),
  * for exercising the fraction-part(F) IEEE 754-1985 test vector.
  */
 
 #include "fdlibm.h"
 
 #ifdef __STDC__
-	double significand(double x)
+	double fdlibm_significand(double x)
 #else
-	double significand(x)
+	double fdlibm_significand(x)
 	double x;
 #endif
 {
-	return __ieee754_scalb(x,(double) -ilogb(x));
+	return __fdlibm_ieee754_scalb(x,(double) -fdlibm_ilogb(x));
 }

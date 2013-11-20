@@ -11,11 +11,11 @@ use Config::AutoConf;
 sub ccflags_dyn {
     my $is_dev = shift;
 
-    my $ccflags = q<( $Config::Config{ccflags} || '' ) . ' -I. -D_IEEE_LIBM'>;
-    my $is_little_endian = unpack("h*", pack("s", 1)) =~ /^1/;   # C.f. perlport
-    if ($is_little_endian) {
-	$ccflags .= ' -D__LITTLE_ENDIAN'
-    }
+    my $is_little_endian = (unpack("h*", pack("s", 1)) =~ /^1/);   # C.f. perlport
+    my $ccflags = $is_little_endian ? 
+	q<( $Config::Config{ccflags} || '' ) . ' -Ifdlibm53 -D_IEEE_LIBM'> :
+	q<( $Config::Config{ccflags} || '' ) . ' -Ifdlibm53 -D_IEEE_LIBM -D__LITTLE_ENDIAN'>;
+
     return $ccflags;
 }
 

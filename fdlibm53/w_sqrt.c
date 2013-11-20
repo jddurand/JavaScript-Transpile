@@ -12,26 +12,26 @@
  */
 
 /* 
- * wrapper sqrt(x)
+ * wrapper fdlibm_sqrt(x)
  */
 
 #include "fdlibm.h"
 
 #ifdef __STDC__
-	double sqrt(double x)		/* wrapper sqrt */
+	double fdlibm_sqrt(double x)		/* wrapper fdlibm_sqrt */
 #else
-	double sqrt(x)			/* wrapper sqrt */
+	double fdlibm_sqrt(x)			/* wrapper fdlibm_sqrt */
 	double x;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_sqrt(x);
+	return __fdlibm_ieee754_sqrt(x);
 #else
 	double z;
-	z = __ieee754_sqrt(x);
-	if(_LIB_VERSION == _IEEE_ || isnan(x)) return z;
+	z = __fdlibm_ieee754_sqrt(x);
+	if(_FDLIBM_LIB_VERSION == _FDLIBM_IEEE_ || fdlibm_isnan(x)) return z;
 	if(x<0.0) {
-	    return __kernel_standard(x,x,26); /* sqrt(negative) */
+	    return __fdlibm_kernel_standard(x,x,26); /* fdlibm_sqrt(negative) */
 	} else
 	    return z;
 #endif

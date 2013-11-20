@@ -12,26 +12,26 @@
  */
 
 /*
- * double logb(x)
- * IEEE 754 logb. Included to pass IEEE test suite. Not recommend.
- * Use ilogb instead.
+ * double fdlibm_logb(x)
+ * IEEE 754 fdlibm_logb. Included to pass IEEE test suite. Not recommend.
+ * Use fdlibm_ilogb instead.
  */
 
 #include "fdlibm.h"
 
 #ifdef __STDC__
-	double logb(double x)
+	double fdlibm_logb(double x)
 #else
-	double logb(x)
+	double fdlibm_logb(x)
 	double x;
 #endif
 {
 	int lx,ix;
-	ix = (__HI(x))&0x7fffffff;	/* high |x| */
-	lx = __LO(x);			/* low x */
-	if((ix|lx)==0) return -1.0/fabs(x);
+	ix = (__FDLIBM_HI(x))&0x7fffffff;	/* high |x| */
+	lx = __FDLIBM_LO(x);			/* low x */
+	if((ix|lx)==0) return -1.0/fdlibm_fabs(x);
 	if(ix>=0x7ff00000) return x*x;
-	if((ix>>=20)==0) 			/* IEEE 754 logb */
+	if((ix>>=20)==0) 			/* IEEE 754 fdlibm_logb */
 		return -1022.0; 
 	else
 		return (double) (ix-1023); 

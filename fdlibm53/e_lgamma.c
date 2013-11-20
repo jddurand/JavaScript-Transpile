@@ -12,22 +12,22 @@
  *
  */
 
-/* __ieee754_lgamma(x)
+/* __fdlibm_ieee754_lgamma(x)
  * Return the logarithm of the Gamma function of x.
  *
- * Method: call __ieee754_lgamma_r
+ * Method: call __fdlibm_ieee754_lgamma_r
  */
 
 #include "fdlibm.h"
 
-extern int signgam;
+extern int fdlibm_signgam;
 
 #ifdef __STDC__
-	double __ieee754_lgamma(double x)
+	double __fdlibm_ieee754_lgamma(double x)
 #else
-	double __ieee754_lgamma(x)
+	double __fdlibm_ieee754_lgamma(x)
 	double x;
 #endif
 {
-	return __ieee754_lgamma_r(x,&signgam);
+	return __fdlibm_ieee754_lgamma_r(x,&fdlibm_signgam);
 }

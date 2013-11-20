@@ -12,7 +12,7 @@
  */
 
 /* 
- * __ieee754_fmod(x,y)
+ * __fdlibm_ieee754_fmod(x,y)
  * Return x mod y in exact arithmetic
  * Method: shift and subtract
  */
@@ -26,25 +26,25 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 #endif
 
 #ifdef __STDC__
-	double __ieee754_fmod(double x, double y)
+	double __fdlibm_ieee754_fmod(double x, double y)
 #else
-	double __ieee754_fmod(x,y)
+	double __fdlibm_ieee754_fmod(x,y)
 	double x,y ;
 #endif
 {
 	int n,hx,hy,hz,ix,iy,sx,i;
 	unsigned lx,ly,lz;
 
-	hx = __HI(x);		/* high word of x */
-	lx = __LO(x);		/* low  word of x */
-	hy = __HI(y);		/* high word of y */
-	ly = __LO(y);		/* low  word of y */
+	hx = __FDLIBM_HI(x);		/* high word of x */
+	lx = __FDLIBM_LO(x);		/* low  word of x */
+	hy = __FDLIBM_HI(y);		/* high word of y */
+	ly = __FDLIBM_LO(y);		/* low  word of y */
 	sx = hx&0x80000000;		/* sign of x */
 	hx ^=sx;		/* |x| */
 	hy &= 0x7fffffff;	/* |y| */
 
     /* purge off exception values */
-	if((hy|ly)==0||(hx>=0x7ff00000)||	/* y=0,or x not finite */
+	if((hy|ly)==0||(hx>=0x7ff00000)||	/* y=0,or x not fdlibm_finite */
 	  ((hy|((ly|-ly)>>31))>0x7ff00000))	/* or y is NaN */
 	    return (x*y)/(x*y);
 	if(hx<=hy) {
@@ -53,7 +53,7 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 		return Zero[(unsigned)sx>>31];	/* |x|=|y| return x*0*/
 	}
 
-    /* determine ix = ilogb(x) */
+    /* determine ix = fdlibm_ilogb(x) */
 	if(hx<0x00100000) {	/* subnormal x */
 	    if(hx==0) {
 		for (ix = -1043, i=lx; i>0; i<<=1) ix -=1;
@@ -62,7 +62,7 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 	    }
 	} else ix = (hx>>20)-1023;
 
-    /* determine iy = ilogb(y) */
+    /* determine iy = fdlibm_ilogb(y) */
 	if(hy<0x00100000) {	/* subnormal y */
 	    if(hy==0) {
 		for (iy = -1043, i=ly; i>0; i<<=1) iy -=1;
@@ -97,7 +97,7 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 	    }
 	}
 
-    /* fix point fmod */
+    /* fix point fdlibm_fmod */
 	n = ix - iy;
 	while(n--) {
 	    hz=hx-hy;lz=lx-ly; if(lx<ly) hz -= 1;
@@ -120,8 +120,8 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 	}
 	if(iy>= -1022) {	/* normalize output */
 	    hx = ((hx-0x00100000)|((iy+1023)<<20));
-	    __HI(x) = hx|sx;
-	    __LO(x) = lx;
+	    __FDLIBM_HI(x) = hx|sx;
+	    __FDLIBM_LO(x) = lx;
 	} else {		/* subnormal output */
 	    n = -1022 - iy;
 	    if(n<=20) {
@@ -132,8 +132,8 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 	    } else {
 		lx = hx>>(n-32); hx = sx;
 	    }
-	    __HI(x) = hx|sx;
-	    __LO(x) = lx;
+	    __FDLIBM_HI(x) = hx|sx;
+	    __FDLIBM_LO(x) = lx;
 	    x *= one;		/* create necessary signal */
 	}
 	return x;		/* exact output */

@@ -12,54 +12,54 @@
  */
 
 /* 
- * wrapper of j1,y1 
+ * wrapper of fdlibm_j1,fdlibm_y1 
  */
 
 #include "fdlibm.h"
 
 #ifdef __STDC__
-	double j1(double x)		/* wrapper j1 */
+	double fdlibm_j1(double x)		/* wrapper fdlibm_j1 */
 #else
-	double j1(x)			/* wrapper j1 */
+	double fdlibm_j1(x)			/* wrapper fdlibm_j1 */
 	double x;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_j1(x);
+	return __fdlibm_ieee754_j1(x);
 #else
 	double z;
-	z = __ieee754_j1(x);
-	if(_LIB_VERSION == _IEEE_ || isnan(x) ) return z;
-	if(fabs(x)>X_TLOSS) {
-	        return __kernel_standard(x,x,36); /* j1(|x|>X_TLOSS) */
+	z = __fdlibm_ieee754_j1(x);
+	if(_FDLIBM_LIB_VERSION == _FDLIBM_IEEE_ || fdlibm_isnan(x) ) return z;
+	if(fdlibm_fabs(x)>FDLIBM_X_TLOSS) {
+	        return __fdlibm_kernel_standard(x,x,36); /* fdlibm_j1(|x|>FDLIBM_X_TLOSS) */
 	} else
 	    return z;
 #endif
 }
 
 #ifdef __STDC__
-	double y1(double x)		/* wrapper y1 */
+	double fdlibm_y1(double x)		/* wrapper fdlibm_y1 */
 #else
-	double y1(x)			/* wrapper y1 */
+	double fdlibm_y1(x)			/* wrapper fdlibm_y1 */
 	double x;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_y1(x);
+	return __fdlibm_ieee754_y1(x);
 #else
 	double z;
-	z = __ieee754_y1(x);
-	if(_LIB_VERSION == _IEEE_ || isnan(x) ) return z;
+	z = __fdlibm_ieee754_y1(x);
+	if(_FDLIBM_LIB_VERSION == _FDLIBM_IEEE_ || fdlibm_isnan(x) ) return z;
         if(x <= 0.0){
                 if(x==0.0)
                     /* d= -one/(x-x); */
-                    return __kernel_standard(x,x,10);
+                    return __fdlibm_kernel_standard(x,x,10);
                 else
                     /* d = zero/(x-x); */
-                    return __kernel_standard(x,x,11);
+                    return __fdlibm_kernel_standard(x,x,11);
         }
-	if(x>X_TLOSS) {
-	        return __kernel_standard(x,x,37); /* y1(x>X_TLOSS) */
+	if(x>FDLIBM_X_TLOSS) {
+	        return __fdlibm_kernel_standard(x,x,37); /* fdlibm_y1(x>FDLIBM_X_TLOSS) */
 	} else
 	    return z;
 #endif

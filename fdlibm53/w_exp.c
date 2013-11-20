@@ -11,7 +11,7 @@
  */
 
 /* 
- * wrapper exp(x)
+ * wrapper fdlibm_exp(x)
  */
 
 #include "fdlibm.h"
@@ -25,23 +25,23 @@ o_threshold=  7.09782712893383973096e+02,  /* 0x40862E42, 0xFEFA39EF */
 u_threshold= -7.45133219101941108420e+02;  /* 0xc0874910, 0xD52D3051 */
 
 #ifdef __STDC__
-	double exp(double x)		/* wrapper exp */
+	double fdlibm_exp(double x)		/* wrapper fdlibm_exp */
 #else
-	double exp(x)			/* wrapper exp */
+	double fdlibm_exp(x)			/* wrapper fdlibm_exp */
 	double x;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_exp(x);
+	return __fdlibm_ieee754_exp(x);
 #else
 	double z;
-	z = __ieee754_exp(x);
-	if(_LIB_VERSION == _IEEE_) return z;
-	if(finite(x)) {
+	z = __fdlibm_ieee754_exp(x);
+	if(_FDLIBM_LIB_VERSION == _FDLIBM_IEEE_) return z;
+	if(fdlibm_finite(x)) {
 	    if(x>o_threshold)
-	        return __kernel_standard(x,x,6); /* exp overflow */
+	        return __fdlibm_kernel_standard(x,x,6); /* fdlibm_exp overflow */
 	    else if(x<u_threshold)
-	        return __kernel_standard(x,x,7); /* exp underflow */
+	        return __fdlibm_kernel_standard(x,x,7); /* fdlibm_exp underflow */
 	} 
 	return z;
 #endif

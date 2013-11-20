@@ -12,10 +12,10 @@
  */
 
 /*
- * __kernel_rem_pio2(x,y,e0,nx,prec,ipio2)
+ * __fdlibm_kernel_rem_pio2(x,y,e0,nx,prec,ipio2)
  * double x[],y[]; int e0,nx,prec; int ipio2[];
  * 
- * __kernel_rem_pio2 return the last three digits of N with 
+ * __fdlibm_kernel_rem_pio2 return the last three digits of N with 
  *		y = x - N*pi/2
  * so that |y| < pi/2.
  *
@@ -35,10 +35,10 @@
  *		match x's up to 24 bits.
  *
  *		Example of breaking a double positive z into x[0]+x[1]+x[2]:
- *			e0 = ilogb(z)-23
- *			z  = scalbn(z,-e0)
+ *			e0 = fdlibm_ilogb(z)-23
+ *			z  = fdlibm_scalbn(z,-e0)
  *		for i = 0,1,2
- *			x[i] = floor(z)
+ *			x[i] = fdlibm_floor(z)
  *			z    = (z-x[i])*2**24
  *
  *
@@ -75,7 +75,7 @@
  *			ipio2[i] * 2^(-24(i+1)).
  *
  * External function:
- *	double scalbn(), floor();
+ *	double fdlibm_scalbn(), fdlibm_floor();
  *
  *
  * Here is the description of some local variables:
@@ -161,9 +161,9 @@ two24   =  1.67772160000000000000e+07, /* 0x41700000, 0x00000000 */
 twon24  =  5.96046447753906250000e-08; /* 0x3E700000, 0x00000000 */
 
 #ifdef __STDC__
-	int __kernel_rem_pio2(double *x, double *y, int e0, int nx, int prec, const int *ipio2) 
+	int __fdlibm_kernel_rem_pio2(double *x, double *y, int e0, int nx, int prec, const int *ipio2) 
 #else
-	int __kernel_rem_pio2(x,y,e0,nx,prec,ipio2) 	
+	int __fdlibm_kernel_rem_pio2(x,y,e0,nx,prec,ipio2) 	
 	double x[], y[]; int e0,nx,prec; int ipio2[];
 #endif
 {
@@ -198,8 +198,8 @@ recompute:
 	}
 
     /* compute n */
-	z  = scalbn(z,q0);		/* actual value of z */
-	z -= 8.0*floor(z*0.125);		/* trim off integer >= 8 */
+	z  = fdlibm_scalbn(z,q0);		/* actual value of z */
+	z -= 8.0*fdlibm_floor(z*0.125);		/* trim off integer >= 8 */
 	n  = (int) z;
 	z -= (double)n;
 	ih = 0;
@@ -231,7 +231,7 @@ recompute:
 	    }
 	    if(ih==2) {
 		z = one - z;
-		if(carry!=0) z -= scalbn(one,q0);
+		if(carry!=0) z -= fdlibm_scalbn(one,q0);
 	    }
 	}
 
@@ -257,7 +257,7 @@ recompute:
 	    jz -= 1; q0 -= 24;
 	    while(iq[jz]==0) { jz--; q0-=24;}
 	} else { /* break z into 24-bit if necessary */
-	    z = scalbn(z,-q0);
+	    z = fdlibm_scalbn(z,-q0);
 	    if(z>=two24) { 
 		fw = (double)((int)(twon24*z));
 		iq[jz] = (int)(z-two24*fw);
@@ -267,7 +267,7 @@ recompute:
 	}
 
     /* convert integer "bit" chunk to floating-point value */
-	fw = scalbn(one,q0);
+	fw = fdlibm_scalbn(one,q0);
 	for(i=jz;i>=0;i--) {
 	    q[i] = fw*(double)iq[i]; fw*=twon24;
 	}

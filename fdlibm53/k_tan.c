@@ -11,37 +11,37 @@
  */
 
 /* INDENT OFF */
-/* __kernel_tan( x, y, k )
- * kernel tan function on [-pi/4, pi/4], pi/4 ~ 0.7854
+/* __fdlibm_kernel_tan( x, y, k )
+ * kernel fdlibm_tan function on [-pi/4, pi/4], pi/4 ~ 0.7854
  * Input x is assumed to be bounded by ~pi/4 in magnitude.
  * Input y is the tail of x.
- * Input k indicates whether tan (if k = 1) or -1/tan (if k = -1) is returned.
+ * Input k indicates whether fdlibm_tan (if k = 1) or -1/fdlibm_tan (if k = -1) is returned.
  *
  * Algorithm
- *	1. Since tan(-x) = -tan(x), we need only to consider positive x.
+ *	1. Since fdlibm_tan(-x) = -fdlibm_tan(x), we need only to consider positive x.
  *	2. if x < 2^-28 (hx<0x3e300000 0), return x with inexact if x!=0.
- *	3. tan(x) is approximated by a odd polynomial of degree 27 on
+ *	3. fdlibm_tan(x) is approximated by a odd polynomial of degree 27 on
  *	   [0,0.67434]
  *		  	         3             27
- *	   	tan(x) ~ x + T1*x + ... + T13*x
+ *	   	fdlibm_tan(x) ~ x + T1*x + ... + T13*x
  *	   where
  *
- * 	        |tan(x)         2     4            26   |     -59.2
+ * 	        |fdlibm_tan(x)         2     4            26   |     -59.2
  * 	        |----- - (1+T1*x +T2*x +.... +T13*x    )| <= 2
  * 	        |  x 					|
  *
- *	   Note: tan(x+y) = tan(x) + tan'(x)*y
- *		          ~ tan(x) + (1+x*x)*y
- *	   Therefore, for better accuracy in computing tan(x+y), let
+ *	   Note: fdlibm_tan(x+y) = fdlibm_tan(x) + fdlibm_tan'(x)*y
+ *		          ~ fdlibm_tan(x) + (1+x*x)*y
+ *	   Therefore, for better accuracy in computing fdlibm_tan(x+y), let
  *		     3      2      2       2       2
  *		r = x *(T2+x *(T3+x *(...+x *(T12+x *T13))))
  *	   then
  *		 		    3    2
- *		tan(x+y) = x + (T1*x + (x *(r+y)+y))
+ *		fdlibm_tan(x+y) = x + (T1*x + (x *(r+y)+y))
  *
  *      4. For x in [0.67434,pi/4],  let y = pi/4 - x, then
- *		tan(x) = tan(pi/4-y) = (1-tan(y))/(1+tan(y))
- *		       = 1 - 2*(tan(y) - (tan(y)^2)/(1+tan(y)))
+ *		fdlibm_tan(x) = fdlibm_tan(pi/4-y) = (1-fdlibm_tan(y))/(1+fdlibm_tan(y))
+ *		       = 1 - 2*(fdlibm_tan(y) - (fdlibm_tan(y)^2)/(1+fdlibm_tan(y)))
  */
 
 #include "fdlibm.h"
@@ -71,16 +71,16 @@ static const double xxx[] = {
 /* INDENT ON */
 
 double
-__kernel_tan(double x, double y, int iy) {
+__fdlibm_kernel_tan(double x, double y, int iy) {
 	double z, r, v, w, s;
 	int ix, hx;
 
-	hx = __HI(x);		/* high word of x */
+	hx = __FDLIBM_HI(x);		/* high word of x */
 	ix = hx & 0x7fffffff;			/* high word of |x| */
 	if (ix < 0x3e300000) {			/* x < 2**-28 */
 		if ((int) x == 0) {		/* generate inexact */
-			if (((ix | __LO(x)) | (iy + 1)) == 0)
-				return one / fabs(x);
+			if (((ix | __FDLIBM_LO(x)) | (iy + 1)) == 0)
+				return one / fdlibm_fabs(x);
 			else {
 				if (iy == 1)
 					return x;
@@ -88,10 +88,10 @@ __kernel_tan(double x, double y, int iy) {
 					double a, t;
 
 					z = w = x + y;
-					__LO(z) = 0;
+					__FDLIBM_LO(z) = 0;
 					v = y - (z - x);
 					t = a = -one / w;
-					__LO(t) = 0;
+					__FDLIBM_LO(t) = 0;
 					s = one + t * z;
 					return t + a * (s + t * v);
 				}
@@ -138,10 +138,10 @@ __kernel_tan(double x, double y, int iy) {
 		/* compute -1.0 / (x+r) accurately */
 		double a, t;
 		z = w;
-		__LO(z) = 0;
+		__FDLIBM_LO(z) = 0;
 		v = r - (z - x);	/* z+v = r+x */
 		t = a = -1.0 / w;	/* a = -1.0/w */
-		__LO(t) = 0;
+		__FDLIBM_LO(t) = 0;
 		s = 1.0 + t * z;
 		return t + a * (s + t * v);
 	}

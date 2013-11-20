@@ -15,14 +15,14 @@
 #include <errno.h>
 
 #ifdef __STDC__
-	double ldexp(double value, int exp)
+	double fdlibm_ldexp(double value, int fdlibm_exp)
 #else
-	double ldexp(value, exp)
-	double value; int exp;
+	double fdlibm_ldexp(value, fdlibm_exp)
+	double value; int fdlibm_exp;
 #endif
 {
-	if(!finite(value)||value==0.0) return value;
-	value = scalbn(value,exp);
-	if(!finite(value)||value==0.0) errno = ERANGE;
+	if(!fdlibm_finite(value)||value==0.0) return value;
+	value = fdlibm_scalbn(value,fdlibm_exp);
+	if(!fdlibm_finite(value)||value==0.0) errno = ERANGE;
 	return value;
 }

@@ -11,28 +11,28 @@
  * ====================================================
  */
 
-/* __ieee754_acos(x)
+/* __fdlibm_ieee754_acos(x)
  * Method :                  
- *	acos(x)  = pi/2 - asin(x)
- *	acos(-x) = pi/2 + asin(x)
+ *	fdlibm_acos(x)  = pi/2 - fdlibm_asin(x)
+ *	fdlibm_acos(-x) = pi/2 + fdlibm_asin(x)
  * For |x|<=0.5
- *	acos(x) = pi/2 - (x + x*x^2*R(x^2))	(see asin.c)
+ *	fdlibm_acos(x) = pi/2 - (x + x*x^2*R(x^2))	(see fdlibm_asin.c)
  * For x>0.5
- * 	acos(x) = pi/2 - (pi/2 - 2asin(sqrt((1-x)/2)))
- *		= 2asin(sqrt((1-x)/2))  
- *		= 2s + 2s*z*R(z) 	...z=(1-x)/2, s=sqrt(z)
+ * 	fdlibm_acos(x) = pi/2 - (pi/2 - 2asin(fdlibm_sqrt((1-x)/2)))
+ *		= 2asin(fdlibm_sqrt((1-x)/2))  
+ *		= 2s + 2s*z*R(z) 	...z=(1-x)/2, s=fdlibm_sqrt(z)
  *		= 2f + (2c + 2s*z*R(z))
  *     where f=hi part of s, and c = (z-f*f)/(s+f) is the correction term
- *     for f so that f+c ~ sqrt(z).
+ *     for f so that f+c ~ fdlibm_sqrt(z).
  * For x<-0.5
- *	acos(x) = pi - 2asin(sqrt((1-|x|)/2))
- *		= pi - 0.5*(s+s*z*R(z)), where z=(1-|x|)/2,s=sqrt(z)
+ *	fdlibm_acos(x) = pi - 2asin(fdlibm_sqrt((1-|x|)/2))
+ *		= pi - 0.5*(s+s*z*R(z)), where z=(1-|x|)/2,s=fdlibm_sqrt(z)
  *
  * Special cases:
  *	if x is NaN, return x itself;
  *	if |x|>1, return NaN with invalid signal.
  *
- * Function needed: sqrt
+ * Function needed: fdlibm_sqrt
  */
 
 #include "fdlibm.h"
@@ -58,22 +58,22 @@ qS3 = -6.88283971605453293030e-01, /* 0xBFE6066C, 0x1B8D0159 */
 qS4 =  7.70381505559019352791e-02; /* 0x3FB3B8C5, 0xB12E9282 */
 
 #ifdef __STDC__
-	double __ieee754_acos(double x)
+	double __fdlibm_ieee754_acos(double x)
 #else
-	double __ieee754_acos(x)
+	double __fdlibm_ieee754_acos(x)
 	double x;
 #endif
 {
 	double z,p,q,r,w,s,c,df;
 	int hx,ix;
-	hx = __HI(x);
+	hx = __FDLIBM_HI(x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x3ff00000) {	/* |x| >= 1 */
-	    if(((ix-0x3ff00000)|__LO(x))==0) {	/* |x|==1 */
-		if(hx>0) return 0.0;		/* acos(1) = 0  */
-		else return pi+2.0*pio2_lo;	/* acos(-1)= pi */
+	    if(((ix-0x3ff00000)|__FDLIBM_LO(x))==0) {	/* |x|==1 */
+		if(hx>0) return 0.0;		/* fdlibm_acos(1) = 0  */
+		else return pi+2.0*pio2_lo;	/* fdlibm_acos(-1)= pi */
 	    }
-	    return (x-x)/(x-x);		/* acos(|x|>1) is NaN */
+	    return (x-x)/(x-x);		/* fdlibm_acos(|x|>1) is NaN */
 	}
 	if(ix<0x3fe00000) {	/* |x| < 0.5 */
 	    if(ix<=0x3c600000) return pio2_hi+pio2_lo;/*if|x|<2**-57*/
@@ -86,15 +86,15 @@ qS4 =  7.70381505559019352791e-02; /* 0x3FB3B8C5, 0xB12E9282 */
 	    z = (one+x)*0.5;
 	    p = z*(pS0+z*(pS1+z*(pS2+z*(pS3+z*(pS4+z*pS5)))));
 	    q = one+z*(qS1+z*(qS2+z*(qS3+z*qS4)));
-	    s = sqrt(z);
+	    s = fdlibm_sqrt(z);
 	    r = p/q;
 	    w = r*s-pio2_lo;
 	    return pi - 2.0*(s+w);
 	} else {			/* x > 0.5 */
 	    z = (one-x)*0.5;
-	    s = sqrt(z);
+	    s = fdlibm_sqrt(z);
 	    df = s;
-	    __LO(df) = 0;
+	    __FDLIBM_LO(df) = 0;
 	    c  = (z-df*df)/(s+df);
 	    p = z*(pS0+z*(pS1+z*(pS2+z*(pS3+z*(pS4+z*pS5)))));
 	    q = one+z*(qS1+z*(qS2+z*(qS3+z*qS4)));
