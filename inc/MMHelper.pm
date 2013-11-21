@@ -7,24 +7,61 @@ use Config;
 use Cwd qw( abs_path );
 use File::Basename qw( dirname );
 use Config::AutoConf;
+use File::Temp;
+use ExtUtils::CBuilder;
 
 sub ccflags_dyn {
     my $is_dev = shift;
 
     my $ac = Config::AutoConf->new();
+    #
+    # Check headers
+    #
     $ac->check_header('sys/types.h');
     $ac->check_header('sys/config.h');
-    $ac->check_sizeof_type('double');
-    if ($ac->cache_val('ac_cv_sizeof_C_double') == 4) {
-	ac->define_var('_DOUBLE_IS_32BITS', 1);
+    #
+    # Check if double is 32 bits (bad luck...)
+    #
+    if ($ac->check_sizeof_type('double') == 4) {
+	$ac->define_var('_DOUBLE_IS_32BITS', 1);
 	warn "Double is 32 bits - the build will very likely fail";
     }
+    #
+    # Check Endian-ness
+    #
     my $is_little_endian = (unpack("h*", pack("s", 1)) =~ /^1/);   # C.f. perlport
     if ($is_little_endian) {
-	ac->define_var('__IEEE_LITTLE_ENDIAN', 1);
+	$ac->define_var('__IEEE_LITTLE_ENDIAN', 1);
     } else {
-	ac->define_var('__IEEE_BIG_ENDIAN', 1);
+	$ac->define_var('__IEEE_BIG_ENDIAN', 1);
     }
+    #
+    # Check right-shift signed-ness
+    #
+    $ac->msg_checking('right-shift signed-ness');
+    my $prologue = "#include <stddef.h>\n#include <stdio.h>";
+    my $program = <<PROGRAM;
+  signed char c = 0x97;
+  c >> 1;
+  if ((c & 0x80) == 0x80) {
+    printf("Signed shift");
+  } else {
+    printf("Unsigned shift");
+  }
+PROGRAM
+    my $source = $ac->lang_build_program($prologue, $program);
+    my $c = File::Temp->new(UNLINK => 0, SUFFIX => '.c');
+    print $c $source;
+    close($c);
+    my $b = ExtUtils::CBuilder->new(quiet => 1);
+    my $obj_file = $b->compile(source => $c);
+    my $exe_file = $b->link_executable(objects => [ $obj_file ]);
+    my $output = `$exe_file`;
+    $ac->msg_result($output);
+    if ($output eq 'Unsigned shift') {
+	$ac->define_var('Unsigned_Shifts', 1);
+    }
+
     $ac->write_config_h('config.h');
     my $ccflags = q<( $Config::Config{ccflags} || '' ) . ' -Ifdlibm53 '>;
 
