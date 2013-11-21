@@ -11,10 +11,22 @@ use Config::AutoConf;
 sub ccflags_dyn {
     my $is_dev = shift;
 
+    my $ac = Config::AutoConf->new();
+    $ac->check_header('sys/types.h');
+    $ac->check_header('sys/config.h');
+    $ac->check_sizeof_type('double');
+    if ($ac->cache_val('ac_cv_sizeof_C_double') == 4) {
+	ac->define_var('_DOUBLE_IS_32BITS', 1);
+	warn "Double is 32 bits - the build will very likely fail";
+    }
     my $is_little_endian = (unpack("h*", pack("s", 1)) =~ /^1/);   # C.f. perlport
-    my $ccflags = $is_little_endian ? 
-	q<( $Config::Config{ccflags} || '' ) . ' -Ifdlibm53 -D_IEEE_LIBM'> :
-	q<( $Config::Config{ccflags} || '' ) . ' -Ifdlibm53 -D_IEEE_LIBM -D__LITTLE_ENDIAN'>;
+    if ($is_little_endian) {
+	ac->define_var('__IEEE_LITTLE_ENDIAN', 1);
+    } else {
+	ac->define_var('__IEEE_BIG_ENDIAN', 1);
+    }
+    $ac->write_config_h('config.h');
+    my $ccflags = q<( $Config::Config{ccflags} || '' ) . ' -Ifdlibm53 '>;
 
     return $ccflags;
 }

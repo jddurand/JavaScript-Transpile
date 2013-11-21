@@ -22,6 +22,8 @@
 
 #include "fdlibm.h"
 
+#ifndef _DOUBLE_IS_32BITS
+
 #ifdef __STDC__
 static const double huge = 1.0e300;
 #else
@@ -35,10 +37,9 @@ static double huge = 1.0e300;
 	double x;
 #endif
 {
-	int i0,i1,fdlibm_j0;
-	unsigned i,j;
-	i0 =  __FDLIBM_HI(x);
-	i1 =  __FDLIBM_LO(x);
+	int32_t i0,i1,fdlibm_j0;
+	uint32_t i,j;
+	EXTRACT_WORDS(i0,i1,x);
 	fdlibm_j0 = ((i0>>20)&0x7ff)-0x3ff;
 	if(fdlibm_j0<20) {
 	    if(fdlibm_j0<0) { 	/* raise inexact if x != 0 */
@@ -59,21 +60,21 @@ static double huge = 1.0e300;
 	    if(fdlibm_j0==0x400) return x+x;	/* inf or NaN */
 	    else return x;		/* x is integral */
 	} else {
-	    i = ((unsigned)(0xffffffff))>>(fdlibm_j0-20);
+	    i = ((uint32_t)(0xffffffff))>>(fdlibm_j0-20);
 	    if((i1&i)==0) return x;	/* x is integral */
 	    if(huge+x>0.0) { 		/* raise inexact flag */
 		if(i0<0) {
 		    if(fdlibm_j0==20) i0+=1; 
 		    else {
 			j = i1+(1<<(52-fdlibm_j0));
-			if(j<i1) i0 +=1 ; 	/* got a carry */
+			if(j<(uint32_t)i1) i0 +=1 ; 	/* got a carry */
 			i1=j;
 		    }
 		}
 		i1 &= (~i);
 	    }
 	}
-	__FDLIBM_HI(x) = i0;
-	__FDLIBM_LO(x) = i1;
+	INSERT_WORDS(x,i0,i1);
 	return x;
 }
+#endif /* _DOUBLE_IS_32BITS */

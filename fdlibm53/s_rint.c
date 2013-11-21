@@ -23,6 +23,8 @@
 
 #include "fdlibm.h"
 
+#ifndef _DOUBLE_IS_32BITS
+
 #ifdef __STDC__
 static const double
 #else
@@ -40,12 +42,12 @@ TWO52[2]={
 	double x;
 #endif
 {
-	int i0,fdlibm_j0,sx;
-	unsigned i,i1;
-	double w,t;
-	i0 =  __FDLIBM_HI(x);
+	int32_t i0,fdlibm_j0,sx;
+	uint32_t i,i1;
+	double t;
+	volatile double w;
+	EXTRACT_WORDS(i0,i1,x);
 	sx = (i0>>31)&1;
-	i1 =  __FDLIBM_LO(x);
 	fdlibm_j0 = ((i0>>20)&0x7ff)-0x3ff;
 	if(fdlibm_j0<20) {
 	    if(fdlibm_j0<0) { 	
@@ -53,11 +55,11 @@ TWO52[2]={
 		i1 |= (i0&0x0fffff);
 		i0 &= 0xfffe0000;
 		i0 |= ((i1|-i1)>>12)&0x80000;
-		__FDLIBM_HI(x)=i0;
+		SET_HIGH_WORD(x,i0);
 	        w = TWO52[sx]+x;
 	        t =  w-TWO52[sx];
-	        i0 = __FDLIBM_HI(t);
-	        __FDLIBM_HI(t) = (i0&0x7fffffff)|(sx<<31);
+		GET_HIGH_WORD(i0,t);
+		SET_HIGH_WORD(t,(i0&0x7fffffff)|(sx<<31));
 	        return t;
 	    } else {
 		i = (0x000fffff)>>fdlibm_j0;
@@ -72,13 +74,13 @@ TWO52[2]={
 	    if(fdlibm_j0==0x400) return x+x;	/* inf or NaN */
 	    else return x;		/* x is integral */
 	} else {
-	    i = ((unsigned)(0xffffffff))>>(fdlibm_j0-20);
+	    i = ((uint32_t)(0xffffffff))>>(fdlibm_j0-20);
 	    if((i1&i)==0) return x;	/* x is integral */
 	    i>>=1;
 	    if((i1&i)!=0) i1 = (i1&(~i))|((0x40000000)>>(fdlibm_j0-20));
 	}
-	__FDLIBM_HI(x) = i0;
-	__FDLIBM_LO(x) = i1;
+	INSERT_WORDS(x,i0,i1);
 	w = TWO52[sx]+x;
 	return w-TWO52[sx];
 }
+#endif /* _DOUBLE_IS_32BITS */

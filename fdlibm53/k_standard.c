@@ -27,7 +27,7 @@
 static double zero = 0.0;	/* used as const */
 
 /* 
- * Standard conformance (non-IEEE) on exception cases.
+ * Standard conformance (non-IEEE) on fdlibm_exception cases.
  * Mapping:
  *	1 -- fdlibm_acos(|x|>1)
  *	2 -- fdlibm_asin(|x|>1)

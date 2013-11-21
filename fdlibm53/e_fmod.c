@@ -19,6 +19,8 @@
 
 #include "fdlibm.h"
 
+#ifndef _DOUBLE_IS_32BITS
+
 #ifdef __STDC__
 static const double one = 1.0, Zero[] = {0.0, -0.0,};
 #else
@@ -32,25 +34,23 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 	double x,y ;
 #endif
 {
-	int n,hx,hy,hz,ix,iy,sx,i;
-	unsigned lx,ly,lz;
+	int32_t n,hx,hy,hz,ix,iy,sx,i;
+	uint32_t lx,ly,lz;
 
-	hx = __FDLIBM_HI(x);		/* high word of x */
-	lx = __FDLIBM_LO(x);		/* low  word of x */
-	hy = __FDLIBM_HI(y);		/* high word of y */
-	ly = __FDLIBM_LO(y);		/* low  word of y */
+	EXTRACT_WORDS(hx,lx,x);
+	EXTRACT_WORDS(hy,ly,y);
 	sx = hx&0x80000000;		/* sign of x */
 	hx ^=sx;		/* |x| */
 	hy &= 0x7fffffff;	/* |y| */
 
-    /* purge off exception values */
+    /* purge off fdlibm_exception values */
 	if((hy|ly)==0||(hx>=0x7ff00000)||	/* y=0,or x not fdlibm_finite */
 	  ((hy|((ly|-ly)>>31))>0x7ff00000))	/* or y is NaN */
 	    return (x*y)/(x*y);
 	if(hx<=hy) {
 	    if((hx<hy)||(lx<ly)) return x;	/* |x|<|y| return x */
 	    if(lx==ly) 
-		return Zero[(unsigned)sx>>31];	/* |x|=|y| return x*0*/
+		return Zero[(uint32_t)sx>>31];	/* |x|=|y| return x*0*/
 	}
 
     /* determine ix = fdlibm_ilogb(x) */
@@ -104,7 +104,7 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 	    if(hz<0){hx = hx+hx+(lx>>31); lx = lx+lx;}
 	    else {
 	    	if((hz|lz)==0) 		/* return sign(x)*0 */
-		    return Zero[(unsigned)sx>>31];
+		    return Zero[(uint32_t)sx>>31];
 	    	hx = hz+hz+(lz>>31); lx = lz+lz;
 	    }
 	}
@@ -120,21 +120,20 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 	}
 	if(iy>= -1022) {	/* normalize output */
 	    hx = ((hx-0x00100000)|((iy+1023)<<20));
-	    __FDLIBM_HI(x) = hx|sx;
-	    __FDLIBM_LO(x) = lx;
+	    INSERT_WORDS(x,hx|sx,lx);
 	} else {		/* subnormal output */
 	    n = -1022 - iy;
 	    if(n<=20) {
-		lx = (lx>>n)|((unsigned)hx<<(32-n));
+		lx = (lx>>n)|((uint32_t)hx<<(32-n));
 		hx >>= n;
 	    } else if (n<=31) {
 		lx = (hx<<(32-n))|(lx>>n); hx = sx;
 	    } else {
 		lx = hx>>(n-32); hx = sx;
 	    }
-	    __FDLIBM_HI(x) = hx|sx;
-	    __FDLIBM_LO(x) = lx;
+	    INSERT_WORDS(x,hx|sx,lx);
 	    x *= one;		/* create necessary signal */
 	}
 	return x;		/* exact output */
 }
+#endif /* defined(_DOUBLE_IS_32BITS) */

@@ -22,6 +22,8 @@
 
 #include "fdlibm.h"
 
+#ifndef _DOUBLE_IS_32BITS
+
 #ifdef __STDC__
 static const double zero = 0.0;
 #else
@@ -36,19 +38,17 @@ static double zero = 0.0;
 	double x,p;
 #endif
 {
-	int hx,hp;
-	unsigned sx,lx,lp;
+	int32_t hx,hp;
+	uint32_t sx,lx,lp;
 	double p_half;
 
-	hx = __FDLIBM_HI(x);		/* high word of x */
-	lx = __FDLIBM_LO(x);		/* low  word of x */
-	hp = __FDLIBM_HI(p);		/* high word of p */
-	lp = __FDLIBM_LO(p);		/* low  word of p */
+	EXTRACT_WORDS(hx,lx,x);
+	EXTRACT_WORDS(hp,lp,p);
 	sx = hx&0x80000000;
 	hp &= 0x7fffffff;
 	hx &= 0x7fffffff;
 
-    /* purge off exception values */
+    /* purge off fdlibm_exception values */
 	if((hp|lp)==0) return (x*p)/(x*p); 	/* p = 0 */
 	if((hx>=0x7ff00000)||			/* x not fdlibm_finite */
 	  ((hp>=0x7ff00000)&&			/* p is NaN */
@@ -72,6 +72,8 @@ static double zero = 0.0;
 		if(x>=p_half) x -= p;
 	    }
 	}
-	__FDLIBM_HI(x) ^= sx;
+	GET_HIGH_WORD(hx,x);
+	SET_HIGH_WORD(x,hx ^ sx);
 	return x;
 }
+#endif /* defined(_DOUBLE_IS_32BITS) */

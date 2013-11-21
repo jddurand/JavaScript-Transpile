@@ -345,7 +345,7 @@ The name and version of the module you were trying to build.
 
 =item 4.
 
-A full log of the build that failed.
+A full fdlibm_log of the build that failed.
 
 =item 5.
 
