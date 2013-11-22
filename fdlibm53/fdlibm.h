@@ -86,6 +86,9 @@ extern int fdlibm_signgam;
 enum fdlibm_fdversion {fdlibm_ieee = -1, fdlibm_svid, fdlibm_xopen, fdlibm_posix};
 
 #define _FDLIBM_LIB_VERSION_TYPE enum fdlibm_fdversion
+/* For pure convenience because we are building a shared lib, propagate
+   the fixed version in this macro */
+static int _fdlib_version = fdlibm_ieee;
 #define _FDLIBM_LIB_VERSION _fdlib_version  
 
 /* if global variable _FDLIBM_LIB_VERSION is not desirable, one may 
