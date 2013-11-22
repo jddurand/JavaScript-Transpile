@@ -7,40 +7,48 @@ use Config;
 use Cwd qw( abs_path );
 use File::Basename qw( dirname );
 use Config::AutoConf;
+use File::Spec;
 use File::Temp;
 use ExtUtils::CBuilder;
+
+our $FDLIBMDIR = 'fdlibm53';
+
 
 sub ccflags_dyn {
     my $is_dev = shift;
 
-    my $ac = Config::AutoConf->new();
     #
-    # Check headers
-    #
-    $ac->check_header('sys/types.h');
-    $ac->check_header('sys/config.h');
-    #
-    # Check if double is 32 bits (bad luck...)
-    #
-    if ($ac->check_sizeof_type('double') == 4) {
-	$ac->define_var('_DOUBLE_IS_32BITS', 1);
-	warn "Double is 32 bits - the build will very likely fail";
-    }
-    #
-    # Check Endian-ness
-    #
-    my $is_little_endian = (unpack("h*", pack("s", 1)) =~ /^1/);   # C.f. perlport
-    if ($is_little_endian) {
-	$ac->define_var('__IEEE_LITTLE_ENDIAN', 1);
-    } else {
-	$ac->define_var('__IEEE_BIG_ENDIAN', 1);
-    }
-    #
-    # Check right-shift signed-ness
-    #
-    $ac->msg_checking('right-shift signed-ness');
-    my $prologue = "#include <stddef.h>\n#include <stdio.h>";
-    my $program = <<PROGRAM;
+    # config.h
+    # --------
+    {
+	my $ac = Config::AutoConf->new();
+	#
+	# Check headers
+	#
+	$ac->check_header('sys/types.h');
+	$ac->check_header('sys/config.h');
+	#
+	# Check if double is 32 bits (bad luck...)
+	#
+	if ($ac->check_sizeof_type('double') == 4) {
+	    $ac->define_var('_DOUBLE_IS_32BITS', 1);
+	    warn "Double is 32 bits - the build will very likely fail";
+	}
+	#
+	# Check Endian-ness
+	#
+	my $is_little_endian = (unpack("h*", pack("s", 1)) =~ /^1/);   # C.f. perlport
+	if ($is_little_endian) {
+	    $ac->define_var('__IEEE_LITTLE_ENDIAN', 1);
+	} else {
+	    $ac->define_var('__IEEE_BIG_ENDIAN', 1);
+	}
+	#
+	# Check right-shift signed-ness
+	#
+	$ac->msg_checking('right-shift signed-ness');
+	my $prologue = "#include <stddef.h>\n#include <stdio.h>";
+	my $program = <<PROGRAM;
   signed char c = 0x97;
   c >> 1;
   if ((c & 0x80) == 0x80) {
@@ -49,20 +57,36 @@ sub ccflags_dyn {
     printf("Unsigned shift");
   }
 PROGRAM
-    my $source = $ac->lang_build_program($prologue, $program);
-    my $c = File::Temp->new(UNLINK => 0, SUFFIX => '.c');
-    print $c $source;
-    close($c);
-    my $b = ExtUtils::CBuilder->new(quiet => 1);
-    my $obj_file = $b->compile(source => $c);
-    my $exe_file = $b->link_executable(objects => [ $obj_file ]);
-    my $output = `$exe_file`;
-    $ac->msg_result($output);
-    if ($output eq 'Unsigned shift') {
-	$ac->define_var('Unsigned_Shifts', 1);
+        my $source = $ac->lang_build_program($prologue, $program);
+	my $c = File::Temp->new(UNLINK => 0, SUFFIX => '.c');
+	print $c $source;
+	close($c);
+	my $b = ExtUtils::CBuilder->new(quiet => 1);
+	my $obj_file = $b->compile(source => $c);
+	my $exe_file = $b->link_executable(objects => [ $obj_file ]);
+	my $output = `$exe_file`;
+	$ac->msg_result($output);
+	if ($output eq 'Unsigned shift') {
+	    $ac->define_var('Unsigned_Shifts', 1);
+	}
+	$ac->write_config_h(File::Spec->catfile($FDLIBMDIR, 'config.h'));
     }
-
-    $ac->write_config_h('config.h');
+    #
+    # config-int.h
+    #
+    {
+	my $ac = Config::AutoConf->new();
+	#
+	# Check headers
+	#
+	my $ac_cv_header_stdint = '';
+	foreach (qw<inttypes.h sys/inttypes.h sys/int_types.h stdint.h>) {
+	    if ($ac->check_type('uint32_t', undef, undef, "#include <$_>")) {
+		$ac_cv_header_stdint = $_;
+		last;
+	    }
+	}
+    }
     my $ccflags = q<( $Config::Config{ccflags} || '' ) . ' -Ifdlibm53 '>;
 
     return $ccflags;
@@ -77,7 +101,7 @@ sub ccflags_static {
 sub mm_args {
     my ( @object, %xs );
 
-    for my $xs ( glob "fdlibm53/*.xs" ) {
+    for my $xs ( glob "$FDLIBMDIR/*.xs" ) {
         ( my $c = $xs ) =~ s/\.xs$/.c/i;
         ( my $o = $xs ) =~ s/\.xs$/\$(OBJ_EXT)/i;
 
@@ -85,7 +109,7 @@ sub mm_args {
         push @object, $o;
     }
 
-    for my $c ( glob "fdlibm53/*.c" ) {
+    for my $c ( glob "$FDLIBMDIR/*.c" ) {
         ( my $o = $c ) =~ s/\.c$/\$(OBJ_EXT)/i;
         push @object, $o;
     }
