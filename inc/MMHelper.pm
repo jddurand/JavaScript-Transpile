@@ -54,7 +54,6 @@ use Config::AutoConf;
 use File::Spec;
 use File::Temp;
 use ExtUtils::CBuilder;
-use IPC::Cmd qw/run/;
 
 sub post_initialize {
     my $FDLIBMDIR = 'fdlibm53';
@@ -63,18 +62,33 @@ sub post_initialize {
     #
     my $gcc = 0;
     {
-      my $ac = Config::AutoConf->new();
-      if ($ac->check_cc()) {
-        $ac->msg_checking('if compiler is gcc');
-        my @cmd = ($Config{cc}, '--version');
-        my ($success, $error_code, $full_buf, $stdout_buf, $stderr_buf ) = run(command => [ @cmd ], verbose => 0 );
-        if ($success) {
-          if (index("@{$stdout_buf}", 'gcc') == 0) {
-            $gcc = 1;
-          }
-        }
-        $ac->msg_result($gcc ? 'yes' : 'no');
-      }
+	my $ac = Config::AutoConf->new();
+	if ($ac->check_cc()) {
+	    $ac->msg_checking('if compiler is gcc');
+
+	    my $prologue = "#include <stddef.h>\n#include <stdio.h>";
+	    my $yes = 'yes, very probably';
+	    my $no = 'no';
+	    my $program = <<PROGRAM;
+#if (defined(__GNUC__) || defined(__GNUG__)) && !(defined(__clang__) || defined(__INTEL_COMPILER))
+  printf("$yes");
+#else
+  printf("$no");
+#endif
+PROGRAM
+    my $source = $ac->lang_build_program($prologue, $program);
+	    my $c = File::Temp->new(UNLINK => 0, SUFFIX => '.c');
+	    print $c $source;
+	    close($c);
+	    my $b = ExtUtils::CBuilder->new(quiet => 1);
+	    my $obj_file = $b->compile(source => $c);
+	    my $exe_file = $b->link_executable(objects => [ $obj_file ]);
+	    my $output = `$exe_file`;
+	    $ac->msg_result($output);
+	    if ($output eq $yes) {
+		$gcc = 1;
+	    }
+	}
     }
     #
     # config.h
@@ -87,7 +101,7 @@ sub post_initialize {
 	$ac->check_header('sys/types.h');
 	$ac->check_header('sys/config.h');
         if ($gcc) {
-          $ac->msg_notice('let ieeefp.h do all platform configuration');
+          $ac->msg_notice('gcc detected, so let ieeefp.h do all platform configuration');
           #
           # We let ieeefp.h do all the work
           #
