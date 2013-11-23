@@ -59,6 +59,7 @@ sub post_initialize {
     my $FDLIBMDIR = 'fdlibm53';
     #
     # Check if we have a running C compiler and if this is GCC
+    # C.f. http://nadeausoftware.com/articles/2012/10/c_c_tip_how_detect_compiler_name_and_version_using_compiler_predefined_macros
     #
     my $gcc = 0;
     {
