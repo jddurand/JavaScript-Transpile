@@ -278,12 +278,12 @@ extern double rnd_prod(double, double), rnd_quot(double, double);
 #define MAX_BIGNUM_WDS 128
 #endif
 
-struct _Jv_Bigint
+typedef struct _Jv_Bigint
 {
   struct _Jv_Bigint *_next;
   int _k, _maxwds, _sign, _wds;
-  unsigned long _x[1];
-};
+  unsigned long int _x[1];
+} _Jv_Bigint;
 
 
 #define	_PTR		void *
@@ -302,7 +302,7 @@ struct _Jv_Bigint
 #define _CAST_VOID (void)
 
 
-struct _Jv_reent
+typedef struct _Jv_reent
 {
   /* local copy of errno */
   int _errno;
@@ -314,10 +314,8 @@ struct _Jv_reent
 
   struct _Jv_Bigint **_freelist;
   int _max_k;
-};
+} _Jv_reent;
 
-
-typedef struct _Jv_Bigint _Jv_Bigint;
 
 #define Balloc  _Jv_Balloc
 #define Bfree   _Jv_Bfree
