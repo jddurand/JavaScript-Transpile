@@ -1,4 +1,31 @@
+_Jv_Bigint					T_OPAQUE_STRUCT
+_Jv_Bigint *					T_PTROBJ
+_Jv_reent					T_OPAQUE_STRUCT
+_Jv_reent *					T_PTROBJ
+const char *					T_PTROBJ
 const int *					T_PTROBJ
 double *					T_PTROBJ
 int *						T_PTROBJ
+long long int					T_PTROBJ
 struct fdlibm_exception *			T_PTROBJ
+struct _Jv_Bigint *				T_PTROBJ
+struct _Jv_Bigint **				T_PTROBJ
+struct _Jv_reent *				T_PTROBJ
+#############################################################################
+INPUT
+T_OPAQUE_STRUCT
+	if (sv_derived_from($arg, \"${ntype}\")) {
+	    STRLEN len;
+	    char  *s = SvPV((SV*)SvRV($arg), len);
+
+	    if (len != sizeof($var))
+		croak(\"Size %d of packed data != expected %d\",
+			len, sizeof($var));
+	    $var = *($type *)s;
+	}
+	else
+	    croak(\"$var is not of type ${ntype}\")
+#############################################################################
+OUTPUT
+T_OPAQUE_STRUCT
+	sv_setref_pvn($arg, \"${ntype}\", (char *)&$var, sizeof($var));
