@@ -88,6 +88,7 @@ PROGRAM
 	    if ($output eq $yes) {
 		$gcc = 1;
 	    }
+	    unlink($c) || warn "Cannot unlink $c, $!";
 	}
     }
     #
@@ -150,6 +151,7 @@ PROGRAM
           if ($output eq 'Unsigned shift') {
 	    $ac->define_var('Unsigned_Shifts', 1);
           }
+	  unlink($c) || warn "Cannot unlink $c, $!";
         }
         my $output = File::Spec->catfile($FDLIBMDIR, 'config.h');
         $ac->msg_notice("creating $output");
