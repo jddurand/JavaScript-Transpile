@@ -37,91 +37,35 @@ our %EXPORT_TAGS = ( 'all' => [ qw(
 	_FDLIBM_POSIX_
 	_FDLIBM_SVID_
 	_FDLIBM_XOPEN_
-	__fdlibm_ieee754_acos
-	__fdlibm_ieee754_acosh
-	__fdlibm_ieee754_asin
-	__fdlibm_ieee754_atan2
-	__fdlibm_ieee754_atanh
-	__fdlibm_ieee754_cosh
-	__fdlibm_ieee754_exp
-	__fdlibm_ieee754_fmod
-	__fdlibm_ieee754_gamma
-	__fdlibm_ieee754_gamma_r
-	__fdlibm_ieee754_hypot
-	__fdlibm_ieee754_j0
-	__fdlibm_ieee754_j1
-	__fdlibm_ieee754_jn
-	__fdlibm_ieee754_lgamma
-	__fdlibm_ieee754_lgamma_r
-	__fdlibm_ieee754_log
-	__fdlibm_ieee754_log10
-	__fdlibm_ieee754_pow
-	__fdlibm_ieee754_rem_pio2
-	__fdlibm_ieee754_remainder
-	__fdlibm_ieee754_scalb
-	__fdlibm_ieee754_sinh
-	__fdlibm_ieee754_sqrt
-	__fdlibm_ieee754_y0
-	__fdlibm_ieee754_y1
-	__fdlibm_ieee754_yn
-	__fdlibm_kernel_cos
-	__fdlibm_kernel_rem_pio2
-	__fdlibm_kernel_sin
-	__fdlibm_kernel_standard
-	__fdlibm_kernel_tan
 	fdlibm_acos
-	fdlibm_acosh
 	fdlibm_asin
-	fdlibm_asinh
 	fdlibm_atan
 	fdlibm_atan2
-	fdlibm_atanh
 	fdlibm_cbrt
 	fdlibm_ceil
 	fdlibm_copysign
 	fdlibm_cos
 	fdlibm_cosh
-	fdlibm_erf
-	fdlibm_erfc
 	fdlibm_exp
 	fdlibm_expm1
 	fdlibm_fabs
 	fdlibm_finite
 	fdlibm_floor
 	fdlibm_fmod
-	fdlibm_frexp
-	fdlibm_gamma
-	fdlibm_gamma_r
 	fdlibm_hypot
-	fdlibm_ilogb
 	fdlibm_isnan
-	fdlibm_j0
-	fdlibm_j1
-	fdlibm_jn
-	fdlibm_ldexp
-	fdlibm_lgamma
-	fdlibm_lgamma_r
 	fdlibm_log
 	fdlibm_log10
 	fdlibm_log1p
-	fdlibm_logb
-	fdlibm_matherr
-	fdlibm_modf
-	fdlibm_nextafter
 	fdlibm_pow
 	fdlibm_remainder
 	fdlibm_rint
-	fdlibm_scalb
 	fdlibm_scalbn
-	fdlibm_significand
 	fdlibm_sin
 	fdlibm_sinh
 	fdlibm_sqrt
 	fdlibm_tan
 	fdlibm_tanh
-	fdlibm_y0
-	fdlibm_y1
-	fdlibm_yn
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
@@ -210,93 +154,35 @@ None by default.
 
 =head2 Exportable functions
 
-  double __fdlibm_ieee754_acos (double)
-  double __fdlibm_ieee754_acosh (double)
-  double __fdlibm_ieee754_asin (double)
-  double __fdlibm_ieee754_atan2 (double,double)
-  double __fdlibm_ieee754_atanh (double)
-  double __fdlibm_ieee754_cosh (double)
-  double __fdlibm_ieee754_exp (double)
-  double __fdlibm_ieee754_fmod (double,double)
-  double __fdlibm_ieee754_gamma (double)
-  double __fdlibm_ieee754_gamma_r (double,int *)
-  double __fdlibm_ieee754_hypot (double,double)
-  double __fdlibm_ieee754_j0 (double)
-  double __fdlibm_ieee754_j1 (double)
-  double __fdlibm_ieee754_jn (int,double)
-  double __fdlibm_ieee754_lgamma (double)
-  double __fdlibm_ieee754_lgamma_r (double,int *)
-  double __fdlibm_ieee754_log (double)
-  double __fdlibm_ieee754_log10 (double)
-  double __fdlibm_ieee754_pow (double,double)
-  int __fdlibm_ieee754_rem_pio2 (double,double*)
-  double __fdlibm_ieee754_remainder (double,double)
-  double __fdlibm_ieee754_scalb (double,double)
-  double __fdlibm_ieee754_sinh (double)
-  double __fdlibm_ieee754_sqrt (double)
-  double __fdlibm_ieee754_y0 (double)
-  double __fdlibm_ieee754_y1 (double)
-  double __fdlibm_ieee754_yn (int,double)
-  double __fdlibm_kernel_cos (double,double)
-  int __fdlibm_kernel_rem_pio2 (double*,double*,int,int,int,const int*)
-  double __fdlibm_kernel_sin (double,double,int)
-  double __fdlibm_kernel_standard (double,double,int)
-  double __fdlibm_kernel_tan (double,double,int)
   double fdlibm_acos (double)
-  double fdlibm_acosh (double)
   double fdlibm_asin (double)
-  double fdlibm_asinh (double)
   double fdlibm_atan (double)
   double fdlibm_atan2 (double, double)
-  double fdlibm_atanh (double)
   double fdlibm_cbrt (double)
   double fdlibm_ceil (double)
   double fdlibm_copysign (double, double)
   double fdlibm_cos (double)
   double fdlibm_cosh (double)
-  double fdlibm_erf (double)
-  double fdlibm_erfc (double)
   double fdlibm_exp (double)
   double fdlibm_expm1 (double)
   double fdlibm_fabs (double)
   int fdlibm_finite (double)
   double fdlibm_floor (double)
   double fdlibm_fmod (double, double)
-  double fdlibm_frexp (double, int *)
-  double fdlibm_gamma (double)
-  double fdlibm_gamma_r (double, int *)
   double fdlibm_hypot (double, double)
-  int fdlibm_ilogb (double)
   int fdlibm_isnan (double)
-  double fdlibm_j0 (double)
-  double fdlibm_j1 (double)
-  double fdlibm_jn (int, double)
-  double fdlibm_ldexp (double, int)
-  double fdlibm_lgamma (double)
-  double fdlibm_lgamma_r (double, int *)
   double fdlibm_log (double)
   double fdlibm_log10 (double)
   double fdlibm_log1p (double)
-  double fdlibm_logb (double)
-  int fdlibm_matherr (struct fdlibm_exception *)
-  double fdlibm_modf (double, double *)
-  double fdlibm_nextafter (double, double)
   double fdlibm_pow (double, double)
   double fdlibm_remainder (double, double)
   double fdlibm_rint (double)
-  double fdlibm_scalb (double, double)
   double fdlibm_scalbn (double, int)
-  double fdlibm_significand (double)
   double fdlibm_sin (double)
   double fdlibm_sinh (double)
   double fdlibm_sqrt (double)
   double fdlibm_tan (double)
   double fdlibm_tanh (double)
-  double fdlibm_y0 (double)
-  double fdlibm_y1 (double)
-  double fdlibm_yn (int, double)
-
-
 
 =head1 SEE ALSO
 
