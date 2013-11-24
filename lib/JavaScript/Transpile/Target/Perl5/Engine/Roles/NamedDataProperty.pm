@@ -17,7 +17,7 @@ This module provides JavaScript Named Data Property role implementation in a Per
 
 has 'Value' => {
     isa => 'Any'
-    default => { undef }
+    default => { unknown }
 };
 
 has 'Writable' => {

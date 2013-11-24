@@ -18,12 +18,12 @@ This module provides JavaScript Named Accessor Property role implementation in a
 
 has 'Get' => {
     isa => 'Object|Undefined',
-    default => { undef }
+    default => { unknown }
 };
 
 has 'Set' => {
     isa => 'Object|Undefined'
-    default => { undef }
+    default => { unknown }
 };
 
 has 'Enumerable' => {
