@@ -338,9 +338,9 @@ typedef struct _Jv_reent
 #define bigtens _Jv__mprec_bigtens
 #define tinytens _Jv__mprec_tinytens
 
-#define _dtoa _Jv_dtoa
-#define _dtoa_r _Jv_dtoa_r
-#define _strtod_r _Jv_strtod_r
+#define _dtoa fdlibm_dtoa
+#define _dtoa_r fdlibm_dtoa_r
+#define _strtod_r fdlibm_strtod_r
 
 extern double _EXFUN(_strtod_r, (struct _Jv_reent *ptr, const char *s00, char **se));
 extern char* _EXFUN(_dtoa_r, (struct _Jv_reent *ptr, double d,

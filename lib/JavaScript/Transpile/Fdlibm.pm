@@ -3,7 +3,7 @@ use warnings FATAL => 'all';
 
 package JavaScript::Transpile::Fdlibm;
 
-# ABSTRACT: fdlibm interface
+# ABSTRACT: fdlibm interface from gcc with extensions taken from Java
 
 # VERSION
 
@@ -66,6 +66,14 @@ our %EXPORT_TAGS = ( 'all' => [ qw(
 	fdlibm_sqrt
 	fdlibm_tan
 	fdlibm_tanh
+        __fdlibm_ieee754_remainder
+        fdlibm_dtoa
+        fdlibm_dtoa_r
+        fdlibm strtod_r
+        fdlibm_floatToIntBits
+        fdlibm_doubleToLongBits
+        fdlibm_longBitsToDouble
+        fdlibm_isNaN
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
@@ -183,10 +191,26 @@ None by default.
   double fdlibm_sqrt (double)
   double fdlibm_tan (double)
   double fdlibm_tanh (double)
+  double __fdlibm_ieee754_remainder(double, double)
+  void fdlibm_dtoa(double, int, int, int *, int *, char **, char *, int)
+  void fdlibm_dtoa_r(struct _Jv_reent *, double, int, int, int *, int *, char **, int)
+  double fdlibm_strtod_r(struct _Jv_reent *, const char *,  char **)
+  jint fdlibm_floatToIntBits (float value)
+  jlong fdlibm_doubleToLongBits(double)
+  double fdlibm_longBitsToDouble(jlong)
+  int fdlibm_isNaN(jlong)
+
+=head1 NOTES
+
+jint is a 32bits integer, jlong is a 64bits integer.
+
+L<http://gcc.gnu.org/>
 
 =head1 SEE ALSO
 
 L<http://www.netlib.org/fdlibm/>
+
+L<http://gcc.gnu.org/>
 
 =cut
 

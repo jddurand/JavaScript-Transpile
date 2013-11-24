@@ -6,13 +6,21 @@ const char *					T_PTROBJ
 const int *					T_PTROBJ
 double *					T_PTROBJ
 int *						T_PTROBJ
-long long int					T_PTROBJ
 struct fdlibm_exception *			T_PTROBJ
 struct _Jv_Bigint *				T_PTROBJ
 struct _Jv_Bigint **				T_PTROBJ
 struct _Jv_reent *				T_PTROBJ
+jint						JINT
+jlong						JLONG
 #############################################################################
 INPUT
+
+JINT
+    $var = ($type)SvIV($arg);
+
+JLONG
+    $var = ($type)SvIV($arg);
+
 T_OPAQUE_STRUCT
 	if (sv_derived_from($arg, \"${ntype}\")) {
 	    STRLEN len;
@@ -27,5 +35,12 @@ T_OPAQUE_STRUCT
 	    croak(\"$var is not of type ${ntype}\")
 #############################################################################
 OUTPUT
+
+JINT
+    sv_setiv($arg, (IV)$var);
+
+JLONG
+    sv_setiv($arg, (IV)$var);
+
 T_OPAQUE_STRUCT
 	sv_setref_pvn($arg, \"${ntype}\", (char *)&$var, sizeof($var));

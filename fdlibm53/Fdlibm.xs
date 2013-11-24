@@ -8,6 +8,31 @@
 
 #include "fdlibm.h"
 
+#if SIZEOF_INT == 4
+typedef int		jint;
+#elif SIZEOF_LONG == 4
+typedef long		jint;
+#else
+#error "sizeof(int) or sizeof(long) must be 4"
+#endif
+
+#if SIZEOF_LONG == 8
+typedef long		jlong;
+#elif SIZEOF_LONG_LONG == 8
+typedef long long	jlong;
+#elif SIZEOF___INT64 == 8
+typedef __int64		jlong;
+#else
+#error "sizeof(long) or sizeof(long long) or sizeof(__int64) must be 8"
+#endif
+
+union fdlibm_u
+{
+  jlong l;
+  double d;
+  float f;
+};
+
 #include "const-c.inc"
 
 MODULE = JavaScript::Transpile		PACKAGE = JavaScript::Transpile::Fdlibm
@@ -106,6 +131,11 @@ fdlibm_pow(arg0, arg1)
 	double	arg1
 
 double
+__fdlibm_ieee754_remainder(arg0, arg1)
+	double	arg0
+	double	arg1
+
+double
 fdlibm_remainder(arg0, arg1)
 	double	arg0
 	double	arg1
@@ -173,7 +203,7 @@ _Jv_d2b(p, d, e, bits)
 	int *	bits
 
 void
-_Jv_dtoa(d, mode, ndigits, decpt, sign, rve, buf, float_type)
+fdlibm_dtoa(d, mode, ndigits, decpt, sign, rve, buf, float_type)
 	double	d
 	int	mode
 	int	ndigits
@@ -184,7 +214,7 @@ _Jv_dtoa(d, mode, ndigits, decpt, sign, rve, buf, float_type)
 	int	float_type
 
 char *
-_Jv_dtoa_r(ptr, d, mode, ndigits, decpt, sign, rve, float_type)
+fdlibm_dtoa_r(ptr, d, mode, ndigits, decpt, sign, rve, float_type)
 	struct _Jv_reent *	ptr
 	double	d
 	int	mode
@@ -246,7 +276,7 @@ _Jv_s2b(arg0, arg1, arg2, arg3, arg4)
 	unsigned long	arg4
 
 double
-_Jv_strtod_r(ptr, s00, se)
+fdlibm_strtod_r(ptr, s00, se)
 	struct _Jv_reent *	ptr
 	const char *	s00
 	char **	se
@@ -254,6 +284,54 @@ _Jv_strtod_r(ptr, s00, se)
 double
 _Jv_ulp(x)
 	double	x
+
+jint
+fdlibm_floatToIntBits(x)
+	float	x
+    PROTOTYPE: $
+    CODE:
+	union fdlibm_u u;
+  	u.f = x;
+  
+	RETVAL = u.l;
+    OUTPUT:
+	RETVAL
+
+jlong
+fdlibm_doubleToLongBits(x)
+	double	x
+    PROTOTYPE: $
+    CODE:
+	union fdlibm_u u;
+  	u.d = x;
+  
+	RETVAL = u.l;
+    OUTPUT:
+	RETVAL
+
+double
+fdlibm_longBitsToDouble(bits)
+	jlong bits
+    PROTOTYPE: $
+    CODE:
+	union fdlibm_u u;
+	u.l = bits;
+  
+	RETVAL = u.d;
+    OUTPUT:
+	RETVAL
+
+int
+fdlibm_isNan(bits)
+	jlong bits
+    PROTOTYPE: $
+    CODE:
+	jlong e = bits & 0x7ff0000000000000LL;
+	jlong f = bits & 0x000fffffffffffffLL;
+  
+	RETVAL =  ((e == 0x7ff0000000000000LL) && (f != 0LL));
+    OUTPUT:
+	RETVAL
 
 MODULE = JavaScript::Transpile		PACKAGE = JavaScript::Transpile::Fdlibm::_Jv_reent		
 

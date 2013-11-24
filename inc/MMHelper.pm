@@ -102,6 +102,13 @@ PROGRAM
 	#
 	$ac->check_header('sys/types.h');
 	$ac->check_header('sys/config.h');
+	#
+	# For jlong do the sizeof checks
+	#
+	my $sizeof_int = $ac->check_sizeof_type('int');
+	my $sizeof_long = $ac->check_sizeof_type('long');
+	my $sizeof_long_long = $ac->check_sizeof_type('long long');
+	my $sizeof___int64 = $ac->check_sizeof_type('__int64');
         if ($gcc) {
           $ac->msg_notice('gcc detected, so let ieeefp.h do all platform configuration');
           #
