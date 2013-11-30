@@ -28,8 +28,31 @@ class_type 'Undefined', {class => ref(unknown) };
 subtype 'Null',      as 'Undef';
 subtype 'Boolean',   as 'Bool';
 subtype 'IntGeZero', as 'Int', where { $_ >= 0 };
-subtype 'String',    as 'ArrayRef[IntGeZero]';
-subtype 'Number',    as 'Object', traits => [qw/Num/];
+subtype 'String',    as 'ArrayRef[IntGeZero]', traits => [qw/Str/];
+
+coerce 'Str',
+    from 'String',   via { arrayOfUnsignedShortToUtf8($_) };
+
+coerce 'String',
+    from 'Str',   via { utf8ToArrayOfUnsignedShort($_) };
+
+
+subtype 'Number',    as 'Num';
+subtype 'DecimalLiteral',      as 'Number';
+subtype 'HexIntegerLiteral',   as 'Number';
+subtype 'OctalIntegerLiteral', as 'Number';
+
+#
+# DecimalLiteral, HexIntegerLiteral and OctalIntegerLiteral can come only from an AST
+# and are never a destination: there is only the need to coerce from them.
+#
+coerce 'Number',
+    from 'DecimalLiteral',   via { 0+$_ };
+coerce 'Number',
+    from 'HexIntegerLiteral', via { oct($_) };   # See perldoc -f hex, perldoc -f oct
+coerce 'Number',
+    from 'OctalIntegerLiteral', via { oct($_) };   # See perldoc -f hex, perldoc -f oct
+
 #
 # Moose already provides the Object type
 #

@@ -82,7 +82,7 @@ PROGRAM
 	    print $c $source;
 	    close($c);
 	    my $b = ExtUtils::CBuilder->new(quiet => 1);
-	    my $obj_file = $b->compile(source => $c);
+	    my $obj_file = $b->compile(source => $c->filename);
 	    my $exe_file = $b->link_executable(objects => [ $obj_file ]);
 	    my $output = `$exe_file`;
 	    $ac->msg_result($output);
@@ -152,7 +152,7 @@ PROGRAM
           print $c $source;
           close($c);
           my $b = ExtUtils::CBuilder->new(quiet => 1);
-          my $obj_file = $b->compile(source => $c);
+          my $obj_file = $b->compile(source => $c->filename);
           my $exe_file = $b->link_executable(objects => [ $obj_file ]);
           my $output = `$exe_file`;
           $ac->msg_result($output);
