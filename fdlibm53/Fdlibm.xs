@@ -33,6 +33,19 @@ union fdlibm_u
   float f;
 };
 
+/*
+ * Taken from frugalware.org/tmpgit/mono/mono/metadata/sysmath.c
+ */
+#ifndef FDLIBM_NAN
+# ifdef __IEEE_BIG_ENDIAN
+#  define __nan_bytes           { 0x7f, 0xc0, 0, 0 }
+# else
+#  define __nan_bytes           { 0, 0, 0xc0, 0x7f }
+# endif
+static union { unsigned char __c[4]; float __d; } __nan_union = { __nan_bytes };
+# define FDLIBM_NAN    (__nan_union.__d)
+#endif
+
 #include "const-c.inc"
 
 MODULE = JavaScript::Transpile		PACKAGE = JavaScript::Transpile::Fdlibm
@@ -330,6 +343,26 @@ fdlibm_isNan(bits)
 	jlong f = bits & 0x000fffffffffffffLL;
   
 	RETVAL =  ((e == 0x7ff0000000000000LL) && (f != 0LL));
+    OUTPUT:
+	RETVAL
+
+double
+fdlibm_strtod(str)
+	char *str
+    PROTOTYPE: $
+    CODE:
+        struct _Jv_reent reent;
+	double d;
+
+	memset (&reent, 0, sizeof reent);
+	/* Just to be sure */
+	reent._errno = 0;
+	d = fdlibm_strtod_r(&reent, str, NULL);
+	if (reent._errno != 0) {
+	   RETVAL = FDLIBM_NAN;
+	} else {
+	   RETVAL = d;
+	}
     OUTPUT:
 	RETVAL
 

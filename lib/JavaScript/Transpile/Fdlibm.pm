@@ -74,6 +74,7 @@ our %EXPORT_TAGS = ( 'all' => [ qw(
         fdlibm_doubleToLongBits
         fdlibm_longBitsToDouble
         fdlibm_isNaN
+        fdlibm_strtod
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
