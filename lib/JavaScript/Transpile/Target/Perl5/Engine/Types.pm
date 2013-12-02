@@ -7,12 +7,11 @@ package JavaScript::Transpile::Target::Perl5::Engine::Types;
 
 # VERSION
 
+use namespace::sweep;
 use Unknown::Values;
-use bignum;
+use JavaScript::Transpile::Fdlibm;
 use Moose::Util::TypeConstraints;
 use Encode qw/encode/;
-
-Math::BigInt->round_mode('even');  # Just to be sure
 
 =head1 DESCRIPTION
 
@@ -21,46 +20,9 @@ This module provides JavaScript primitive types in a Perl5 environment.
 =cut
 
 #
-# Types definitions
-# -----------------
+# JavaScript built-in types are: Undefined, Null, Boolean, Number, String and Object.
 #
-class_type 'Undefined', {class => ref(unknown) };
-subtype 'Null',      as 'Undef';
-subtype 'Boolean',   as 'Bool';
-subtype 'IntGeZero', as 'Int', where { $_ >= 0 };
-subtype 'String',    as 'ArrayRef[IntGeZero]', traits => [qw/Str/];
-
-coerce 'Str',
-    from 'String',   via { arrayOfUnsignedShortToUtf8($_) };
-
-coerce 'String',
-    from 'Str',   via { utf8ToArrayOfUnsignedShort($_) };
-
-
-subtype 'Number',    as 'Num';
-subtype 'DecimalLiteral',      as 'Number';
-subtype 'HexIntegerLiteral',   as 'Number';
-subtype 'OctalIntegerLiteral', as 'Number';
-
-#
-# DecimalLiteral, HexIntegerLiteral and OctalIntegerLiteral can come only from an AST
-# and are never a destination: there is only the need to coerce from them.
-#
-coerce 'Number',
-    from 'DecimalLiteral',   via { 0+$_ };
-coerce 'Number',
-    from 'HexIntegerLiteral', via { oct($_) };   # See perldoc -f hex, perldoc -f oct
-coerce 'Number',
-    from 'OctalIntegerLiteral', via { oct($_) };   # See perldoc -f hex, perldoc -f oct
-
-#
-# Moose already provides the Object type
-#
-# subtype 'Object',    as 'Object';
-
-#
-# Types coercions
-# ---------------
+# Mapping with Moose built-in types is:
 #         Any
 #             Item
 #                 Bool                               <=> Boolean
@@ -69,11 +31,11 @@ coerce 'Number',
 #                 Defined
 #                     Value
 #                         Str                        <=> String
-#                             Num
-#                                 Int
+#                             Num                    <=> Number <= DecimalLiteral
+#                                 Int                           <= HexIntegerLiteral, OctalIntegerLiteral
 #                             ClassName
 #                             RoleName
-#                     Ref                            <=> Reference
+#                     Ref
 #                         ScalarRef[`a]
 #                         ArrayRef[`a]
 #                         HashRef[`a]
@@ -81,7 +43,42 @@ coerce 'Number',
 #                         RegexpRef
 #                         GlobRef
 #                         FileHandle
-#                         Object                     <=> Undefined, Number
+#                         Object
+#
+# The Undefined type is a new type. Object is already a built-in type in Moose.
+#
+class_type 'Undefined', {class => ref(unknown) };
+subtype 'Boolean',   as 'Bool';
+subtype 'Null',      as 'Undef';
+subtype 'String',    as 'ArrayRef[Int]';
+subtype 'Number',    as 'Num';
+
+#
+# The AST sub-divides Number to three categories:
+#
+# - DecimalLiteral
+# - HexIntegerLiteral
+# - OctalIntegerLiteral
+#
+subtype 'DecimalLiteral', as 'Number';
+subtype 'HexIntegerLiteral', as 'Int';
+subtype 'OctalIntegerLiteral', as 'Int';
+
+#
+# Coercions:
+#
+coerce 'Str',    from 'String', via { arrayOfUnsignedShortToUtf8($_) };
+coerce 'String', from 'Str',    via { utf8ToArrayOfUnsignedShort($_) };
+
+coerce 'Boolean', from 'String', via { $_ eq 'true' ? 1 : 0 };
+coerce 'String', from 'Boolean', via { $_ ? 'true' : 'false' };
+
+coerce 'String',  from 'Null', via { 'null' };
+coerce 'Null',  from 'String', via { undef };
+
+coerce 'Number', from 'DecimalLiteral', via { fdlibm_strtod($_) };
+coerce 'Int',    from 'HexIntegerLiteral', via { hex($_) };
+coerce 'Int',    from 'OctalIntegerLiteral', via { oct($_) };
 
 #
 # Take care: String is a sequence of UTF-16 Code Units, NOT characters.
@@ -95,94 +92,12 @@ coerce 'Number',
 # To get the unsigned short values out of a UTF-16BE: unpack('n*', ...).
 #
 sub utf8ToArrayOfUnsignedShort {
-    return [ unpack('v*', encode("UTF-16LE", $_[0])) ];
+    return [ unpack('v*', encode('UTF-16LE', $_[0])) ];
 }
 
 sub arrayOfUnsignedShortToUtf8 {   # Note: this is NOT symmetric
     return pack('W*', @{$_[0]});
 }
-
-use constant trueAsString      => utf8ToArrayOfUnsignedShort('true');
-use constant falseAsString     => utf8ToArrayOfUnsignedShort('false');
-use constant undefinedAsString => utf8ToArrayOfUnsignedShort('undefined');
-use constant nullAsString      => utf8ToArrayOfUnsignedShort('null');
-use constant referenceAsString => utf8ToArrayOfUnsignedShort('Reference');
-use constant ZeroStringValue   => utf8ToArrayOfUnsignedShort('0');
-use constant xStringValue      => utf8ToArrayOfUnsignedShort('x');
-use constant XStringValue      => utf8ToArrayOfUnsignedShort('X');
-use constant NaNStringValue    => utf8ToArrayOfUnsignedShort('NaN');
-use constant InfPStringValue   => utf8ToArrayOfUnsignedShort('+Infinity');
-use constant InfMStringValue   => utf8ToArrayOfUnsignedShort('-Infinity');
-use constant ZeroPStringValue  => utf8ToArrayOfUnsignedShort('+0');
-use constant ZeroMStringValue  => utf8ToArrayOfUnsignedShort('-0');
-
-# Undefined is mapped to single value unknown
-coerce 'Undefined', from 'Any', via { unknown };
-
-# Null is mapped to single value undef
-coerce 'Null', from 'Any', via { undef };
-
-# Boolean is mapped to two values 1 and 0
-coerce 'Boolean', from 'Any', via { $_ ? 1 : 0 };
-
-# Number is IEEE-754
-# In ECMAScript-262-5, Number special values are:
-# NaN
-# +Infinity
-#  Infinity
-# -Infinity
-# +0
-#  0
-# -0
-coerce 'Number',
-    from 'Boolean',   via { $_ ? 1 : 0 };
-    from 'Null',      via { 0 };
-    from 'Reference', via { int($_) };
-    from 'Undefined', via { NaN() };
-    from 'String',    via { my $s = arrayOfUnsignedShortToUtf8($_);
-                            if (! $s || $s eq 'NaN') {
-                              return NaN();
-                            } elsif ($s eq '+Infinity' || $s eq 'Infinity')  {
-                              return +inf();
-                            } elsif ($s eq '-Infinity')  {
-                              return -inf();
-                            } elsif ($s eq '+0' || $s eq '0')  {
-                              return +0.0;
-                            } elsif ($s eq '-0')  {
-                              return -0.0;
-			    } elsif (substr($s, 0, 1) eq '0') {
-                              return oct($s);      # See perldoc, in fact oct() behaves like hex() if 0x or 0X
-			    } else {
-                              return 0+$s;         # perl to do the magic
-			    }
-};
-
-# String coercions
-coerce 'String',
-  from 'Boolean',   via { $_ ? trueAsString : falseAsString };
-  from 'Null',      via { nullAsString };
-  from 'Number',    via {                          # Numbers are objects, c.f. Math::BigInt or Math::BigFloat
-    if ($_->is_nan()) {
-      return NaNStringValue;
-    } elsif ($_->is_inf()) {
-      return InfPStringValue;
-    } elsif ($_->is_inf('-')) {
-      return InfMStringValue;
-    } elsif ($_->is_zero()) {
-      #
-      # For the principle, I believe is_pos() always returns true
-      #
-      if ($_->is_pos()) {
-        return ZeroPStringValue;
-      } else {
-        return ZeroMStringValue;
-      }
-    } else {
-      return utf8ToArrayOfUnsignedShort("$_")
-    }
-  };
-    from 'Reference', via { utf8ToArrayOfUnsignedShort(ref($_)) };
-    from 'Undefined', via { undefinedAsString };
 
 =head1 SEE ALSO
 
