@@ -334,18 +334,6 @@ fdlibm_longBitsToDouble(bits)
     OUTPUT:
 	RETVAL
 
-int
-fdlibm_isNan(bits)
-	jlong bits
-    PROTOTYPE: $
-    CODE:
-	jlong e = bits & 0x7ff0000000000000LL;
-	jlong f = bits & 0x000fffffffffffffLL;
-  
-	RETVAL =  ((e == 0x7ff0000000000000LL) && (f != 0LL));
-    OUTPUT:
-	RETVAL
-
 double
 fdlibm_strtod(str)
 	char *str
