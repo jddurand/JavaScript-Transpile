@@ -10,12 +10,25 @@ package JavaScript::Transpile::Target::Perl5::Engine::Types;
 use namespace::sweep;
 use Unknown::Values;
 use JavaScript::Transpile::Fdlibm;
-use Moose::Util::TypeConstraints;
 use Encode qw/encode/;
+use MooseX::Types -declare => [
+             qw(
+                 Undefined
+                 Boolean
+                 Null
+                 String
+                 Number
+                 DecimalLiteral
+                 HexIntegerLiteral
+                 OctalIntegerLiteral
+                 PropertyDescriptor
+                 )
+         ];
+use MooseX::Types::Moose qw/Any Bool Undef Str Num ArrayRef HashRef/;
 
 =head1 DESCRIPTION
 
-This module provides JavaScript primitive types in a Perl5 environment.
+This module provides JavaScript types in a Perl5 environment.
 
 =cut
 
@@ -45,13 +58,15 @@ This module provides JavaScript primitive types in a Perl5 environment.
 #                         FileHandle
 #                         Object
 #
+#
 # The Undefined type is a new type. Object is already a built-in type in Moose.
 #
-class_type 'Undefined', {class => ref(unknown) };
-subtype 'Boolean',   as 'Bool';
-subtype 'Null',      as 'Undef';
-subtype 'String',    as 'ArrayRef[Int]';
-subtype 'Number',    as 'Num';
+class_type Undefined, {class => ref(unknown) };
+subtype Boolean,   as Bool;
+subtype Null,      as Undef;
+# No need of PositiveInt : we know what we are doing
+subtype String,    as ArrayRef[Int];
+subtype Number,    as Num;
 
 #
 # The AST sub-divides Number to three categories:
@@ -60,12 +75,12 @@ subtype 'Number',    as 'Num';
 # - HexIntegerLiteral
 # - OctalIntegerLiteral
 #
-subtype 'DecimalLiteral', as 'Number';
-subtype 'HexIntegerLiteral', as 'Int';
-subtype 'OctalIntegerLiteral', as 'Int';
+subtype DecimalLiteral, as Number;
+subtype HexIntegerLiteral, as Int;
+subtype OctalIntegerLiteral, as Int;
 
 #
-# Coercions:
+# Coercions
 #
 coerce 'Str',    from 'String', via { arrayOfUnsignedShortToUtf8($_) };
 coerce 'String', from 'Str',    via { utf8ToArrayOfUnsignedShort($_) };
@@ -98,6 +113,18 @@ sub utf8ToArrayOfUnsignedShort {
 sub arrayOfUnsignedShortToUtf8 {   # Note: this is NOT symmetric
     return pack('W*', @{$_[0]});
 }
+
+#
+# Non-primitive types
+# -------------------
+#
+# Note: a PropertyDescriptor maybe not be exactly a NamedDataProperty or a NamedAccessorProperty
+#
+subtype PropertyDescriptor, as HashRef;
+#
+# But a PropertyIdentifier is necessrarly a hash of PropertyDescriptor
+#
+subtype PropertyIdentifier, as HashRef[PropertyDescriptor];
 
 =head1 SEE ALSO
 
