@@ -9,7 +9,7 @@ use Moose;
 use MooseX::ClassAttribute;
 use Scalar::Util qw/blessed/;
 
-sub 'IsAccessorDescriptor' =>
+class_has 'IsAccessorDescriptor' =>
         ( is      => 'rw',
           isa     => 'Boolean',
           default => sub {

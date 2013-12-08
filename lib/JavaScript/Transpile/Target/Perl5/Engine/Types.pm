@@ -126,6 +126,7 @@ subtype PropertyDescriptor, as HashRef;
 #
 subtype PropertyIdentifier, as HashRef[PropertyDescriptor];
 
+class_type Reference, {class => 'JavaScript::Transpile::Target::Perl5::Engine::Roles::Reference'};
 =head1 SEE ALSO
 
 L<MooseX::Types>
