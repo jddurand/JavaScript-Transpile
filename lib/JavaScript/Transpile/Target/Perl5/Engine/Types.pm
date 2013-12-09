@@ -3,6 +3,7 @@ use warnings FATAL => 'all';
 
 package JavaScript::Transpile::Target::Perl5::Engine::Types;
 use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
+use JavaScript::Transpile::Target::Perl5::Engine::Undefined;
 
 # ABSTRACT: JavaScript Types in Perl5
 
