@@ -19,7 +19,9 @@ Log::Any::Adapter->set('Log4perl');
 #use JavaScript::Transpile::Target::Perl5::Engine;
 use JavaScript::Transpile::Target::Perl5::Engine::PropertyDescriptor qw//;
 
-my $x = JavaScript::Transpile::Target::Perl5::Engine::PropertyDescriptor->new(Desc => {test => 1});
+my $x = JavaScript::Transpile::Target::Perl5::Engine::PropertyDescriptor->new({test => 1});
 $x->IsAccessorDescriptor();
+use Data::Dumper;
+print STDERR Dumper($x->Desc);
 
 
