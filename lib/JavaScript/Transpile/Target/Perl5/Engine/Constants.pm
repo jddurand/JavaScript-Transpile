@@ -2,6 +2,7 @@ use strict;
 use warnings FATAL => 'all';
 
 package JavaScript::Transpile::Target::Perl5::Engine::Constants;
+use Unknown::Values;
 
 # ABSTRACT: JavaScript constants in Perl5
 

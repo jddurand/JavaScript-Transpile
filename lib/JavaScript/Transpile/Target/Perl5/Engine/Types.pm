@@ -2,14 +2,14 @@ use strict;
 use warnings FATAL => 'all';
 
 package JavaScript::Transpile::Target::Perl5::Engine::Types;
+use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 
 # ABSTRACT: JavaScript Types in Perl5
 
 # VERSION
 
 use namespace::sweep;
-use Unknown::Values;
-use JavaScript::Transpile::Fdlibm;
+#use JavaScript::Transpile::Fdlibm;
 use Encode qw/encode/;
 use MooseX::Types -declare => [
              qw(
@@ -63,7 +63,7 @@ This module provides JavaScript types in a Perl5 environment.
 #
 # The Undefined type is a new type. Object is already a built-in type in Moose.
 #
-class_type Undefined, {class => ref(unknown) };
+class_type Undefined, {class => ref(undefined) };
 subtype Boolean,   as Bool;
 subtype Null,      as Undef;
 # No need of PositiveInt : we know what we are doing
@@ -84,18 +84,18 @@ subtype OctalIntegerLiteral, as Int;
 #
 # Coercions
 #
-coerce 'Str',    from 'String', via { arrayOfUnsignedShortToUtf8($_) };
-coerce 'String', from 'Str',    via { utf8ToArrayOfUnsignedShort($_) };
+coerce Str,    from String, via { arrayOfUnsignedShortToUtf8($_) };
+coerce String, from Str,    via { utf8ToArrayOfUnsignedShort($_) };
 
-coerce 'Boolean', from 'String', via { $_ eq 'true' ? 1 : 0 };
-coerce 'String', from 'Boolean', via { $_ ? 'true' : 'false' };
+coerce Boolean, from String, via { $_ eq 'true' ? true : false };
+coerce String, from Boolean, via { $_ == true ? 'true' : 'false' };
 
-coerce 'String',  from 'Null', via { 'null' };
-coerce 'Null',  from 'String', via { undef };
+coerce String,  from Null, via { 'null' };
+coerce Null,  from String, via { undef };
 
-coerce 'Number', from 'DecimalLiteral', via { fdlibm_strtod($_) };
-coerce 'Int',    from 'HexIntegerLiteral', via { hex($_) };
-coerce 'Int',    from 'OctalIntegerLiteral', via { oct($_) };
+coerce Number, from DecimalLiteral, via { fdlibm_strtod($_) };
+coerce Int,    from HexIntegerLiteral, via { hex($_) };
+coerce Int,    from OctalIntegerLiteral, via { oct($_) };
 
 #
 # Take care: String is a sequence of UTF-16 Code Units, NOT characters.
