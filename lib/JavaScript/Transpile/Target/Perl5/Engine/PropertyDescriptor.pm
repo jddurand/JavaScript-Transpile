@@ -25,8 +25,18 @@ has 'Desc' => (
                builder => '_build_desc'
               );
 
+around BUILDARGS => sub {
+  my $orig  = shift;
+  my $class = shift;
+
+  if ( @_ == 1 && ref($_[0]) eq 'HASH') {
+    return $class->$orig( Desc => $_[0] );
+  } else {
+    return $class->$orig(@_);
+  }
+};
+
 sub _build_desc {
-  print STDERR "@_\n";
   return undefined;
 }
 
