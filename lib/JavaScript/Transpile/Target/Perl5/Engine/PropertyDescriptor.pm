@@ -9,6 +9,16 @@ use Moose;
 use MooseX::ClassAttribute;
 use Scalar::Util qw/blessed/;
 
+# ABSTRACT: JavaScript Property Descriptor type in Perl5
+
+# VERSION
+
+=head1 DESCRIPTION
+
+This module provides JavaScript Property Descriptor type in a Perl5 environment.
+
+=cut
+
 class_has 'IsAccessorDescriptor' =>
         ( is      => 'rw',
           isa     => 'Boolean',
