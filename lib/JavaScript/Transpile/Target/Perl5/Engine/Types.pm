@@ -24,7 +24,7 @@ use MooseX::Types -declare => [
                  PropertyDescriptor
                  )
          ];
-use MooseX::Types::Moose qw/Any Bool Undef Str Num ArrayRef HashRef/;
+use MooseX::Types::Moose qw/Any Bool Undef Int Str Num ArrayRef HashRef/;
 
 =head1 DESCRIPTION
 
