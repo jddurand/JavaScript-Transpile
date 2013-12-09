@@ -22,6 +22,8 @@ use MooseX::Types -declare => [
                  HexIntegerLiteral
                  OctalIntegerLiteral
                  PropertyDescriptor
+                 PropertyIdentifier
+                 Reference
                  )
          ];
 use MooseX::Types::Moose qw/Any Bool Undef Int Str Num ArrayRef HashRef/;
