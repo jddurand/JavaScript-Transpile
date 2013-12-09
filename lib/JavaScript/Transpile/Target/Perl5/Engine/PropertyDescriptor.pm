@@ -3,10 +3,10 @@ use warnings FATAL => 'all';
 
 package JavaScript::Transpile::Target::Perl5::Engine::PropertyDescriptor;
 use JavaScript::Transpile::Target::Perl5::Engine::Types;
-use JavaScript::Transpile::Target::Perl5::Engine::Constants;
+use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 use namespace::sweep;
 use Moose;
-use MooseX::ClassAttribute;
+use Carp qw/croak/;
 use Scalar::Util qw/blessed/;
 
 # ABSTRACT: JavaScript Property Descriptor type in Perl5
@@ -19,182 +19,186 @@ This module provides JavaScript Property Descriptor type in a Perl5 environment.
 
 =cut
 
-class_has 'IsAccessorDescriptor' =>
-        ( is      => 'rw',
-          isa     => 'Boolean',
-          default => sub {
-	      my ($class, $desc) = @_;
+has 'Desc' => (
+               is => 'ro',
+               isa => 'HashRef|Undefined',
+               builder => '_build_desc'
+              );
 
-	      if ($desc == undefined) {
-		  return false;
-	      }
-	      if (! exists($desc->{Get} && ! $desc->{Set})) {
-		  return false;
-	      }
-	      return true;
-	  },
-        );
+sub _build_desc {
+  print STDERR "@_\n";
+  return undefined;
+}
 
-class_has 'IsDataDescriptor' =>
-        ( is      => 'rw',
-          isa     => 'Boolean',
-          default => sub {
-	      my ($class, $desc) = @_;
+sub IsAccessorDescriptor {
+  my ($self) = @_;
 
-	      if ($desc == undefined) {
-		  return false;
-	      }
-	      if (! exists($desc->{Value} && ! $desc->{Writable})) {
-		  return false;
-	      }
-	      return true;
-	  },
-        );
+  my $Desc = $self->Desc();
 
-class_has 'IsGenericDescriptor' =>
-        ( is      => 'rw',
-          isa     => 'Boolean',
-          default => sub {
-	      my ($class, $desc) = @_;
+  if ($Desc == undefined) {
+    return false;
+  }
 
-	      if ($desc == undefined) {
-		  return false;
-	      }
-	      if ($class-> IsAccessorDescriptor($desc) == false &&
-		  $class-> IsDataDescriptor($desc) == false) {
-		  return true;
-	      }
-	      return false;
-	  },
-        );
+  if (! exists($Desc->{Get}) && ! exists($Desc->{Set})) {
+    return false;
+  }
+  return true;
+}
 
-class_has 'FromPropertyDescriptor' =>
-        ( is      => 'rw',
-          isa     => 'Boolean',
-          default => sub {
-	      my ($class, $desc) = @_;
+sub IsDataDescriptor {
+  my ($self) = @_;
 
-	      if ($desc == undefined) {
-		  return undefined;
-	      }
+  my $Desc = $self->Desc;
 
-	      my $obj =  Object->new();
+  if ($Desc == undefined) {
+    return false;
+  }
+  if (! exists($Desc->{Value}) && ! exists($Desc->{Writable})) {
+    return false;
+  }
+  return true;
+}
 
-	      if ($class->IsDataDescriptor($desc) == true) {
-		  $obj->DefineOwnProperty('value',
-					  {
-					      Value => $desc->{Value},
-					      Writable => true,
-					      Enumerable => true,
-					      Configurable => true
-					  },
-					  false);
-		  $obj->DefineOwnProperty('writable',
-					  {
-					      Value => $desc->{Writable},
-					      Writable => true,
-					      Enumerable => true,
-					      Configurable => true
-					  },
-					  false);
-	      } else {
-		  $obj->DefineOwnProperty('get',
-					  {
-					      Value => $desc->{Get},
-					      Writable => true,
-					      Enumerable => true,
-					      Configurable => true
-					  },
-					  false);
-		  $obj->DefineOwnProperty('set',
-					  {
-					      Value => $desc->{Set},
-					      Writable => true,
-					      Enumerable => true,
-					      Configurable => true
-					  },
-					  false);
-	      }
+sub IsGenericDescriptor {
+  my ($self) = @_;
 
-	      $obj->DefineOwnProperty('enumerable',
-				      {
-					  Value => $desc->{Enumerable},
-					  Writable => true,
-					  Enumerable => true,
-					  Configurable => true
-				      },
-				      false);
-	      $obj->DefineOwnProperty('configurable',
-				      {
-					  Value => $desc->{Configurable},
-					  Writable => true,
-					  Enumerable => true,
-					  Configurable => true
-				      },
-				      false);
+  my $Desc = $self->Desc;
 
-	      return $obj;
-	  },
-        );
+  if ($Desc == undefined) {
+    return false;
+  }
+  if ($self->IsAccessorDescriptor == false &&
+      $self->IsDataDescriptor == false) {
+    return true;
+  }
+  return false;
+}
 
-class_has 'ToPropertyDescriptor' =>
-        ( is      => 'rw',
-          isa     => 'Boolean',
-          default => sub {
-	      my ($class, $obj) = @_;
+sub FromPropertyDescriptor {
+  my ($self) = @_;
 
-	      if ((my $objType = blessed($obj) || '') ne 'Object') {
-		  croak "TypeError: \$obj type is not 'Object', but '$objType'";
-	      }
+  my $Desc = $self->Desc;
 
-	      my $desc == {};
+  if ($Desc == undefined) {
+    return undefined;
+  }
 
-	      if ($obj->HasProperty('enumerable') == true) {
-		  my $enum = $obj->Get('enumerable');
-		  $desc{Enumerable} = ToBoolean($enum);
-	      }
+  my $obj = Object->new();
 
-	      if ($obj->HasProperty('configurable') == true) {
-		  my $conf = $obj->Get('configurable');
-		  $desc{Configurable} = ToBoolean($conf);
-	      }
+  if ($self->IsDataDescriptor == true) {
+    $obj->DefineOwnProperty('value',
+                            {
+                             Value => $Desc->{Value},
+                             Writable => true,
+                             Enumerable => true,
+                             Configurable => true
+                            },
+                            false);
+    $obj->DefineOwnProperty('writable',
+                            {
+                             Value => $Desc->{Writable},
+                             Writable => true,
+                             Enumerable => true,
+                             Configurable => true
+                            },
+                            false);
+  } else {
+    $obj->DefineOwnProperty('get',
+                            {
+                             Value => $Desc->{Get},
+                             Writable => true,
+                             Enumerable => true,
+                             Configurable => true
+                            },
+                            false);
+    $obj->DefineOwnProperty('set',
+                            {
+                             Value => $Desc->{Set},
+                             Writable => true,
+                             Enumerable => true,
+                             Configurable => true
+                            },
+                            false);
+  }
 
-	      if ($obj->HasProperty('value') == true) {
-		  my $value = $obj->Get('value');
-		  $desc{Value} = $value;
-	      }
+  $obj->DefineOwnProperty('enumerable',
+                          {
+                           Value => $Desc->{Enumerable},
+                           Writable => true,
+                           Enumerable => true,
+                           Configurable => true
+                          },
+                          false);
+  $obj->DefineOwnProperty('configurable',
+                          {
+                           Value => $Desc->{Configurable},
+                           Writable => true,
+                           Enumerable => true,
+                           Configurable => true
+                          },
+                          false);
 
-	      if ($obj->HasProperty('writable') == true) {
-		  my $writable = $obj->Get('writable');
-		  $desc{Writable} = ToBoolean($writable);
-	      }
+  return $obj;
+}
 
-	      if ($obj->HasProperty('get') == true) {
-		  my $getter = $obj->Get('get');
-		  if (IsCallable($getter) == false && $getter != undefined) {
-		      croak "TypeError: getter $getter is not callable and is not undefined";
-		  }
-		  $desc{Get} = $getter;
-	      }
+sub ToPropertyDescriptor {
+  my ($self, $obj) = @_;
 
-	      if ($obj->HasProperty('set') == true) {
-		  my $setter = $obj->Get('set');
-		  if (IsCallable($setter) == false && $setter != undefined) {
-		      croak "TypeError: setter $setter is not callable and is not undefined";
-		  }
-		  $desc{Set} = $setter;
-	      }
+  my $objBlessed = blessed($obj) || '';
 
-	      if (exists($desc{Get}) || exists($desc{Set})) {
-		  if (exists($desc{Value}) || exists($desc{Writable})) {
-		      croak 'TypeError: getter and/or setter property present, value and/or writable property as well';
-		  }
-	      }
+  if ($objBlessed ne 'Object') {
+    croak "TypeError: \$obj is of type '$objBlessed', should be 'Object'";
+  }
 
-	      return $desc;
+  my $desc = __PACKAGE__->new();
 
-	  },
-        );
+  my $Desc = $desc->desc;
+
+  if ($obj->HasProperty('enumerable') == true) {
+    my $enum = $obj->Get('enumerable');
+    $Desc->{Enumerable} = ToBoolean($enum);
+  }
+
+  if ($obj->HasProperty('configurable') == true) {
+    my $conf = $obj->Get('configurable');
+    $Desc->{Configurable} = ToBoolean($conf);
+  }
+
+  if ($obj->HasProperty('value') == true) {
+    my $value = $obj->Get('value');
+    $Desc->{Value} = $value;
+  }
+
+  if ($obj->HasProperty('writable') == true) {
+    my $writable = $obj->Get('writable');
+    $Desc->{Writable} = ToBoolean($writable);
+  }
+
+  if ($obj->HasProperty('get') == true) {
+    my $getter = $obj->Get('get');
+    if (IsCallable($getter) == false && $getter != undefined) {
+      croak "TypeError: getter $getter is not callable and is not undefined";
+    }
+    $Desc->{Get} = $getter;
+  }
+
+  if ($obj->HasProperty('set') == true) {
+    my $setter = $obj->Get('set');
+    if (IsCallable($setter) == false && $setter != undefined) {
+      croak "TypeError: setter $setter is not callable and is not undefined";
+    }
+    $Desc->{Set} = $setter;
+  }
+
+  if (exists($Desc->{Get}) || exists($Desc->{Set})) {
+    if (exists($Desc->{Value}) || exists($Desc->{Writable})) {
+      croak 'TypeError: getter and/or setter property present, value and/or writable property as well';
+    }
+  }
+
+  return $desc;
+
+}
 
 __PACKAGE__->meta()->make_immutable();
 
