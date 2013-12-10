@@ -4,60 +4,61 @@ use warnings FATAL => 'all';
 package JavaScript::Transpile::Target::Perl5::Engine::Helpers::PropertyDescriptor;
 use JavaScript::Transpile::Target::Perl5::Engine::Types qw/PropertyDescriptor/;
 use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
-use Method::Signatures;
+use MooseX::Method::Signatures;
+use Carp qw/croak/;
 
-method IsAccessorDescriptor($class: PropertyDescriptor Desc) {
+method IsAccessorDescriptor($class: PropertyDescriptor $desc) {
 
-  if ($Desc == undefined) {
+  if ($desc == undefined) {
     return false;
   }
 
-  if (! exists($Desc->{Get}) && ! exists($Desc->{Set})) {
-    return false;
-  }
-
-  return true;
-}
-
-method IsDataDescriptor($class: PropertyDescriptor Desc) {
-
-  if ($Desc == undefined) {
-    return false;
-  }
-
-  if (! exists($Desc->{Value}) && ! exists($Desc->{Writable})) {
+  if (! exists($desc->{Get}) && ! exists($desc->{Set})) {
     return false;
   }
 
   return true;
 }
 
-method IsGenericDescriptor($class: PropertyDescriptor Desc) {
+method IsDataDescriptor($class: PropertyDescriptor $desc) {
 
-  if ($Desc == undefined) {
+  if ($desc == undefined) {
     return false;
   }
 
-  if ($class->IsAccessorDescriptor($Desc) == false &&
-      $class->IsDataDescriptor($Desc) == false) {
+  if (! exists($desc->{Value}) && ! exists($desc->{Writable})) {
+    return false;
+  }
+
+  return true;
+}
+
+method IsGenericDescriptor($class: PropertyDescriptor $desc) {
+
+  if ($desc == undefined) {
+    return false;
+  }
+
+  if ($class->IsAccessorDescriptor($desc) == false &&
+      $class->IsDataDescriptor($desc) == false) {
     return true;
   }
 
   return false;
 }
 
-method FromPropertyDescriptor($class: PropertyDescriptor Desc) {
+method FromPropertyDescriptor($class: PropertyDescriptor $desc) {
 
-  if ($Desc == undefined) {
+  if ($desc == undefined) {
     return undefined;
   }
 
   my $obj = Object->new();
 
-  if ($class->IsDataDescriptor($Desc) == true) {
+  if ($class->IsDataDescriptor($desc) == true) {
     $obj->DefineOwnProperty('value',
                             {
-                             Value => $Desc->{Value},
+                             Value => $desc->{Value},
                              Writable => true,
                              Enumerable => true,
                              Configurable => true
@@ -65,7 +66,7 @@ method FromPropertyDescriptor($class: PropertyDescriptor Desc) {
                             false);
     $obj->DefineOwnProperty('writable',
                             {
-                             Value => $Desc->{Writable},
+                             Value => $desc->{Writable},
                              Writable => true,
                              Enumerable => true,
                              Configurable => true
@@ -74,7 +75,7 @@ method FromPropertyDescriptor($class: PropertyDescriptor Desc) {
   } else {
     $obj->DefineOwnProperty('get',
                             {
-                             Value => $Desc->{Get},
+                             Value => $desc->{Get},
                              Writable => true,
                              Enumerable => true,
                              Configurable => true
@@ -82,7 +83,7 @@ method FromPropertyDescriptor($class: PropertyDescriptor Desc) {
                             false);
     $obj->DefineOwnProperty('set',
                             {
-                             Value => $Desc->{Set},
+                             Value => $desc->{Set},
                              Writable => true,
                              Enumerable => true,
                              Configurable => true
@@ -92,7 +93,7 @@ method FromPropertyDescriptor($class: PropertyDescriptor Desc) {
 
   $obj->DefineOwnProperty('enumerable',
                           {
-                           Value => $Desc->{Enumerable},
+                           Value => $desc->{Enumerable},
                            Writable => true,
                            Enumerable => true,
                            Configurable => true
@@ -100,7 +101,7 @@ method FromPropertyDescriptor($class: PropertyDescriptor Desc) {
                           false);
   $obj->DefineOwnProperty('configurable',
                           {
-                           Value => $Desc->{Configurable},
+                           Value => $desc->{Configurable},
                            Writable => true,
                            Enumerable => true,
                            Configurable => true
@@ -110,48 +111,48 @@ method FromPropertyDescriptor($class: PropertyDescriptor Desc) {
   return $obj;
 }
 
-method ToPropertyDescriptor($class: Object Obj) {
+method ToPropertyDescriptor($class: Object $obj) {
 
-    my $Desc = {};
+    my $desc = {};
 
     if ($obj->HasProperty('enumerable') == true) {
 	my $enum = $obj->Get('enumerable');
-	$Desc->{Enumerable} = ToBoolean($enum);
+	$desc->{Enumerable} = ToBoolean($enum);
     }
 
     if ($obj->HasProperty('configurable') == true) {
 	my $conf = $obj->Get('configurable');
-	$Desc->{Configurable} = ToBoolean($conf);
+	$desc->{Configurable} = ToBoolean($conf);
     }
-    
+
     if ($obj->HasProperty('value') == true) {
 	my $value = $obj->Get('value');
-	$Desc->{Value} = $value;
+	$desc->{Value} = $value;
     }
-    
+
     if ($obj->HasProperty('writable') == true) {
 	my $writable = $obj->Get('writable');
-	$Desc->{Writable} = ToBoolean($writable);
+	$desc->{Writable} = ToBoolean($writable);
     }
-    
+
     if ($obj->HasProperty('get') == true) {
 	my $getter = $obj->Get('get');
-	if (IsCallable($getter) == false && $getter != undefined) {
+	if ($class->IsCallable($getter) == false && $getter != undefined) {
 	    croak "TypeError: getter $getter is not callable and is not undefined";
 	}
-	$Desc->{Get} = $getter;
+	$desc->{Get} = $getter;
     }
-    
+
     if ($obj->HasProperty('set') == true) {
 	my $setter = $obj->Get('set');
-	if (IsCallable($setter) == false && $setter != undefined) {
+	if ($class->IsCallable($setter) == false && $setter != undefined) {
 	    croak "TypeError: setter $setter is not callable and is not undefined";
 	}
-	$Desc->{Set} = $setter;
+	$desc->{Set} = $setter;
     }
-    
-    if (exists($Desc->{Get}) || exists($Desc->{Set})) {
-	if (exists($Desc->{Value}) || exists($Desc->{Writable})) {
+
+    if (exists($desc->{Get}) || exists($desc->{Set})) {
+	if (exists($desc->{Value}) || exists($desc->{Writable})) {
 	    croak 'TypeError: getter and/or setter property present, value and/or writable property as well';
 	}
     }
