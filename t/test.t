@@ -2,6 +2,7 @@
 use strict;
 use warnings FATAL => 'all';
 use Test::More tests => 2;
+    use Log::Log4perl qw/:easy/;
     use Log::Any::Adapter;
     use Log::Any qw/$log/;
     #

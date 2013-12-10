@@ -108,7 +108,8 @@ sub arrayOfUnsignedShortToUtf8 {   # Note: this is NOT symmetric
 #
 # Note: a PropertyDescriptor maybe not be exactly a NamedDataProperty or a NamedAccessorProperty
 #
-class_type 'PropertyDescriptor', {class => 'JavaScript::Transpile::Target::Perl5::Engine::PropertyDescriptor' };
+# class_type 'PropertyDescriptor', {class => 'JavaScript::Transpile::Target::Perl5::Engine::PropertyDescriptor' };
+subtype 'PropertyDescriptor', as 'HashRef|Undefined';
 #
 # But a PropertyIdentifier is necessrarly a hash of PropertyDescriptor
 #

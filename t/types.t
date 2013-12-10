@@ -16,12 +16,10 @@ our $defaultLog4perlConf = '
     ';
 Log::Log4perl::init(\$defaultLog4perlConf);
 Log::Any::Adapter->set('Log4perl');
-#use JavaScript::Transpile::Target::Perl5::Engine;
-use JavaScript::Transpile::Target::Perl5::Engine::PropertyDescriptor qw//;
+use JavaScript::Transpile::Target::Perl5::Engine::Types;
+use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
+use JavaScript::Transpile::Target::Perl5::Engine::Helpers::PropertyDescriptor;
 
-my $x = JavaScript::Transpile::Target::Perl5::Engine::PropertyDescriptor->new({test => 1});
-$x->IsAccessorDescriptor();
-use Data::Dumper;
-print STDERR Dumper($x->Desc);
+my $x = undefined;
 
-
+JavaScript::Transpile::Target::Perl5::Engine::Helpers::PropertyDescriptor->IsAccessorDescriptor($x);

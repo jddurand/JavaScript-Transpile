@@ -2,10 +2,10 @@ use strict;
 use warnings FATAL => 'all';
 
 package JavaScript::Transpile::Target::Perl5::Engine::Helpers::PropertyDescriptor;
-use JavaScript::Transpile::Target::Perl5::Engine::Types qw/PropertyDescriptor/;
+use JavaScript::Transpile::Target::Perl5::Engine::Exception;
+use JavaScript::Transpile::Target::Perl5::Engine::Types qw/:all/;
 use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 use MooseX::Method::Signatures;
-use Carp qw/croak/;
 
 method IsAccessorDescriptor($class: PropertyDescriptor $desc) {
 
@@ -138,7 +138,7 @@ method ToPropertyDescriptor($class: Object $obj) {
     if ($obj->HasProperty('get') == true) {
 	my $getter = $obj->Get('get');
 	if ($class->IsCallable($getter) == false && $getter != undefined) {
-	    croak "TypeError: getter $getter is not callable and is not undefined";
+          JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'TypeError', message => "getter $getter is not callable and is not undefined"});
 	}
 	$desc->{Get} = $getter;
     }
@@ -146,14 +146,14 @@ method ToPropertyDescriptor($class: Object $obj) {
     if ($obj->HasProperty('set') == true) {
 	my $setter = $obj->Get('set');
 	if ($class->IsCallable($setter) == false && $setter != undefined) {
-	    croak "TypeError: setter $setter is not callable and is not undefined";
+          JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'TypeError', message => "setter $setter is not callable and is not undefined"});
 	}
 	$desc->{Set} = $setter;
     }
 
     if (exists($desc->{Get}) || exists($desc->{Set})) {
 	if (exists($desc->{Value}) || exists($desc->{Writable})) {
-	    croak 'TypeError: getter and/or setter property present, value and/or writable property as well';
+          JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'TypeError', message => 'getter and/or setter property present, value and/or writable property as well'});
 	}
     }
 
