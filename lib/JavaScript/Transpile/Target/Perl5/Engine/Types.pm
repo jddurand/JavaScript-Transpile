@@ -105,6 +105,8 @@ sub arrayOfUnsignedShortToUtf8 {   # Note: this is NOT symmetric
 #
 # Non-primitive types
 # -------------------
+class_type 'NamedDataProperty', {class => 'JavaScript::Transpile::Target::Perl5::Engine::NamedDataProperty'};
+class_type 'NamedAccessorProperty', {class => 'JavaScript::Transpile::Target::Perl5::Engine::NamedAccessorProperty'};
 #
 # Note: a PropertyDescriptor maybe not be exactly a NamedDataProperty or a NamedAccessorProperty
 #
