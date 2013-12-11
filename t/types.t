@@ -18,8 +18,9 @@ Log::Log4perl::init(\$defaultLog4perlConf);
 Log::Any::Adapter->set('Log4perl');
 use JavaScript::Transpile::Target::Perl5::Engine::Types;
 use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
-use JavaScript::Transpile::Target::Perl5::Engine::Helpers::PropertyDescriptor;
+use JavaScript::Transpile::Target::Perl5::Engine::Object;
+use JavaScript::Transpile::Target::Perl5::Engine::Roles::NamedDataProperty;
 
-my $x = undefined;
-
-JavaScript::Transpile::Target::Perl5::Engine::Helpers::PropertyDescriptor->IsAccessorDescriptor($x);
+my $x = JavaScript::Transpile::Target::Perl5::Engine::Object->new();
+use Data::Dumper;
+print STDERR Dumper($x);

@@ -5,8 +5,15 @@ package JavaScript::Transpile::Target::Perl5::Engine::Exception;
 use namespace::sweep;
 use Moose;
 with 'Throwable';
+with 'MooseX::Role::Logger';
 
-has type => (is => 'ro');
-has message => (is => 'ro');
+has type => (is => 'ro', default => 'GenericError');
+has message => (is => 'ro', default => '');
+
+sub BUILD {
+  my $self = shift;
+
+  $self->logger->error(join(', ', $self->type, $self->message));
+}
 
 1;

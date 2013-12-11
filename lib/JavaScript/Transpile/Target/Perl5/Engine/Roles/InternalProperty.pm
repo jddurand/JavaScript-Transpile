@@ -1,7 +1,7 @@
 use strict;
 use warnings FATAL => 'all';
 
-package JavaScript::Transpile::Target::Perl5::Engine::InternalProperty;
+package JavaScript::Transpile::Target::Perl5::Engine::Roles::InternalProperty;
 use namespace::sweep;
 use Moose::Role;
 use MooseX::Prototype qw/create_class_from_prototype/;
@@ -10,6 +10,7 @@ use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 use JavaScript::Transpile::Target::Perl5::Engine::Exception;
 use MooseX::Method::Signatures;
 use Scalar::Util qw/refaddr/;
+use Moose::Util::TypeConstraints;
 
 with 'MooseX::Role::Logger';
 
@@ -31,7 +32,7 @@ our @NOT_ALLOWED_CLASS = qw/Arguments Array Boolean Date Error Function JSON Mat
 #
 # Because of the cost of creating a class, we do prototype in a lazy way.
 #
-has 'Prototype' => (isa => 'Object|Null',
+has 'Prototype' => (isa => 'Object|JavaScript::Type::Null',
                     is => 'rw',
                     lazy => 1,
                     builder => '_build_Prototype');
@@ -76,7 +77,7 @@ around 'Prototype' => sub {
   return $self->$orig($prototype);
 };
 
-has 'Class' => (isa => 'String',
+has 'Class' => (isa => 'JavaScript::Type::String',
 		is => 'rw',
 		builder => '_build_Class'
                );
@@ -144,7 +145,7 @@ around 'Extensible' => sub {
   return $self->$orig($extensible);
 };
 
-method Get($self: String $propertyName) {
+method Get($self: Str $propertyName) {
   my $property = $self->Property;
   if ($property->DOES('Object')) {
     if ($property->DOES('NamedDataProperty')) {
@@ -155,52 +156,60 @@ method Get($self: String $propertyName) {
 
 sub _build_Get { undefined };
 
-has 'GetOwnProperty' => {
-    isa => 'Undefined|PropertyDescriptor',
+has 'GetOwnProperty' => (
+    isa => 'JavaScript::Type::Undefined|PropertyDescriptor',
     builder => '_build_GetOwnProperty',
-};
+);
 
 sub _build_GetOwnProperty { undefined };
 
-has 'GetProperty' => {
-    isa => 'Any',
+has 'GetProperty' => (
+    isa => 'JavaScript::Type::Undefined|PropertyDescriptor',
     builder => '_build_GetProperty',
-};
+);
 
-has 'Put' => {
+sub _build_GetProperty { undefined };
+
+has 'Put' => (
     isa => 'Any',
     builder => '_build_Put',
-};
+);
 
-has 'CanPut' => {
+sub _build_Put { undefined };
+
+has 'CanPut' => (
     isa => 'Any',
     builder => '_build_CanPut',
-};
+);
 
-has 'HasProperty' => {
-    isa => 'Any',
+sub _build_CanPut { undefined };
+
+has 'HasProperty' => (
+    isa => 'JavaScript::Type::Boolean',
     builder => '_build_HasProperty',
-};
+);
 
-has 'Delete' => {
+sub _build_HasProperty { undefined };
+
+has 'Delete' => (
     isa => 'Any',
     builder => '_build_Delete',
-};
+);
 
-has 'DefaultValue' => {
+sub _build_Delete { undefined };
+
+has 'DefaultValue' => (
     isa => 'Any',
     builder => '_build_DefaultValue',
-};
+);
 
-has 'DefineOwnProperty' => {
+sub _build_DefaultValue { undefined };
+
+has 'DefineOwnProperty' => (
     isa => 'Any',
     builder => '_build_DefineOwnProperty',
-};
+);
 
-=head1 SEE ALSO
-
-L<Moose>
-
-=cut
+sub _build_DefineOwnProperty { undefined };
 
 1;

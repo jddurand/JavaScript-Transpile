@@ -4,6 +4,7 @@ use warnings FATAL => 'all';
 package JavaScript::Transpile::Target::Perl5::Engine::Types;
 use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 use JavaScript::Transpile::Target::Perl5::Engine::Undefined;
+use JavaScript::Transpile::Target::Perl5::Engine::Object;
 
 # ABSTRACT: JavaScript Types in Perl5
 
@@ -49,12 +50,12 @@ This module provides JavaScript types in a Perl5 environment.
 #
 # The Undefined type is a new type. Object is already a built-in type in Moose.
 #
-class_type 'Undefined', {class => 'JavaScript::Transpile::Target::Perl5::Engine::Undefined' };
-subtype 'Boolean',   as 'Bool';
-subtype 'Null',      as 'Undef';
+class_type 'JavaScript::Type::Undefined', {class => 'JavaScript::Transpile::Target::Perl5::Engine::Undefined' };
+subtype 'JavaScript::Type::Boolean',   as 'Bool';
+subtype 'JavaScript::Type::Null',      as 'Undef';
 # No need of PositiveInt : we know what we are doing
-subtype 'String',    as 'ArrayRef[Int]';
-subtype 'Number',    as 'Num';
+subtype 'JavaScript::Type::String',    as 'ArrayRef[Int]';
+subtype 'JavaScript::Type::Number',    as 'Num';
 
 #
 # The AST sub-divides Number to three categories:
@@ -63,28 +64,18 @@ subtype 'Number',    as 'Num';
 # - HexIntegerLiteral
 # - OctalIntegerLiteral
 #
-subtype 'DecimalLiteral', as 'Number';
-subtype 'HexIntegerLiteral', as 'Int';
-subtype 'OctalIntegerLiteral', as 'Int';
+subtype 'JavaScript::Type::DecimalLiteral', as 'JavaScript::Type::Number';
+subtype 'JavaScript::Type::HexIntegerLiteral', as 'JavaScript::Type::Int';
+subtype 'JavaScript::Type::OctalIntegerLiteral', as 'JavaScript::Type::Int';
 
 #
-# Coercions
+# Coercions for strings only
 #
-coerce 'Str',    from 'String', via { arrayOfUnsignedShortToUtf8($_) };
-coerce 'String', from 'Str',    via { utf8ToArrayOfUnsignedShort($_) };
-
-coerce 'Boolean', from 'String', via { $_ eq 'true' ? true : false };
-coerce 'String', from 'Boolean', via { $_ == true ? 'true' : 'false' };
-
-coerce 'String',  from 'Null', via { 'null' };
-coerce 'Null',  from 'String', via { undef };
-
-coerce 'Number', from 'DecimalLiteral', via { fdlibm_strtod($_) };
-coerce 'Int',    from 'HexIntegerLiteral', via { hex($_) };
-coerce 'Int',    from 'OctalIntegerLiteral', via { oct($_) };
+coerce 'Str',    from 'JavaScript::Type::String', via { arrayOfUnsignedShortToUtf8($_) };
+coerce 'JavaScript::Type::String', from 'Str',    via { utf8ToArrayOfUnsignedShort($_) };
 
 #
-# Take care: String is a sequence of UTF-16 Code Units, NOT characters.
+# Take care: JavaScript::Type::String is a sequence of UTF-16 Code Units, NOT characters.
 # This mean that internally JavaScript is using UCS-2, not UTF-16. I.e.
 # no support for surrogate pairs. Nevertheless the spec says that textual
 # data is supposed to be UTF-16. I.e. the input can contain surrogate pairs.
@@ -105,19 +96,8 @@ sub arrayOfUnsignedShortToUtf8 {   # Note: this is NOT symmetric
 #
 # Non-primitive types
 # -------------------
-class_type 'NamedDataProperty', {class => 'JavaScript::Transpile::Target::Perl5::Engine::NamedDataProperty'};
-class_type 'NamedAccessorProperty', {class => 'JavaScript::Transpile::Target::Perl5::Engine::NamedAccessorProperty'};
-#
-# Note: a PropertyDescriptor maybe not be exactly a NamedDataProperty or a NamedAccessorProperty
-#
-# class_type 'PropertyDescriptor', {class => 'JavaScript::Transpile::Target::Perl5::Engine::PropertyDescriptor' };
-subtype 'PropertyDescriptor', as 'HashRef|Undefined';
-#
-# But a PropertyIdentifier is necessrarly a hash of PropertyDescriptor
-#
-subtype 'PropertyIdentifier', as 'HashRef[PropertyDescriptor]';
-
-class_type 'Reference', {class => 'JavaScript::Transpile::Target::Perl5::Engine::Roles::Reference'};
+class_type 'JavaScript::Type::DataProperty', {class => 'JavaScript::Transpile::Target::Perl5::Engine::DataProperty' };
+class_type 'JavaScript::Object', {class => 'JavaScript::Transpile::Target::Perl5::Engine::Object' };
 
 =head1 SEE ALSO
 
