@@ -11,7 +11,12 @@ use MooseX::Declare;
 use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
 use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 
-class JavaScript::Type::PropertyDescriptor {
+#
+# Note: prototype model is highly inspired by MooseX::Prototype, but simplified
+# and/or adapted to our implementation
+#
+
+role JavaScript::Type::PropertyDescriptor {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 
@@ -129,8 +134,8 @@ class JavaScript::Type::PropertyDescriptor {
     method ToPropertyDescriptor(ClassName $class: $obj) {
 	my $objBlessed = blessed($obj) || '';
 
-	if ($objBlessed ne 'JavaScript::Type::Object') {
-	    JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'TypeError', message => "\$obj is of type '$objBlessed', should be 'Object'"});
+	if (! $objBlessed || ! $objBlessed->DOES('JavaScript::Role::Object')) {
+	    JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'TypeError', message => "\$obj does not have an object role"});
 	}
 
 	my $desc = JavaScript::Type::PropertyDescriptor->new();
@@ -181,7 +186,7 @@ class JavaScript::Type::PropertyDescriptor {
     }
 }
 
-class JavaScript::Type::Object {
+role JavaScript::Role::Object {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
     use JavaScript::Transpile::Target::Perl5::Engine::Exception;
@@ -190,7 +195,6 @@ class JavaScript::Type::Object {
 
     our %CLASSES = map {$_ => 1} qw/Arguments Array Boolean Date Error Function JSON Math Number Object RegExp String/;
 
-    has '_buildPhase'       => (isa => 'Bool', is => 'ro', default => 0, writer => '_set__buildPhase');
     has '_properties'       => (traits => ['Hash'], is => 'ro', isa => 'HashRef[JavaScript::Type::PropertyDescriptor]', default => sub { {} },
 				handles => {
 				    descriptor         => 'accessor',
@@ -200,9 +204,22 @@ class JavaScript::Type::Object {
 				    delete_descriptor  => 'delete',
 				},
 	);
-    has 'prototype'         => (isa => 'JavaScript::Type::Object|JavaScript::Type::Null', is => 'rw', weak_ref => 1);
     has 'class'             => (isa => 'Str',                               is => 'rw', coerce => 1, default => 'Object');
     has 'extensible'        => (isa => 'JavaScript::Type::Boolean',         is => 'rw', default => false);
+    #
+    # Take care: the root of all objects, i.e. $Object, is created with an explicit null
+    #
+    has '_buildPhase'       => (isa => 'JavaScript::Type::Boolean', is => 'ro', default => false, writer => '_set__buildPhase');
+    has 'prototype'         => (isa => 'MooseX::Prototype::Trait::Object|JavaScript::Type::Null', is => 'rw', weak_ref => 1, default => null, init_arg => undef);
+
+    method BUILD {
+      #
+      # Prototype chaining is ending at JavaScript::Type::Object
+      #
+      $self->_set__buildPhase(true);
+      $self->prototype(blessed($self) eq 'JavaScript::Type::Object' ? null : $self);
+      $self->_set__buildPhase(false);
+    }
 
     #
     # 8.12.1 [[GetOwnProperty]] (P)
@@ -236,7 +253,7 @@ class JavaScript::Type::Object {
 	if (! defined($proto)) {
 	    return undefined;
 	}
-	return super();
+	return $proto->SUPER($p);
     }
     #
     # 8.12.3 [[Get]] (P)
@@ -266,40 +283,6 @@ class JavaScript::Type::Object {
 	return true;
     }
 
-    sub can {
-	my ($self, $name) = @_;
-
-	# check if it's a method of ours or inherited
-	if ($self->meta->find_method_by_name($name)) {
-	    return sub {
-		my $self = shift;
-		$self->{$name} = shift if @_;
-		return $self->{$name};
-	    };
-	}
-
-	return; # no method found
-    }
-
-    method AUTOLOAD {
-	my $field = our $AUTOLOAD;
-	$field =~ s/.*:://; # strip the package name
-	my $code = $self->can($field)
-	    or JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'TypeError', message => "Unimplemented internal property $field"});
-	goto &$code; # tail call; invisible via `caller()`.
-    }
-
-    method BUILD {
-	$self->_set__buildPhase(1);
-	my $parentClassName = ($self->meta->class_precedence_list)[0];
-	if ($parentClassName eq 'JavaScript::Type::Object') {
-	    $self->prototype(null);
-	} else {
-	    $self->prototype($self);
-	}
-	$self->_set__buildPhase(0);
-    }
-  
     around class {
 	return $self->$orig() unless  $#_ >= 2;
 
@@ -321,31 +304,52 @@ class JavaScript::Type::Object {
 	return $self->$orig($class);
     }
 
+      #
+      # Private method that will search for a prototype
+      #
+      method _findPrototype(JavaScript::Role::Object $obj, ArrayRef $listp?) {
+        my $prototype = $self->prototype;
+        if (defined($prototype)) {
+          if (defined($listp)) {
+            push(@{$listp}, $prototype);
+          }
+          if ($prototype == $obj) {
+            return true;
+          } else {
+            return $prototype->super($obj, $listp);
+          }
+        } else {
+          return 0;
+        }
+      }
+
     around prototype {
+      print STDERR "JDD\n";
 	return $self->$orig() unless  $#_ >= 2;
-    
+
 	my $prototype = pop;
-	#
-	# No check during build phase
-	#
-	if (! $self->_buildPhase) {
-	    #
-	    # if [[Extensible]] is false the value of the [[Prototype]] internal property of the object may not be modified
-	    #
-	    if ($self->extensible == false) {
-		#
-		# We trigger if it really changes
-		#
-		JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'GenericError', message => 'The value of the [[Prototype]] internal property may not be modified'});
-	    }
-	
-	    if ($prototype != null && grep {$prototype eq $_} $self->meta->class_precedente_list) {
-		#
-		# Recursively accessing the [[Prototype]] internal property must eventually lead to a null value
-		#
-		JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'GenericError', message => 'Recursive access to [[Prototype]] internal property would be possible'});
-	    }
-	}
+
+        print STDERR "\$self->_buildPhase = " . $self->_buildPhase . "\n";
+        if ($self->_buildPhase == false) {
+          #
+          # if [[Extensible]] is false the value of the [[Prototype]] internal property of the object may not be modified
+          #
+          if ($self->extensible == false) {
+            #
+            # We trigger if it really changes
+            #
+            JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'GenericError', message => 'The value of the [[Prototype]] internal property may not be modified'});
+          }
+          my @list = ();
+          $self->_findPrototype($prototype, \@list);
+	print STDERR "Prototype chain: " . join(', ', reverse(@list)) . "\n";
+          if ($prototype != null && $self->_findPrototype($prototype)) {
+              #
+              # Recursively accessing the [[Prototype]] internal property must eventually lead to a null value
+              #
+              JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'GenericError', message => 'Recursive access to [[Prototype]] internal property would be possible'});
+            }
+        }
 	
 	return $self->$orig($prototype);
     }
@@ -366,6 +370,10 @@ class JavaScript::Type::Object {
 	return $self->$orig($extensible);
     }
     
+}
+
+class JavaScript::Type::Object is mutable
+  with (JavaScript::Role::Object, MooseX::Prototype::Trait::Object::RW) {
 }
 
 1;
