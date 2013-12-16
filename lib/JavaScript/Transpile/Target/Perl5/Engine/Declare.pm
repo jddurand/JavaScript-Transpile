@@ -7,16 +7,19 @@ package JavaScript::Transpile::Target::Perl5::Engine::Declare;
 
 # VERSION
 
+#
+# Yes, JavaScript uses the prototype model. One might think that I should
+# have used MooseX::Prototype, but if you look closely to the spec you
+# will see that in fact classes are never modified. New "attributes" are
+# in reality added in a PropertyDescriptor. Therefore it is perfectly
+# sensible to use immutable classes to simulate JavaScript.
+#
+
 use MooseX::Declare;
 use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
 use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 
-#
-# Note: prototype model is highly inspired by MooseX::Prototype, but simplified
-# and/or adapted to our implementation
-#
-
-role JavaScript::Type::PropertyDescriptor {
+class JavaScript::Type::PropertyDescriptor {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 
@@ -134,7 +137,7 @@ role JavaScript::Type::PropertyDescriptor {
     method ToPropertyDescriptor(ClassName $class: $obj) {
 	my $objBlessed = blessed($obj) || '';
 
-	if (! $objBlessed || ! $objBlessed->DOES('JavaScript::Role::Object')) {
+	if ($objBlessed ne 'JavaScript::Type::Object') {
 	    JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'TypeError', message => "\$obj does not have an object role"});
 	}
 
@@ -186,7 +189,7 @@ role JavaScript::Type::PropertyDescriptor {
     }
 }
 
-role JavaScript::Role::Object {
+class JavaScript::Type::Object is mutable {   # See below, I cannot blame MooseX::Declare for that
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
     use JavaScript::Transpile::Target::Perl5::Engine::Exception;
@@ -209,18 +212,21 @@ role JavaScript::Role::Object {
     #
     # Take care: the root of all objects, i.e. $Object, is created with an explicit null
     #
-    has '_buildPhase'       => (isa => 'JavaScript::Type::Boolean', is => 'ro', default => false, writer => '_set__buildPhase');
-    has 'prototype'         => (isa => 'MooseX::Prototype::Trait::Object|JavaScript::Type::Null', is => 'rw', weak_ref => 1, default => null, init_arg => undef);
+    has 'prototype'         => (isa => 'JavaScript::Type::Object|JavaScript::Type::Null', is => 'rw', weak_ref => 1, default => null);
 
-    method BUILD {
-      #
-      # Prototype chaining is ending at JavaScript::Type::Object
-      #
-      $self->_set__buildPhase(true);
-      $self->prototype(blessed($self) eq 'JavaScript::Type::Object' ? null : $self);
-      $self->_set__buildPhase(false);
-    }
-
+    #
+    # JavaScript prototyping is as simple as that.
+    # Another way would be like MooseX::Prototype with shallow copies.
+    # But this mean creating mutable classes all the time.
+    #
+    around new(ClassName|JavaScript::Type::Object $class: @params) {
+	my $blessed = blessed($class) || '';
+	if ($blessed) {
+	    return $blessed->$orig(@params, prototype => $class);
+	}
+	$class->$orig(@params);
+    };
+	
     #
     # 8.12.1 [[GetOwnProperty]] (P)
     #
@@ -307,7 +313,7 @@ role JavaScript::Role::Object {
       #
       # Private method that will search for a prototype
       #
-      method _findPrototype(JavaScript::Role::Object $obj, ArrayRef $listp?) {
+      method _findPrototype(JavaScript::Type::Object $obj, ArrayRef $listp?) {
         my $prototype = $self->prototype;
         if (defined($prototype)) {
           if (defined($listp)) {
@@ -324,34 +330,30 @@ role JavaScript::Role::Object {
       }
 
     around prototype {
-      print STDERR "JDD\n";
 	return $self->$orig() unless  $#_ >= 2;
 
 	my $prototype = pop;
 
-        print STDERR "\$self->_buildPhase = " . $self->_buildPhase . "\n";
-        if ($self->_buildPhase == false) {
-          #
-          # if [[Extensible]] is false the value of the [[Prototype]] internal property of the object may not be modified
-          #
-          if ($self->extensible == false) {
-            #
-            # We trigger if it really changes
-            #
-            JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'GenericError', message => 'The value of the [[Prototype]] internal property may not be modified'});
-          }
-          my @list = ();
-          $self->_findPrototype($prototype, \@list);
-	print STDERR "Prototype chain: " . join(', ', reverse(@list)) . "\n";
-          if ($prototype != null && $self->_findPrototype($prototype)) {
-              #
-              # Recursively accessing the [[Prototype]] internal property must eventually lead to a null value
-              #
-              JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'GenericError', message => 'Recursive access to [[Prototype]] internal property would be possible'});
-            }
-        }
+      #
+      # if [[Extensible]] is false the value of the [[Prototype]] internal property of the object may not be modified
+      #
+      if ($self->extensible == false) {
+	  #
+	  # We trigger if it really changes
+	  #
+	  JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'GenericError', message => 'The value of the [[Prototype]] internal property may not be modified'});
+      }
+      my @list = ();
+      $self->_findPrototype($prototype, \@list);
+      print STDERR "Prototype chain: " . join(', ', reverse(@list)) . "\n";
+      if ($prototype != null && $self->_findPrototype($prototype)) {
+	  #
+	  # Recursively accessing the [[Prototype]] internal property must eventually lead to a null value
+	  #
+	  JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'GenericError', message => 'Recursive access to [[Prototype]] internal property would be possible'});
+      }
 	
-	return $self->$orig($prototype);
+      return $self->$orig($prototype);
     }
     
     around extensible {
@@ -370,10 +372,7 @@ role JavaScript::Role::Object {
 	return $self->$orig($extensible);
     }
     
-}
-
-class JavaScript::Type::Object is mutable
-  with (JavaScript::Role::Object, MooseX::Prototype::Trait::Object::RW) {
+    __PACKAGE__->meta->make_immutable( inline_constructor => 0 );
 }
 
 1;
