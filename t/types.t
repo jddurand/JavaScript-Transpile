@@ -16,11 +16,20 @@ our $defaultLog4perlConf = '
     ';
 Log::Log4perl::init(\$defaultLog4perlConf);
 Log::Any::Adapter->set('Log4perl');
-use JavaScript::Transpile::Target::Perl5::Engine::Types;
+use JavaScript::Transpile::Target::Perl5::Engine;
 use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
-use JavaScript::Transpile::Target::Perl5::Engine::Object;
-use JavaScript::Transpile::Target::Perl5::Engine::Roles::NamedDataProperty;
 
-my $x = JavaScript::Transpile::Target::Perl5::Engine::Object->new();
-use Data::Dumper;
-print STDERR Dumper($x);
+my $ROOT = JavaScript::Type::Object->new();
+print STDERR $ROOT->dump();
+my $child = $ROOT->new();
+print STDERR $child->dump();
+print "Child class precedence list: " . join(' ', $child->meta->class_precedence_list) . "\n";
+my $desc = JavaScript::Type::PropertyDescriptor->ToPropertyDescriptor($child);
+print STDERR "Desc: " . $desc->dump;
+my $grandChild = $child->prototype->new();
+print STDERR $grandChild->dump();
+print "Grand child class precedence list: " . join(' ', $grandChild->meta->class_precedence_list) . "\n";
+$grandChild->prototype($ROOT);
+print STDERR $grandChild->dump();
+print "New Grand child class precedence list: " . join(' ', $grandChild->meta->class_precedence_list) . "\n";
+$grandChild->prototype;

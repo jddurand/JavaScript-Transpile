@@ -10,7 +10,7 @@ use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 use JavaScript::Transpile::Target::Perl5::Engine::Exception;
 use MooseX::Method::Signatures;
 use Scalar::Util qw/refaddr/;
-use Moose::Util::TypeConstraints;
+use MooseX::Method::Signatures;
 
 with 'MooseX::Role::Logger';
 
@@ -145,7 +145,7 @@ around 'Extensible' => sub {
   return $self->$orig($extensible);
 };
 
-method Get($self: Str $propertyName) {
+method Get($self: String $propertyName) {
   my $property = $self->Property;
   if ($property->DOES('Object')) {
     if ($property->DOES('NamedDataProperty')) {

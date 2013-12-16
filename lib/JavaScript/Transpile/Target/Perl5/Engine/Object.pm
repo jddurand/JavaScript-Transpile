@@ -2,27 +2,20 @@ use strict;
 use warnings FATAL => 'all';
 
 package JavaScript::Transpile::Target::Perl5::Engine::Object;
-use namespace::sweep;
-use Moose;
+use MooseX::Declare;
 
-# ABSTRACT: JavaScript Object in Perl5
+class JavaScript::Type::Object is dirty {
+    use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
+    use Moose::Util::TypeConstraints;
+    use MooseX::Prototype;
 
-# VERSION
+    with 'MooseX::Prototype::Trait::Object::RW';
 
-=head1 DESCRIPTION
+    our %CLASSES = map {$_ => 1} qw/Arguments Array Boolean Date Error Function JSON Math Number Object RegExp String/;
+    subtype 'allowedObjectClass', as 'Str', where {exists($CLASSES{$_})};
 
-This module provides JavaScript Object definition in a Perl5 environment.
-
-=cut
-
-with 'JavaScript::Transpile::Target::Perl5::Engine::Roles::NamedDataProperty';
-with 'JavaScript::Transpile::Target::Perl5::Engine::Roles::NamedAccessorProperty';
-#with 'JavaScript::Transpile::Target::Perl5::Engine::Roles::InternalProperty';
-
-=head1 SEE ALSO
-
-L<Moose>
-
-=cut
+    has 'Class' => (isa => 'allowedObjectClass',
+		    is => 'rw');
+}
 
 1;

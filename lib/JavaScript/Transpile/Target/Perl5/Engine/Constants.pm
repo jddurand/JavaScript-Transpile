@@ -9,7 +9,7 @@ use JavaScript::Transpile::Target::Perl5::Engine::Undefined;
 # VERSION
 
 use Exporter 'import';
-our @EXPORT_OK = qw/undefined true false/;
+our @EXPORT_OK = qw/undefined true false null/;
 our %EXPORT_TAGS = ('all' => [ @EXPORT_OK ]);
 
 use constant {

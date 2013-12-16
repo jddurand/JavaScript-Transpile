@@ -3,8 +3,8 @@ use warnings FATAL => 'all';
 
 package JavaScript::Transpile::Target::Perl5::Engine::Roles::NamedAccessorProperty;
 use namespace::sweep;
+use JavaScript::Transpile::Target::Perl5::Engine::Types;
 use Moose::Role;
-use JavaScript::Transpile::Target::Perl5::Engine::AccessorProperty;
 
 # ABSTRACT: JavaScript Named Accessor Property role in Perl5
 
@@ -16,15 +16,15 @@ This module provides JavaScript Named Accessor Property role implementation in a
 
 =cut
 
-has '_namedAccessorProperty' => (
-    isa => 'HashRef[JavaScript::Transpile::Target::Perl5::Engine::DataProperty]',
+has _namedAccessorProperty => (
+    isa => 'HashRef[JS_DataProperty]',
     is => 'ro',
     builder => '_build__namedAccessorProperty',
     writer => '_set__namedAccessorProperty'
 );
 
 sub _build__namedAccessorProperty {
-    return {jdd => JavaScript::Transpile::Target::Perl5::Engine::DataProperty->new() };
+    return {jdd => JS_DataProperty->new() };
 }
 
 1;
