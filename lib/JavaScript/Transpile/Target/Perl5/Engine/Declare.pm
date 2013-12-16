@@ -22,6 +22,7 @@ use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 class JavaScript::Type::PropertyDescriptor {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
+    use aliased 'JavaScript::Transpile::Target::Perl5::Engine::Exception';
 
     has '_property' => ( is => 'rw', traits => ['Hash'], isa => 'HashRef', default => sub { {enumerable => false, configurable => false} },
 			 handles => {
@@ -138,7 +139,7 @@ class JavaScript::Type::PropertyDescriptor {
 	my $objBlessed = blessed($obj) || '';
 
 	if ($objBlessed ne 'JavaScript::Type::Object') {
-	    JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'TypeError', message => "\$obj does not have an object role"});
+	    Exception->throw({type => 'TypeError', message => "\$obj does not have an object role"});
 	}
 
 	my $desc = JavaScript::Type::PropertyDescriptor->new();
@@ -166,7 +167,7 @@ class JavaScript::Type::PropertyDescriptor {
 	if ($obj->hasProperty('get') == true) {
 	    my $getter = $obj->get('get');
 	    if ($class->isCallable($getter) == false && $getter != undefined) {
-		JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'TypeError', message => "getter $getter is not callable and is not undefined"});
+		Exception->throw({type => 'TypeError', message => "getter $getter is not callable and is not undefined"});
 	    }
 	    $desc->hash->accessor('get', $getter);
 	}
@@ -174,14 +175,14 @@ class JavaScript::Type::PropertyDescriptor {
 	if ($obj->hasProperty('set') == true) {
 	    my $setter = $obj->get('set');
 	    if ($class->isCallable($setter) == false && $setter != undefined) {
-		JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'TypeError', message => "setter $setter is not callable and is not undefined"});
+		Exception->throw({type => 'TypeError', message => "setter $setter is not callable and is not undefined"});
 	    }
 	    $desc->hash->accessor('set', $setter);
 	}
 
 	if ($desc->exists('get') || $desc->exists('set')) {
 	    if ($desc->exists('value') || $desc->exists('writable')) {
-		JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'TypeError', message => 'getter and/or setter property present, value and/or writable property as well'});
+		Exception->throw({type => 'TypeError', message => 'getter and/or setter property present, value and/or writable property as well'});
 	    }
 	}
 
@@ -192,7 +193,7 @@ class JavaScript::Type::PropertyDescriptor {
 class JavaScript::Type::Object is mutable {   # See below, I cannot blame MooseX::Declare for that
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
-    use JavaScript::Transpile::Target::Perl5::Engine::Exception;
+    use aliased 'JavaScript::Transpile::Target::Perl5::Engine::Exception';
     use Moose::Util::TypeConstraints;
     use Scalar::Util qw/blessed/;
 
@@ -295,7 +296,7 @@ class JavaScript::Type::Object is mutable {   # See below, I cannot blame MooseX
 	my $class = pop;
 
 	if (!exists($CLASSES{$class})) {
-	    JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'TypeError', message => "The value of the [[Class]] internal property cannot but $class, but one of: " . join(' ', sort keys %CLASSES)});
+	    Exception->throw({type => 'TypeError', message => "The value of the [[Class]] internal property cannot but $class, but one of: " . join(' ', sort keys %CLASSES)});
 	}
 	#
 	# if [[Extensible]] is false the value of the [[Class]] internal properties of the object may not be modified
@@ -304,7 +305,7 @@ class JavaScript::Type::Object is mutable {   # See below, I cannot blame MooseX
 	    #
 	    # We trigger if it really changes
 	    #
-	    JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'TypeError', message => "The value of the [[Class]] internal property may not be modified"});
+	    Exception->throw({type => 'TypeError', message => "The value of the [[Class]] internal property may not be modified"});
 	}
     
 	return $self->$orig($class);
@@ -341,7 +342,7 @@ class JavaScript::Type::Object is mutable {   # See below, I cannot blame MooseX
 	  #
 	  # We trigger if it really changes
 	  #
-	  JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'GenericError', message => 'The value of the [[Prototype]] internal property may not be modified'});
+	  Exception->throw({type => 'GenericError', message => 'The value of the [[Prototype]] internal property may not be modified'});
       }
       my @list = ();
       $self->_findPrototype($prototype, \@list);
@@ -350,7 +351,7 @@ class JavaScript::Type::Object is mutable {   # See below, I cannot blame MooseX
 	  #
 	  # Recursively accessing the [[Prototype]] internal property must eventually lead to a null value
 	  #
-	  JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'GenericError', message => 'Recursive access to [[Prototype]] internal property would be possible'});
+	  Exception->throw({type => 'GenericError', message => 'Recursive access to [[Prototype]] internal property would be possible'});
       }
 	
       return $self->$orig($prototype);
@@ -366,7 +367,7 @@ class JavaScript::Type::Object is mutable {   # See below, I cannot blame MooseX
 	# by ECMAScript code to be false then it must not subsequently become true.
 	#
 	if ($self->$orig() == false && $extensible == true) {
-	    JavaScript::Transpile::Target::Perl5::Engine::Exception->throw({type => 'GenericError', message => '[[Extensible]] internal property has been observed to be false so it must not subsequently become true'});
+	    Exception->throw({type => 'GenericError', message => '[[Extensible]] internal property has been observed to be false so it must not subsequently become true'});
 	}
 	
 	return $self->$orig($extensible);
