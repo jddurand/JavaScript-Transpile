@@ -19,16 +19,53 @@ use MooseX::Declare;
 use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
 use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 
+class JavaScript::Type::DeclarativeEnvironmentRecord {
+    use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
+    use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
+
+    has '_declarativeEnvironmentRecord' =>
+	( is => 'rw',
+	  traits => ['Hash'],
+	  isa => 'HashRef',
+	  default => sub { {} },
+	  handles => {
+	      accessor => 'accessor',
+	      exists   => 'exists',
+	  }
+	);
+    #
+    # 10.2.1.1.1 HasBinding(N)
+    #
+    method hasBinding($envRec: Str $N) {
+	if ($envRec->exists($N)) {
+	    return true;
+	}
+	return false;
+    }
+    #
+    # 10.2.1.1.2 CreateMutableBinding (N, D)
+    #
+    method createMutableBinding($envRec: Str $N, JavaScript::Type::Boolean $D) {
+    }
+
+
+}
+
+
 class JavaScript::Type::PropertyDescriptor {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
     use aliased 'JavaScript::Transpile::Target::Perl5::Engine::Exception';
 
-    has '_property' => ( is => 'rw', traits => ['Hash'], isa => 'HashRef', default => sub { {enumerable => false, configurable => false} },
-			 handles => {
-			     accessor => 'accessor',
-			     exists   => 'exists',
-			 }
+    has '_propertyDescriptor' =>
+	( is => 'rw',
+	  traits => ['Hash'],
+	  isa => 'HashRef',
+	  default => sub { {enumerable => false, configurable => false} },
+	  handles => {
+	      accessor => 'accessor',
+	      exists   => 'exists',
+	  }
 	);
     #
     # 8.10.1 IsAccessorDescriptor ( Desc )
@@ -190,6 +227,10 @@ class JavaScript::Type::PropertyDescriptor {
     }
 }
 
+class JavaScript::Type::Reference {
+    has 'class'             => (isa => 'Str',                               is => 'rw', coerce => 1, default => 'Object');
+}
+
 class JavaScript::Type::Object is mutable {   # See below, I cannot blame MooseX::Declare for that
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
@@ -199,14 +240,18 @@ class JavaScript::Type::Object is mutable {   # See below, I cannot blame MooseX
 
     our %CLASSES = map {$_ => 1} qw/Arguments Array Boolean Date Error Function JSON Math Number Object RegExp String/;
 
-    has '_properties'       => (traits => ['Hash'], is => 'ro', isa => 'HashRef[JavaScript::Type::PropertyDescriptor]', default => sub { {} },
-				handles => {
-				    descriptor         => 'accessor',
-				    exists_descriptor  => 'exists',
-				    descriptors        => 'keys',
-				    count_descriptors  => 'count',
-				    delete_descriptor  => 'delete',
-				},
+    has '_propertyDescriptorHash' =>
+	(traits => ['Hash'],
+	 is => 'ro',
+	 isa => 'HashRef[JavaScript::Type::PropertyDescriptor]',
+	 default => sub { {} },
+	 handles => {
+	     descriptor         => 'accessor',
+	     exists_descriptor  => 'exists',
+	     descriptors        => 'keys',
+	     count_descriptors  => 'count',
+	     delete_descriptor  => 'delete',
+	 },
 	);
     has 'class'             => (isa => 'Str',                               is => 'rw', coerce => 1, default => 'Object');
     has 'extensible'        => (isa => 'JavaScript::Type::Boolean',         is => 'rw', default => false);
@@ -227,7 +272,7 @@ class JavaScript::Type::Object is mutable {   # See below, I cannot blame MooseX
 	}
 	$class->$orig(@params);
     };
-	
+    
     #
     # 8.12.1 [[GetOwnProperty]] (P)
     #
@@ -307,54 +352,54 @@ class JavaScript::Type::Object is mutable {   # See below, I cannot blame MooseX
 	    #
 	    Exception->throw({type => 'TypeError', message => "The value of the [[Class]] internal property may not be modified"});
 	}
-    
+	
 	return $self->$orig($class);
     }
 
-      #
-      # Private method that will search for a prototype
-      #
-      method _findPrototype(JavaScript::Type::Object $obj, ArrayRef $listp?) {
+    #
+    # Private method that will search for a prototype
+    #
+    method _findPrototype(JavaScript::Type::Object $obj, ArrayRef $listp?) {
         my $prototype = $self->prototype;
         if (defined($prototype)) {
-          if (defined($listp)) {
-            push(@{$listp}, $prototype);
-          }
-          if ($prototype == $obj) {
-            return true;
-          } else {
-            return $prototype->super($obj, $listp);
-          }
+	    if (defined($listp)) {
+		push(@{$listp}, $prototype);
+	    }
+	    if ($prototype == $obj) {
+		return true;
+	    } else {
+		return $prototype->super($obj, $listp);
+	    }
         } else {
-          return 0;
+	    return 0;
         }
-      }
+    }
 
     around prototype {
 	return $self->$orig() unless  $#_ >= 2;
 
 	my $prototype = pop;
 
-      #
-      # if [[Extensible]] is false the value of the [[Prototype]] internal property of the object may not be modified
-      #
-      if ($self->extensible == false) {
-	  #
-	  # We trigger if it really changes
-	  #
-	  Exception->throw({type => 'GenericError', message => 'The value of the [[Prototype]] internal property may not be modified'});
-      }
-      my @list = ();
-      $self->_findPrototype($prototype, \@list);
-      print STDERR "Prototype chain: " . join(', ', reverse(@list)) . "\n";
-      if ($prototype != null && $self->_findPrototype($prototype)) {
-	  #
-	  # Recursively accessing the [[Prototype]] internal property must eventually lead to a null value
-	  #
-	  Exception->throw({type => 'GenericError', message => 'Recursive access to [[Prototype]] internal property would be possible'});
-      }
+	#
+	# if [[Extensible]] is false the value of the [[Prototype]] internal property of the object may not be modified
+	#
+	if ($self->extensible == false) {
+	    #
+	    # We trigger if it really changes
+	    #
+	    Exception->throw({type => 'GenericError', message => 'The value of the [[Prototype]] internal property may not be modified'});
+	}
+	my @list = ();
+	$self->_findPrototype($prototype, \@list);
+	print STDERR "Prototype chain: " . join(', ', reverse(@list)) . "\n";
+	if ($prototype != null && $self->_findPrototype($prototype)) {
+	    #
+	    # Recursively accessing the [[Prototype]] internal property must eventually lead to a null value
+	    #
+	    Exception->throw({type => 'GenericError', message => 'Recursive access to [[Prototype]] internal property would be possible'});
+	}
 	
-      return $self->$orig($prototype);
+	return $self->$orig($prototype);
     }
     
     around extensible {
