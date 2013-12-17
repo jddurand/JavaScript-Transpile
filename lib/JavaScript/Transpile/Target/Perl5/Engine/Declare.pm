@@ -16,19 +16,334 @@ package JavaScript::Transpile::Target::Perl5::Engine::Declare;
 #
 
 use MooseX::Declare;
-use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
-use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 
-class JavaScript::Type::EnvironmentRecord {
+class JavaScript::Type::Object is mutable {   # See below, I cannot blame MooseX::Declare for that
+    use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
+    use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
+    use aliased 'JavaScript::Transpile::Target::Perl5::Engine::Exception';
+    use Moose::Util::TypeConstraints;
+    use Scalar::Util qw/blessed/;
+
+    our %CLASSES = map {$_ => 1} qw/Arguments Array Boolean Date Error Function JSON Math Number Object RegExp String/;
+
+    has '_propertyDescriptorHash' =>
+	(traits => ['Hash'],
+	 is => 'ro',
+	 isa => 'HashRef[JavaScript::Role::PropertyDescriptor]',
+	 default => sub { {} },
+	 handles => {
+	     descriptor         => 'accessor',
+	     exists_descriptor  => 'exists',
+	     descriptors        => 'keys',
+	     count_descriptors  => 'count',
+	     delete_descriptor  => 'delete',
+	 },
+	);
+    has 'class'             => (isa => 'Str',                               is => 'rw', coerce => 1, default => 'Object');
+    has 'extensible'        => (isa => 'JavaScript::Type::Boolean',         is => 'rw', default => false);
+    #
+    # Take care: the root of all objects, i.e. $Object, is created with an explicit null
+    #
+    has 'prototype'         => (isa => 'JavaScript::Type::Object|JavaScript::Type::Null', is => 'rw', weak_ref => 1, default => sub { return null });
+
+    #
+    # JavaScript prototyping is as simple as that.
+    # Another way would be like MooseX::Prototype with shallow copies.
+    # But this mean creating mutable classes all the time.
+    #
+    around new(ClassName|JavaScript::Type::Object $class: @params) {
+	my $blessed = blessed($class) || '';
+	if ($blessed) {
+	    return $blessed->$orig(@params, prototype => $class);
+	}
+	$class->$orig(@params);
+    };
+    
+    #
+    # 8.12.1 [[GetOwnProperty]] (P)
+    #
+    method getOwnProperty($O: Str $P) {
+	if (! $O->exists_descriptor($P)) {
+	    return undefined;
+	}
+	my $D = JavaScript::Role::PropertyDescriptor->new();
+	my $X = $O->_propertyDescriptorHash->descriptor($P);
+	if (JavaScript::Role::PropertyDescriptor->isDataproperty($X)) {
+	    $D->accessor('value', $X->accessor('value'));
+	    $D->accessor('writable', $X->accessor('writable'));
+	} else {
+	    $D->accessor('get', $X->accessor('get'));
+	    $D->accessor('set', $X->accessor('set'));
+	}
+	$D->accessor('enumerable', $X->accessor('enumerable'));
+	$D->accessor('configurable', $X->accessor('configurable'));
+	return $D;
+    }
+    #
+    # 8.12.2 [[GetProperty]] (P)
+    #
+    method getProperty($O: Str $P) {
+	my $prop = $O->getOwnProperty($P);
+	if ($prop != undefined) {
+	    return $prop;
+	}
+	my $proto = $O->prototype;
+	if ($proto == null) {
+	    return undefined;
+	}
+	return $proto->SUPER($P);
+    }
+    #
+    # 8.12.3 [[Get]] (P)
+    #
+    method get($O: Str $P) {
+	my $desc = $O->getProperty($P);
+	if ($desc == undefined) {
+	    return undefined;
+	}
+	if ($desc->isDataDescriptor == true) {
+	    return $desc->get('value');
+	}
+	my $getter = $desc->('get');
+	if ($getter == undefined) {
+	    return undefined;
+	}
+	return $getter->call($O);
+    }
+    #
+    # 8.12.4 [[CanPut]] (P)
+    #
+    method canPut($O: Str $P) {
+	my $desc = $O->getOwnProperty($P);
+	if ($desc != undefined) {
+	    if ($desc->isDataDescriptor == true) {
+		if  ($desc->get('set') == undefined) {
+		    return false;
+		} else {
+		    return true;
+		}
+	    } else {
+		return $desc->get('writable');
+	    }
+	}
+	my $proto = $O->prototype;
+	if ($proto == null) {
+	    return $O->extensible;
+	}
+	my $inherited = $proto->getProperty($P);
+	if ($inherited == undefined) {
+	    return $O->extensible;
+	}
+	if ($inherited->isAccessorDescriptor == true) {
+	    if ($inherited->get('set') == undefined) {
+		return false;
+	    } else {
+		return true;
+	    }
+	} else {
+	    if ($O->extensible == false) {
+		return false;
+	    } else {
+		return $inherited->get('writable');
+	    }
+	}
+    }
+    #
+    # 8.12.5 [[Put]] ( P, V, Throw )
+    #
+    method put($O: Str $P, JavaScript::Type::Primitive|JavaScript::Type::Object $V, JavaScript::Type::Boolean $Throw) {
+	if ($O->canPut($P) == false) {
+	    if ($Throw == true) {
+		Exception->throw({type => 'TypeError', message => "[[canPut]] on $P returned false"});
+	    } else {
+		return;
+	    }
+	}
+	my $ownDesc = $O->getOwnProperty($P);
+	if ($ownDesc->isDataDescriptor == true) {
+	    my $valueDesc = JavaScript::Role::PropertyDescriptor->new({value => $V});
+	    $O->defineOwnProperty($P, $valueDesc, $Throw);
+	    return;
+	}
+	my $desc = $O->getProperty($P);
+	if ($desc->isDataDescriptor == true) {
+	    my $setter = $desc->get('set');
+	    $setter->call($O, $V);
+	} else {
+	    my $newDesc = JavaScript::Role::PropertyDescriptor->new({value => $V,
+								     writable => true,
+								     enumerable => true,
+								     configurable => true});
+	    $O->defineOwnProperty($P, $newDesc, $Throw);
+	}
+    }
+    #
+    # 8.12.6 [[HasProperty]] (P)
+    #
+    method hasProperty($O: Str $P) {
+	my $desc = $O->getProperty($P);
+	if ($desc == undefined) {
+	    return false;
+	} else {
+	    return true;
+	}
+    }
+    #
+    # 8.12.7 [[Delete]] (P, Throw)
+    #
+    method delete($O: Str $P, JavaScript::Type::Boolean $Throw) {
+	my $desc = $O->getProperty($P);
+	if ($desc == undefined) {
+	    return true;
+	}
+	if ($desc->get('configurable') == true) {
+	    $O->_propertyDescriptorHash->delete_descriptor($P);
+	    return true;
+	} elsif ($Throw == true) {
+	    Exception->throw({type => 'TypeError', message => "[[Delete]] on $P that have configurable == false"});
+	}
+	return false;
+    }
+    #
+    # 8.12.8 [[DefaultValue]] (hint)
+    #
+    method defaultValue($O: Str $hint?) {
+	if (defined($hint) && $hint eq 'String') {
+	    my $toString = $O->get('toString');
+	}
+    }
+
+
+    around class {
+	return $self->$orig() unless  $#_ >= 2;
+
+	my $class = pop;
+
+	if (!exists($CLASSES{$class})) {
+	    Exception->throw({type => 'TypeError', message => "The value of the [[Class]] internal property cannot but $class, but one of: " . join(' ', sort keys %CLASSES)});
+	}
+	#
+	# if [[Extensible]] is false the value of the [[Class]] internal properties of the object may not be modified
+	#
+	if ($self->extensible == false) {
+	    #
+	    # We trigger if it really changes
+	    #
+	    Exception->throw({type => 'TypeError', message => "The value of the [[Class]] internal property may not be modified"});
+	}
+	
+	return $self->$orig($class);
+    }
+
+    #
+    # Private method that will search for a prototype
+    #
+    method _findPrototype(JavaScript::Type::Object $obj, ArrayRef $listp?) {
+        my $prototype = $self->prototype;
+        if ($prototype != null) {
+	    if (defined($listp)) {
+		push(@{$listp}, $prototype);
+	    }
+	    if ($prototype == $obj) {
+		return true;
+	    } else {
+		return $prototype->super($obj, $listp);
+	    }
+        } else {
+	    return 0;
+        }
+    }
+
+    around prototype {
+	return $self->$orig() unless  $#_ >= 2;
+
+	my $prototype = pop;
+
+	#
+	# if [[Extensible]] is false the value of the [[Prototype]] internal property of the object may not be modified
+	#
+	if ($self->extensible == false) {
+	    #
+	    # We trigger if it really changes
+	    #
+	    Exception->throw({type => 'GenericError', message => 'The value of the [[Prototype]] internal property may not be modified'});
+	}
+	my @list = ();
+	$self->_findPrototype($prototype, \@list);
+	if ($prototype != null && $self->_findPrototype($prototype)) {
+	    #
+	    # Recursively accessing the [[Prototype]] internal property must eventually lead to a null value
+	    #
+	    Exception->throw({type => 'GenericError', message => 'Recursive access to [[Prototype]] internal property would be possible'});
+	}
+	
+	return $self->$orig($prototype);
+    }
+    
+    around extensible {
+	return $self->$orig() unless  $#_ >= 2;
+
+	my $extensible = pop;
+	
+	#
+	# If the [[Extensible]] internal property of that host object has been observed
+	# by ECMAScript code to be false then it must not subsequently become true.
+	#
+	if ($self->$orig() == false && $extensible == true) {
+	    Exception->throw({type => 'GenericError', message => '[[Extensible]] internal property has been observed to be false so it must not subsequently become true'});
+	}
+	
+	return $self->$orig($extensible);
+    }
+    
+    __PACKAGE__->meta->make_immutable( inline_constructor => 0 );
+}
+
+role JavaScript::Role::TypeConversionAndTesting {
+    use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
+    use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
+    #
+    # 9.1 ToPrimitive
+    #
+    method toPrimitive(ClassName $class: JavaScript::Type::Primitive|JavaScript::Type::Object $input, Str $preferredType?) {
+	if (! $input->DOES('JavaScript::Type::Object')) {
+	    return $input;
+	} else {
+	    #
+	    # $preferredType will be undef is not present. JavaScript::Type::Object->defaultValue() handles this.
+	    #
+	    return $input->defaultValue($preferredType);
+	}
+    }
+    #
+    # 9.2 ToBoolean
+    #
+    method toBoolean(ClassName $class: JavaScript::Type::Primitive|JavaScript::Type::Object $input) {
+	if ($input->DOES('JavaScript::Type::Undefined')) {
+	    return false;
+	}
+	elsif ($input->DOES('JavaScript::Type::Null')) {
+	    return false;
+	}
+	elsif ($input->DOES('JavaScript::Type::Boolean')) {
+	    return $input;
+	}
+	elsif ($input->DOES('JavaScript::Type::Number')) {
+	    # TODO return $input;
+	}
+    }
+}
+
+role JavaScript::Role::EnvironmentRecord {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 
-    has 'value' => (isa => 'Any', is => 'rw', predicate => 'has_value');
-    has 'mutable' => (isa => 'JavaScript::Type::Boolean', is => 'rw', default => false);
+    has 'value'     => (isa => 'JavaScript::Type::Primitive|JavaScript::Type::Object',     is => 'rw', predicate => 'has_value');
+    has 'mutable'   => (isa => 'JavaScript::Type::Boolean', is => 'rw', default => true);
     has 'deletable' => (isa => 'JavaScript::Type::Boolean', is => 'rw', default => true);
 }
 
-class JavaScript::Type::DeclarativeEnvironmentRecord {
+role JavaScript::Role::DeclarativeEnvironmentRecord {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
     use aliased 'JavaScript::Transpile::Target::Perl5::Engine::Exception';
@@ -36,7 +351,7 @@ class JavaScript::Type::DeclarativeEnvironmentRecord {
     has '_declarativeEnvironmentRecord' =>
 	( is => 'rw',
 	  traits => ['Hash'],
-	  isa => 'HashRef[JavaScript::Type::EnvironmentRecord]',
+	  isa => 'HashRef[JavaScript::Role::EnvironmentRecord]',
 	  default => sub { {} },
 	  handles => {
 	      accessor => 'accessor',
@@ -57,12 +372,16 @@ class JavaScript::Type::DeclarativeEnvironmentRecord {
     # 10.2.1.1.2 CreateMutableBinding (N, D)
     #
     method createMutableBinding($envRec: Str $N, JavaScript::Type::Boolean $D) {
-	$envRec->set($N, JavaScript::Type::EnvironmentRecord->new({value => undefined, mutable => $D}));
+	my $environmentRecord = JavaScript::Role::EnvironmentRecord->new({value => undefined, mutable => 1});
+	if ($D == true) {
+	    $environmentRecord->deletable(true);
+	}
+	$envRec->set($N, $environmentRecord);
     }
     #
     # 10.2.1.1.3 SetMutableBinding (N,V,S)
     #
-    method SetMutableBinding($envRec: Str $N, Any $V, JavaScript::Type::Boolean $S) {
+    method SetMutableBinding($envRec: Str $N, JavaScript::Type::Primitive|JavaScript::Type::Object $V, JavaScript::Type::Boolean $S) {
 	if ($envRec->get($N)->mutable == true) {
 	    $envRec->get($N)->value($V);
 	} else {
@@ -108,7 +427,7 @@ class JavaScript::Type::DeclarativeEnvironmentRecord {
     # 10.2.1.1.7 CreateImmutableBinding (N)
     #
     method createImmutableBinding($envRec: Str $N) {
-	$envRec->set($N, JavaScript::Type::EnvironmentRecord->new({mutable => false}));
+	$envRec->set($N, JavaScript::Role::EnvironmentRecord->new({mutable => false}));
     }
     #
     # 10.2.1.1.8 InitializeImmutableBinding (N,V)
@@ -117,12 +436,81 @@ class JavaScript::Type::DeclarativeEnvironmentRecord {
 	$envRec->get($N)->value($V);
 	# Record that the immutable binding for N in envRec has been initialised: automatic with predicate has_value
     }
-
-
 }
 
+role JavaScript::Role::ObjectEnvironmentRecord {
+    use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
+    use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
+    use aliased 'JavaScript::Transpile::Target::Perl5::Engine::Exception';
 
-class JavaScript::Type::PropertyDescriptor {
+    has 'bindings'    => ( is => 'ro', isa => 'JavaScript::Type::Object', required => 1);
+    has 'provideThis' => ( is => 'ro', isa => 'JavaScript::Type::Boolean', default => false);
+    #
+    # 10.2.1.2.1 HasBinding(N)
+    #
+    method hasBinding($envRec: Str $N) {
+    	my $bindings = envRec->_bindings;
+    	return $bindings->hasProperty($N);
+    }
+    #
+    # 10.2.1.2.2 CreateMutableBinding (N, D)
+    #
+    method createMutableBinding($envRec: Str $N, JavaScript::Type::Boolean $D) {
+    	my $bindings = envRec->_bindings;
+    	my $configValue = ($D == true) ? true : false;
+    	$bindings->defineOwnProperty($N,
+    				     JavaScript::Role::PropertyDescriptor->new(
+    					 {
+    					     value => undefined,
+    					     writable => true,
+    					     enumerable => true,
+    					     configurable => $configValue
+    					 }
+    				     ),
+    				     true);
+    }
+    #
+    # 10.2.1.2.3 SetMutableBinding (N,V,S)
+    #
+    method SetMutableBinding($envRec: Str $N, Any $V, JavaScript::Type::Boolean $S) {
+    	my $bindings = envRec->_bindings;
+    	$bindings->put($N, $V, $S);
+    }
+    #
+    # 10.2.1.2.4 GetBindingValue(N,S)
+    #
+    method getBindingValue($envRec: Str $N, JavaScript::Type::Boolean $S) {
+    	my $bindings = envRec->_bindings;
+    	my $value = $bindings->hasProperty($N);
+    	if ($value == false) {
+    	    if ($S == false) {
+    		return undefined;
+    	    } else {
+    		Exception->throw({type => 'ReferenceError', message => "Attempt to get the value of an unitialized binding for $N"});
+    	    }
+    	}
+    	return $bindings->get($N);
+    }
+    #
+    # 10.2.1.2.5 DeleteBinding (N)
+    #
+    method deleteBinding($envRec: Str $N) {
+    	my $bindings = $envRec->bindings;
+    	return $bindings->delete($N, false);
+    }
+    #
+    # 10.2.1.2.6 ImplicitThisValue()
+    #
+    method implicitThisValue($envRec) {
+    	if ($envRec->provideThis) {
+    	    return $envRec->bindings;
+    	} else {
+    	    return undefined;
+    	}
+    }
+}
+
+role JavaScript::Role::PropertyDescriptor {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
     use aliased 'JavaScript::Transpile::Target::Perl5::Engine::Exception';
@@ -140,7 +528,7 @@ class JavaScript::Type::PropertyDescriptor {
     #
     # 8.10.1 IsAccessorDescriptor ( Desc )
     #
-    method isAccessorDescriptor(ClassName $class: JavaScript::Type::PropertyDescriptor|JavaScript::Type::Undefined $desc) {
+    method isAccessorDescriptor(ClassName $class: JavaScript::Role::PropertyDescriptor|JavaScript::Type::Undefined $desc) {
 	if ($desc == undefined) {
 	    return false;
 	}
@@ -152,7 +540,7 @@ class JavaScript::Type::PropertyDescriptor {
     #
     # 8.10.2 IsDataDescriptor ( Desc )
     #
-    method isDataDescriptor(ClassName $class: JavaScript::Type::PropertyDescriptor|JavaScript::Type::Undefined $desc) {
+    method isDataDescriptor(ClassName $class: JavaScript::Role::PropertyDescriptor|JavaScript::Type::Undefined $desc) {
 	if ($desc == undefined) {
 	    return false;
 	}
@@ -164,7 +552,7 @@ class JavaScript::Type::PropertyDescriptor {
     #
     # 8.10.3 IsGenericDescriptor ( Desc )
     #
-    method isGenericDescriptor(ClassName $class: JavaScript::Type::PropertyDescriptor|JavaScript::Type::Undefined $desc) {
+    method isGenericDescriptor(ClassName $class: JavaScript::Role::PropertyDescriptor|JavaScript::Type::Undefined $desc) {
 	if ($desc == undefined) {
 	    return false;
 	}
@@ -177,64 +565,76 @@ class JavaScript::Type::PropertyDescriptor {
     #
     # 8.10.4 FromPropertyDescriptor ( Desc )
     #
-    method fromPropertyDescriptor(ClassName $class: JavaScript::Type::PropertyDescriptor|JavaScript::Type::Undefined $desc) {
+    method fromPropertyDescriptor(ClassName $class: JavaScript::Role::PropertyDescriptor|JavaScript::Type::Undefined $desc) {
 	if ($desc == undefined) {
 	    return undefined;
 	}
 
-	my $obj = JavaScript::Type::PropertyDescriptor->new();
+	my $obj = JavaScript::Role::PropertyDescriptor->new();
 
 	if ($class->IsDataDescriptor($desc) == true) {
 	    $obj->defineOwnProperty('value',
-				    {
-					value => $desc->hash->get('value'),
-					writable => true,
-					enumerable => true,
-					configurable => true
-				    },
+				    JavaScript::Role::PropertyDescriptor->new(
+					{
+					    value => $desc->hash->get('value'),
+					    writable => true,
+					    enumerable => true,
+					    configurable => true
+					}
+				    ),
 				    false);
 	    $obj->defineOwnProperty('writable',
-				    {
-					value => $desc->hash->get('writable'),
-					writable => true,
-					enumerable => true,
-					configurable => true
-				    },
+				    JavaScript::Role::PropertyDescriptor->new(
+					{
+					    value => $desc->hash->get('writable'),
+					    writable => true,
+					    enumerable => true,
+					    configurable => true
+					}
+				    ),
 				    false);
 	} else {
 	    $obj->defineOwnProperty('get',
-				    {
-					value => $desc->hash->get('get'),
-					writable => true,
-					enumerable => true,
-					configurable => true
-				    },
+				    JavaScript::Role::PropertyDescriptor->new(
+					{
+					    value => $desc->hash->get('get'),
+					    writable => true,
+					    enumerable => true,
+					    configurable => true
+					}
+				    ),
 				    false);
 	    $obj->defineOwnProperty('set',
-				    {
-					value => $desc->hash->get('set'),
-					writable => true,
-					enumerable => true,
-					configurable => true
-				    },
+				    JavaScript::Role::PropertyDescriptor->new(
+					{
+					    value => $desc->hash->get('set'),
+					    writable => true,
+					    enumerable => true,
+					    configurable => true
+					}
+				    ),
 				    false);
 	}
 
 	$obj->defineOwnProperty('enumerable',
-				{
-				    value => $desc->hash->get('enumerable'),
-				    writable => true,
-				    enumerable => true,
-				    configurable => true
-				},
+				JavaScript::Role::PropertyDescriptor->new(
+				    {
+					value => $desc->hash->get('enumerable'),
+					writable => true,
+					enumerable => true,
+					configurable => true
+				    }
+				),
 				false);
 	$obj->defineOwnProperty('configurable',
-				{
-				    value => $desc->hash->get('configurable'),
-				    writable => true,
-				    enumerable => true,
-				    configurable => true
-				},
+				JavaScript::Role::PropertyDescriptor->new(
+				    {
+					value => $desc->hash->get('configurable'),
+					writable => true,
+					enumerable => true,
+					configurable => true
+				    }
+				),
 				false);
 
 	return $obj;
@@ -249,7 +649,7 @@ class JavaScript::Type::PropertyDescriptor {
 	    Exception->throw({type => 'TypeError', message => "\$obj does not have an object role"});
 	}
 
-	my $desc = JavaScript::Type::PropertyDescriptor->new();
+	my $desc = JavaScript::Role::PropertyDescriptor->new();
 
 	if ($obj->hasProperty('enumerable') == true) {
 	    my $enum = $obj->get('enumerable');
@@ -297,198 +697,9 @@ class JavaScript::Type::PropertyDescriptor {
     }
 }
 
-class JavaScript::Type::Reference {
+role JavaScript::Role::Reference {
     has 'class'             => (isa => 'Str',                               is => 'rw', coerce => 1, default => 'Object');
 }
 
-class JavaScript::Type::Object is mutable {   # See below, I cannot blame MooseX::Declare for that
-    use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
-    use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
-    use aliased 'JavaScript::Transpile::Target::Perl5::Engine::Exception';
-    use Moose::Util::TypeConstraints;
-    use Scalar::Util qw/blessed/;
-
-    our %CLASSES = map {$_ => 1} qw/Arguments Array Boolean Date Error Function JSON Math Number Object RegExp String/;
-
-    has '_propertyDescriptorHash' =>
-	(traits => ['Hash'],
-	 is => 'ro',
-	 isa => 'HashRef[JavaScript::Type::PropertyDescriptor]',
-	 default => sub { {} },
-	 handles => {
-	     descriptor         => 'accessor',
-	     exists_descriptor  => 'exists',
-	     descriptors        => 'keys',
-	     count_descriptors  => 'count',
-	     delete_descriptor  => 'delete',
-	 },
-	);
-    has 'class'             => (isa => 'Str',                               is => 'rw', coerce => 1, default => 'Object');
-    has 'extensible'        => (isa => 'JavaScript::Type::Boolean',         is => 'rw', default => false);
-    #
-    # Take care: the root of all objects, i.e. $Object, is created with an explicit null
-    #
-    has 'prototype'         => (isa => 'JavaScript::Type::Object|JavaScript::Type::Null', is => 'rw', weak_ref => 1, default => null);
-
-    #
-    # JavaScript prototyping is as simple as that.
-    # Another way would be like MooseX::Prototype with shallow copies.
-    # But this mean creating mutable classes all the time.
-    #
-    around new(ClassName|JavaScript::Type::Object $class: @params) {
-	my $blessed = blessed($class) || '';
-	if ($blessed) {
-	    return $blessed->$orig(@params, prototype => $class);
-	}
-	$class->$orig(@params);
-    };
-    
-    #
-    # 8.12.1 [[GetOwnProperty]] (P)
-    #
-    method getOwnProperty(Str $p) {
-	print STDERR "$self->getOwnProperty($p)\n";
-	if (! $self->exists_descriptor($p)) {
-	    return undefined;
-	}
-	my $d = JavaScript::Type::PropertyDescriptor->new();
-	my $x = $self->_properties->descriptor($p);
-	if (JavaScript::Type::PropertyDescriptor->isDataproperty($x)) {
-	    $d->accessor('value', $x->accessor('value'));
-	    $d->accessor('writable', $x->accessor('writable'));
-	} else {
-	    $d->accessor('get', $x->accessor('get'));
-	    $d->accessor('set', $x->accessor('set'));
-	}
-	$d->accessor('enumerable', $x->accessor('enumerable'));
-	$d->accessor('configurable', $x->accessor('configurable'));
-    }
-    #
-    # 8.12.2 [[GetProperty]] (P)
-    #
-    method getProperty(Str $p) {
-	my $prop = $self->getOwnProperty($p);
-	if ($prop != undefined) {
-	    return $prop;
-	}
-	my $proto = $self->prototype;
-	if (! defined($proto)) {
-	    return undefined;
-	}
-	return $proto->SUPER($p);
-    }
-    #
-    # 8.12.3 [[Get]] (P)
-    #
-    method get(Str $p) {
-	my $desc = $self->getProperty($p);
-	if ($desc == undefined) {
-	    return undefined;
-	}
-	if ($desc->isDataDescriptor == true) {
-	    return $desc->value;
-	}
-	my $getter = $desc->get;
-	if ($getter == undefined) {
-	    return undefined;
-	}
-	return $getter->call($self);
-    }
-    #
-    # 8.12.6 [[HasProperty]] (P)
-    #
-    method hasProperty(Str $p) {
-	my $desc = $self->getProperty($p);
-	if ($desc == undefined) {
-	    return undefined;
-	}
-	return true;
-    }
-
-    around class {
-	return $self->$orig() unless  $#_ >= 2;
-
-	my $class = pop;
-
-	if (!exists($CLASSES{$class})) {
-	    Exception->throw({type => 'TypeError', message => "The value of the [[Class]] internal property cannot but $class, but one of: " . join(' ', sort keys %CLASSES)});
-	}
-	#
-	# if [[Extensible]] is false the value of the [[Class]] internal properties of the object may not be modified
-	#
-	if ($self->extensible == false) {
-	    #
-	    # We trigger if it really changes
-	    #
-	    Exception->throw({type => 'TypeError', message => "The value of the [[Class]] internal property may not be modified"});
-	}
-	
-	return $self->$orig($class);
-    }
-
-    #
-    # Private method that will search for a prototype
-    #
-    method _findPrototype(JavaScript::Type::Object $obj, ArrayRef $listp?) {
-        my $prototype = $self->prototype;
-        if (defined($prototype)) {
-	    if (defined($listp)) {
-		push(@{$listp}, $prototype);
-	    }
-	    if ($prototype == $obj) {
-		return true;
-	    } else {
-		return $prototype->super($obj, $listp);
-	    }
-        } else {
-	    return 0;
-        }
-    }
-
-    around prototype {
-	return $self->$orig() unless  $#_ >= 2;
-
-	my $prototype = pop;
-
-	#
-	# if [[Extensible]] is false the value of the [[Prototype]] internal property of the object may not be modified
-	#
-	if ($self->extensible == false) {
-	    #
-	    # We trigger if it really changes
-	    #
-	    Exception->throw({type => 'GenericError', message => 'The value of the [[Prototype]] internal property may not be modified'});
-	}
-	my @list = ();
-	$self->_findPrototype($prototype, \@list);
-	print STDERR "Prototype chain: " . join(', ', reverse(@list)) . "\n";
-	if ($prototype != null && $self->_findPrototype($prototype)) {
-	    #
-	    # Recursively accessing the [[Prototype]] internal property must eventually lead to a null value
-	    #
-	    Exception->throw({type => 'GenericError', message => 'Recursive access to [[Prototype]] internal property would be possible'});
-	}
-	
-	return $self->$orig($prototype);
-    }
-    
-    around extensible {
-	return $self->$orig() unless  $#_ >= 2;
-
-	my $extensible = pop;
-	
-	#
-	# If the [[Extensible]] internal property of that host object has been observed
-	# by ECMAScript code to be false then it must not subsequently become true.
-	#
-	if ($self->$orig() == false && $extensible == true) {
-	    Exception->throw({type => 'GenericError', message => '[[Extensible]] internal property has been observed to be false so it must not subsequently become true'});
-	}
-	
-	return $self->$orig($extensible);
-    }
-    
-    __PACKAGE__->meta->make_immutable( inline_constructor => 0 );
-}
 
 1;

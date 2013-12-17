@@ -3,6 +3,7 @@ use warnings FATAL => 'all';
 
 package JavaScript::Transpile::Target::Perl5::Engine::Constants;
 use JavaScript::Transpile::Target::Perl5::Engine::Undefined;
+use JavaScript::Transpile::Target::Perl5::Engine::Null;
 
 # ABSTRACT: JavaScript constants in Perl5
 
@@ -16,7 +17,7 @@ use constant {
     undefined => JavaScript::Transpile::Target::Perl5::Engine::Undefined->instance,
     true      => 1,
     false     => 0,
-    null      => undef,
+    null      => JavaScript::Transpile::Target::Perl5::Engine::Null->instance,
 };
 
 1;

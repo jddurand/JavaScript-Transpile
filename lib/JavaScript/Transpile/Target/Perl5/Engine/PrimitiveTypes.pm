@@ -13,7 +13,7 @@ use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 
 subtype    'JavaScript::Type::Boolean',   as 'Bool',  where {$_ == true || $_ == false};
 class_type 'JavaScript::Type::Undefined', {class => 'JavaScript::Transpile::Target::Perl5::Engine::Undefined' };
-subtype    'JavaScript::Type::Null',      as 'Undef';
+class_type 'JavaScript::Type::Null',      {class => 'JavaScript::Transpile::Target::Perl5::Engine::Null' };
 subtype    'JavaScript::Type::String',    as 'ArrayRef[Int]';
 subtype    'JavaScript::Type::Number',    as 'Num';
 subtype    'JavaScript::Type::Primitive', as 'JavaScript::Type::Boolean|JavaScript::Type::Undefined|JavaScript::Type::Null|JavaScript::Type::String|JavaScript::Type::Number';
