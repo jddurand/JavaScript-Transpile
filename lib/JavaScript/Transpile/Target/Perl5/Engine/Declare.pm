@@ -19,18 +19,29 @@ use MooseX::Declare;
 use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
 use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 
+class JavaScript::Type::EnvironmentRecord {
+    use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
+    use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
+
+    has 'value' => (isa => 'Any', is => 'rw', predicate => 'has_value');
+    has 'mutable' => (isa => 'JavaScript::Type::Boolean', is => 'rw', default => false);
+    has 'deletable' => (isa => 'JavaScript::Type::Boolean', is => 'rw', default => true);
+}
+
 class JavaScript::Type::DeclarativeEnvironmentRecord {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
+    use aliased 'JavaScript::Transpile::Target::Perl5::Engine::Exception';
 
     has '_declarativeEnvironmentRecord' =>
 	( is => 'rw',
 	  traits => ['Hash'],
-	  isa => 'HashRef',
+	  isa => 'HashRef[JavaScript::Type::EnvironmentRecord]',
 	  default => sub { {} },
 	  handles => {
 	      accessor => 'accessor',
 	      exists   => 'exists',
+	      delete  => 'delete',
 	  }
 	);
     #
@@ -46,6 +57,65 @@ class JavaScript::Type::DeclarativeEnvironmentRecord {
     # 10.2.1.1.2 CreateMutableBinding (N, D)
     #
     method createMutableBinding($envRec: Str $N, JavaScript::Type::Boolean $D) {
+	$envRec->set($N, JavaScript::Type::EnvironmentRecord->new({value => undefined, mutable => $D}));
+    }
+    #
+    # 10.2.1.1.3 SetMutableBinding (N,V,S)
+    #
+    method SetMutableBinding($envRec: Str $N, Any $V, JavaScript::Type::Boolean $S) {
+	if ($envRec->get($N)->mutable == true) {
+	    $envRec->get($N)->value($V);
+	} else {
+	    if ($S == true) {
+		Exception->throw({type => 'TypeError', message => "Attempt to change the value of an immutable binding for $N"});
+	    }
+	}
+    }
+    #
+    # 10.2.1.1.4 GetBindingValue(N,S)
+    #
+    method getBindingValue($envRec: Str $N, JavaScript::Type::Boolean $S) {
+	if (! $envRec->get($N)->has_value) {
+	    if ($S == false) {
+		return undefined;
+	    } else {
+		Exception->throw({type => 'ReferenceError', message => "Attempt to get the value of an unitialized binding for $N"});
+	    }
+	} else {
+	    return $envRec->get($N)->value;
+	}
+    }
+    #
+    # 10.2.1.1.5 DeleteBinding (N)
+    #
+    method deleteBinding($envRec: Str $N) {
+	if (! $envRec->exists($N)) {
+	    return true;
+	}
+	if (! $envRec->get($N)->deletable) {
+	    return false;
+	}
+	$envRec->delete($N);
+	return true;
+    }
+    #
+    # 10.2.1.1.6 ImplicitThisValue()
+    #
+    method implicitThisValue {
+	return undefined;
+    }
+    #
+    # 10.2.1.1.7 CreateImmutableBinding (N)
+    #
+    method createImmutableBinding($envRec: Str $N) {
+	$envRec->set($N, JavaScript::Type::EnvironmentRecord->new({mutable => false}));
+    }
+    #
+    # 10.2.1.1.8 InitializeImmutableBinding (N,V)
+    #
+    method initializeImmutableBinding($envRec: Str $N, Any $V) {
+	$envRec->get($N)->value($V);
+	# Record that the immutable binding for N in envRec has been initialised: automatic with predicate has_value
     }
 
 
