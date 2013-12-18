@@ -306,7 +306,7 @@ role JavaScript::Role::TypeConversionAndTesting {
     # 9.1 ToPrimitive
     #
     method toPrimitive(ClassName $class: JavaScript::Type::Primitive|JavaScript::Type::Object $input, Str $preferredType?) {
-	if (! $input->DOES('JavaScript::Type::Object')) {
+	if (! $input->isa('JavaScript::Type::Object')) {
 	    return $input;
 	} else {
 	    #
@@ -319,16 +319,16 @@ role JavaScript::Role::TypeConversionAndTesting {
     # 9.2 ToBoolean
     #
     method toBoolean(ClassName $class: JavaScript::Type::Primitive|JavaScript::Type::Object $input) {
-	if ($input->DOES('JavaScript::Type::Undefined')) {
+	if ($input->isa('JavaScript::Type::Undefined')) {
 	    return false;
 	}
-	elsif ($input->DOES('JavaScript::Type::Null')) {
+	elsif ($input->isa('JavaScript::Type::Null')) {
 	    return false;
 	}
-	elsif ($input->DOES('JavaScript::Type::Boolean')) {
+	elsif ($input->isa('JavaScript::Type::Boolean')) {
 	    return $input;
 	}
-	elsif ($input->DOES('JavaScript::Type::Number')) {
+	elsif ($input->isa('JavaScript::Type::Number')) {
 	    # TODO return $input;
 	}
     }
