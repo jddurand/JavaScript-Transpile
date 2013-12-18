@@ -116,13 +116,6 @@ PROGRAM
           #
         } else {
           #
-          # Check if double is 32 bits (bad luck...)
-          #
-          if ($ac->check_sizeof_type('double') == 4) {
-	    $ac->define_var('_DOUBLE_IS_32BITS', 1);
-	    $ac->msg_warn('Double is 32 bits - the build will very likely fail');
-          }
-          #
           # Check Endian-ness
           #
           my $is_little_endian = (unpack("h*", pack("s", 1)) =~ /^1/);   # C.f. perlport
