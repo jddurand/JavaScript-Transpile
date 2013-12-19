@@ -1,10 +1,10 @@
 use strict;
 use warnings FATAL => 'all';
 
-package JavaScript::Transpile::Target::Perl5::Engine::Null;
+package JavaScript::Transpile::Target::Perl5::Engine::Types::Null;
 use MooseX::Singleton;
 
-# ABSTRACT: JavaScript Null Type in Perl5
+# ABSTRACT: JavaScript Null role in Perl5
 
 # VERSION
 

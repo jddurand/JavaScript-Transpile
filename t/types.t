@@ -18,6 +18,7 @@ Log::Log4perl::init(\$defaultLog4perlConf);
 Log::Any::Adapter->set('Log4perl');
 use JavaScript::Transpile::Target::Perl5::Engine;
 use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
+use aliased 'JavaScript::Transpile::Target::Perl5::Engine::Types::Object', 'JavaScript::Types::Object';
 
 #my $ROOT = JavaScript::Type::Object->new();
 #print STDERR $ROOT->dump();
@@ -34,7 +35,7 @@ use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
 #print "New Grand child class precedence list: " . join(' ', $grandChild->meta->class_precedence_list) . "\n";
 #$grandChild->prototype;
 
-my $Object = JavaScript::Type::Object->new();
+my $Object = JavaScript::Types::Object->new();
 print STDERR $Object->dump();
 
 my $Child = $Object->new();

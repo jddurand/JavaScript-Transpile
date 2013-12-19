@@ -2,7 +2,12 @@ use strict;
 use warnings FATAL => 'all';
 
 package JavaScript::Transpile::Target::Perl5::Engine::Types;
-use JavaScript::Transpile::Target::Perl5::Engine::Declare;
+use Moose::Util::TypeConstraints;
+use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
+
+class_type 'JavaScript::Type::Object', {class => 'JavaScript::Transpile::Target::Perl5::Engine::Types::Object' };
+
+subtype    'JavaScript::Type::Any', as 'JavaScript::Type::Primitive|JavaScript::Type::Object';
 
 # ABSTRACT: JavaScript Types in Perl5
 
