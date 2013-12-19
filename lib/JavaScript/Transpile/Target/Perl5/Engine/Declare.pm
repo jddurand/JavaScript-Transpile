@@ -208,8 +208,24 @@ class JavaScript::Type::Object is mutable {   # See below, I cannot blame MooseX
     # 8.12.8 [[DefaultValue]] (hint)
     #
     method defaultValue($O: Str $hint?) {
-	if (defined($hint) && $hint eq 'String') {
+	# TO DO
+	$hint //= ($O->class eq 'Date') ? 'String' : 'Number';
+	if ($hint eq 'String') {
 	    my $toString = $O->get('toString');
+	    if (isCallable($toString) == true) {
+		my $str = $toString->call($O);
+		if ($str->isa('JavaScript::Type::Primitive')) {
+		    return $str;
+		}
+	    }
+	    my $valueOf = $O->get('valueOf');
+	    if (isCallable($valueOf) == true) {
+		my $val = $valueOf->call($O);
+		if ($val->isa('JavaScript::Type::Primitive')) {
+		    return $val;
+		}
+	    }
+	    Exception->throw({type => 'TypeError', message => '[[defaultValue]] cannot be computed'});
 	}
     }
 
@@ -302,6 +318,7 @@ class JavaScript::Type::Object is mutable {   # See below, I cannot blame MooseX
 role JavaScript::Role::TypeConversionAndTesting {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
+    use Data::Float qw/float_is_zero float_is_nan nan pos_zero/;
     #
     # 9.1 ToPrimitive
     #
@@ -329,7 +346,47 @@ role JavaScript::Role::TypeConversionAndTesting {
 	    return $input;
 	}
 	elsif ($input->isa('JavaScript::Type::Number')) {
-	    # TODO return $input;
+	    if (float_is_zero($input) || float_is_nan($input)) {
+		return false;
+	    } else {
+		return true;
+	    }
+	}
+	elsif ($input->isa('JavaScript::Type::String')) {
+	    if ($input->is_empty) {
+		return false;
+	    } else {
+		return true;
+	    }
+	} else {
+	    return true;
+	}
+    }
+    #
+    # 9.3 ToNumber
+    #
+    method toNumber(ClassName $class: JavaScript::Type::Primitive|JavaScript::Type::Object $input) {
+	if ($input->isa('JavaScript::Type::Undefined')) {
+	    return nan;
+	}
+	elsif ($input->isa('JavaScript::Type::Null')) {
+	    return pos_zero;
+	}
+	elsif ($input->isa('JavaScript::Type::Boolean')) {
+	    if ($input == true) {
+		return 1;
+	    } else {
+		return pos_zero;
+	    }
+	}
+	elsif ($input->isa('JavaScript::Type::Number')) {
+	    return $input;
+	}
+	elsif ($input->isa('JavaScript::Type::String')) {
+	    # TO DO
+	} else {
+	    my $primValue = $class->toPrimitive($input, 'Number');
+	    return $class->toNumber($primValue);
 	}
     }
 }
