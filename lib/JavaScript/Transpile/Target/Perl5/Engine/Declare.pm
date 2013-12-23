@@ -107,7 +107,7 @@ role JavaScript::Role::DeclarativeEnvironmentRecord {
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
     use aliased 'JavaScript::Transpile::Target::Perl5::Engine::Exception';
 
-    has '_declarativeEnvironmentRecord' =>
+    has '_declarativeEnvironmentRecordHash' =>
 	( is => 'rw',
 	  traits => ['Hash'],
 	  isa => 'HashRef[JavaScript::Role::EnvironmentRecord]',
@@ -274,7 +274,7 @@ role JavaScript::Role::PropertyDescriptor {
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
     use aliased 'JavaScript::Transpile::Target::Perl5::Engine::Exception';
 
-    has '_propertyDescriptor' =>
+    has '_propertyDescriptorHash' =>
 	( is => 'rw',
 	  traits => ['Hash'],
 	  isa => 'HashRef',
