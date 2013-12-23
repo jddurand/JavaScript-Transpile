@@ -235,10 +235,12 @@ sub transpile {
     my $target = $options{target} || 'perl5';
     if ($target eq 'perl5') {
 	my $callback = JavaScript::Transpile::Target::Perl5->new(%options);
-	$options{g1Callback} = $callback->g1CallbackRef;
-	$options{g1CallbackArgs} = [ $callback ];
-	$options{lexemeCallback} = $callback->lexemeCallbackRef;
-	$options{lexemeCallbackArgs} = [ $callback ];
+	$options{Template} = {
+                              g1Callback => $callback->g1CallbackRef,
+                              g1CallbackArgs => [ $callback ],
+                              lexemeCallback => $callback->lexemeCallbackRef,
+                              lexemeCallbackArgs => [ $callback ]
+                             };
     }
 
     my $rc;
