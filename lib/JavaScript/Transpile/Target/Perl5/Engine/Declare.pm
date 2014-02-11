@@ -17,10 +17,19 @@ package JavaScript::Transpile::Target::Perl5::Engine::Declare;
 
 use MooseX::Declare;
 
+role JavaScript::Role::this {
+  #
+  # "this" method, that returns the variable $JavaScript::Transpile::Target::Perl5::Engine::this
+  # which should be localized anytime needed.
+  #
+  method this(ClassName $class) {
+    return $JavaScript::Transpile::Target::Perl5::Engine::this;
+  }
+}
+
 role JavaScript::Role::TypeConversionAndTesting {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
-    use Data::Float qw/float_is_zero float_is_nan nan pos_zero/;
     #
     # 9.1 ToPrimitive
     #

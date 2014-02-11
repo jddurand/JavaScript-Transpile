@@ -95,7 +95,8 @@ role JavaScript::Roles::Object::Parameterized(Str :$class!) {
 	if ($getter == undefined) {
 	    return undefined;
 	}
-	return $getter->call($O);
+        local $JavaScript::Transpile::Target::Perl5::Engine::this = $O;
+	return $getter->call();
     }
     #
     # 8.12.4 [[CanPut]] (P)
@@ -155,7 +156,8 @@ role JavaScript::Roles::Object::Parameterized(Str :$class!) {
 	my $desc = $O->getProperty($P);
 	if ($desc->isDataDescriptor == true) {
 	    my $setter = $desc->get('set');
-	    $setter->call($O, $V);
+            local $JavaScript::Transpile::Target::Perl5::Engine::this = $O;
+	    $setter->call($V);
 	} else {
 	    my $newDesc = JavaScript::Role::PropertyDescriptor->new({value => $V,
 								     writable => true,
@@ -200,14 +202,16 @@ role JavaScript::Roles::Object::Parameterized(Str :$class!) {
 	if ($hint eq 'String') {
 	    my $toString = $O->get('toString');
 	    if (isCallable($toString) == true) {
-		my $str = $toString->call($O);
+                local $JavaScript::Transpile::Target::Perl5::Engine::this = $O;
+		my $str = $toString->call();
 		if ($str->isa('JavaScript::Type::Primitive')) {
 		    return $str;
 		}
 	    }
 	    my $valueOf = $O->get('valueOf');
 	    if (isCallable($valueOf) == true) {
-		my $val = $valueOf->call($O);
+                local $JavaScript::Transpile::Target::Perl5::Engine::this = $O;
+		my $val = $valueOf->call();
 		if ($val->isa('JavaScript::Type::Primitive')) {
 		    return $val;
 		}
