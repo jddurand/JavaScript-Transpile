@@ -22,14 +22,18 @@ role JavaScript::Role::this {
   # "this" method, that returns the variable $JavaScript::Transpile::Target::Perl5::Engine::this
   # which should be localized anytime needed.
   #
-  method this(ClassName $class) {
-    return $JavaScript::Transpile::Target::Perl5::Engine::this;
+  method this {
+      #
+      # If localized this is defined, it has priority, otherwise current object is used
+      #
+      return $JavaScript::Transpile::Target::Perl5::Engine::this || $self;
   }
 }
 
 role JavaScript::Role::TypeConversionAndTesting {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
+    use aliased 'MarpaX::Languages::ECMAScript::AST::Grammar::ECMAScript_262_5::StringNumericLiteral::NativeNumberSemantics';
     #
     # 9.1 ToPrimitive
     #
@@ -78,16 +82,16 @@ role JavaScript::Role::TypeConversionAndTesting {
     #
     method toNumber(ClassName $class: JavaScript::Type::Any $input) {
 	if ($input->DOES('JavaScript::Type::Undefined')) {
-	    return nan;
+	    return NativeNumberSemantics->nan;
 	}
 	elsif ($input->DOES('JavaScript::Type::Null')) {
-	    return pos_zero;
+	    return NativeNumberSemantics->pos_zero;
 	}
 	elsif ($input->DOES('JavaScript::Type::Boolean')) {
 	    if ($input == true) {
 		return 1;
 	    } else {
-		return pos_zero;
+		return NativeNumberSemantics->pos_zero;
 	    }
 	}
 	elsif ($input->DOES('JavaScript::Type::Number')) {
