@@ -10,7 +10,7 @@ use MarpaX::Languages::ECMAScript::AST qw//;
 use MarpaX::Languages::ECMAScript::AST::Exceptions qw/:all/;
 use Digest::MD4 qw/md4_hex/;
 use CHI;
-use File::HomeDir;
+use File::HomeDir 0.93;
 use File::Spec;
 use version 0.77;
 use Log::Any qw/$log/;
