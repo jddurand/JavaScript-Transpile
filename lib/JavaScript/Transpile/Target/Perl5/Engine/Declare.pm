@@ -22,8 +22,11 @@ role JavaScript::Role::this {
   # "this" method, that returns the variable $JavaScript::Transpile::Target::Perl5::Engine::this
   # which should be localized anytime needed.
   #
-  method this(ClassName $class) {
-    return $JavaScript::Transpile::Target::Perl5::Engine::this;
+  method this {
+      #
+      # If localized this is defined, it has priority, otherwise current object is used
+      #
+      return $JavaScript::Transpile::Target::Perl5::Engine::this || $self;
   }
 }
 
