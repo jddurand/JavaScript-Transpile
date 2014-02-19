@@ -10,7 +10,7 @@ use MarpaX::Languages::ECMAScript::AST qw//;
 use MarpaX::Languages::ECMAScript::AST::Exceptions qw/:all/;
 use Digest::MD4 qw/md4_hex/;
 use CHI;
-use File::HomeDir;
+use File::HomeDir 0.93;
 use File::Spec;
 use version 0.77;
 use Log::Any qw/$log/;
@@ -80,6 +80,10 @@ Produced transpilations can be cached: very often the same ECMAScript is used ag
 
 JavaScript::Transpile is using the ASTs produced by MarpaX::Languages::ECMAScript::AST, that have also a cache option. astCache correspond to the MarpaX::Languages::ECMAScript::AST cache option.
 
+=item number
+
+Number implementation. Possible values are 'Native' and 'BigFloat'. Default is 'Native'.
+
 =back
 
 =cut
@@ -90,10 +94,12 @@ sub new {
 
   my $cache       = $opts{cache} // 0;
   my $astCache    = $opts{astCache}; # No pb if this is undef, we just proxy it
+  my $number      = $opts{number} // 'Native';
 
   my $self  = {
-      _cache       => $cache,
-      _astCache    => $astCache,
+               _cache       => $cache,
+               _astCache    => $astCache,
+               _number      => $number
   };
 
   bless($self, $class);

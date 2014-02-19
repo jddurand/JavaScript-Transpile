@@ -1,4 +1,5 @@
 #!perl
+package main;
 use strict;
 use warnings FATAL => 'all';
 use Log::Log4perl qw/:easy/;
@@ -41,7 +42,8 @@ print STDERR $Object->dump();
 my $Child = $Object->new();
 print STDERR $Child->dump();
 
-my $Child2 = $Child->new();
-$Child2->prototype($Object);
-print STDERR $Child2->dump();
+#my $Child2 = $Child->new();
+#$Child2->prototype($Object);
+#print STDERR $Child2->dump();
 
+JavaScript::Role::TypeConversionAndTesting->toNumber($Child);

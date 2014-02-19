@@ -4,7 +4,7 @@ use warnings FATAL => 'all';
 package JavaScript::Transpile::Target::Perl5::Engine::Roles::Object::Parameterized;
 use MooseX::Declare;
 
-role JavaScript::Roles::Object::Parameterized(Str :$class!) {
+role JavaScript::Roles::Object::Parameterized(Str :$className!) {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
     use aliased 'JavaScript::Transpile::Target::Perl5::Engine::Exception';
@@ -26,7 +26,7 @@ role JavaScript::Roles::Object::Parameterized(Str :$class!) {
 	     delete_descriptor  => 'delete',
 	 },
 	);
-    has 'class'             => (isa => 'Str',                               is => 'rw', coerce => 1, default => $class);
+    has 'class'             => (isa => 'Str',                               is => 'rw', coerce => 1, default => $className);
     has 'extensible'        => (isa => 'JavaScript::Type::Boolean',         is => 'rw', default => false);
     #
     # Take care: the root of all objects, i.e. $Object, is created with an explicit null
@@ -227,7 +227,7 @@ role JavaScript::Roles::Object::Parameterized(Str :$class!) {
 	my $class = pop;
 
 	if (!exists($CLASSES{$class})) {
-	    Exception->throw({type => 'TypeError', message => "The value of the [[Class]] internal property cannot but $class, but one of: " . join(' ', sort keys %CLASSES)});
+	    Exception->throw({type => 'TypeError', message => "The value of the [[Class]] internal property cannot be $class, but one of: " . join(' ', sort keys %CLASSES)});
 	}
 	#
 	# if [[Extensible]] is false the value of the [[Class]] internal properties of the object may not be modified

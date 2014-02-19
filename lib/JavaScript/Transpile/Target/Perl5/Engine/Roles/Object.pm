@@ -6,7 +6,7 @@ use JavaScript::Transpile::Target::Perl5::Engine::Roles::Object::Parameterized;
 use MooseX::Declare;
 
 role JavaScript::Roles::Object {
-  with 'JavaScript::Roles::Object::Parameterized' => {class => 'Object'};
+  with 'JavaScript::Roles::Object::Parameterized' => {className => 'Object'};
 }
 
 1;

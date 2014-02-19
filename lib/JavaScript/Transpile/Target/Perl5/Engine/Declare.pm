@@ -27,9 +27,19 @@ role JavaScript::Role::this {
   }
 }
 
+#
+# A number factory must be the same the whole lifetime of package evaluation.
+# That's why it is considered as a constant, that can be localized in the top
+# package JavaScript::Transpile
+#
 role JavaScript::Role::TypeConversionAndTesting {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
+    use JavaScript::Transpile::Target::Perl5::Engine::Number::Factory;
+    use MooseX::ClassAttribute;
+
+    class_has '_numberFactory' => (is => 'ro', default => sub { JavaScript::Transpile::Target::Perl5::Engine::Number::Factory->create($JavaScript::Transpile::numberFactory || 'Native') } );
+
     #
     # 9.1 ToPrimitive
     #
@@ -57,7 +67,7 @@ role JavaScript::Role::TypeConversionAndTesting {
 	    return $input;
 	}
 	elsif ($input->DOES('JavaScript::Type::Number')) {
-	    if (float_is_zero($input) || float_is_nan($input)) {
+	    if ($class->_numberFactory->is_zero($input) || $class->_numberFactory->is_nan($input)) {
 		return false;
 	    } else {
 		return true;
@@ -69,7 +79,8 @@ role JavaScript::Role::TypeConversionAndTesting {
 	    } else {
 		return true;
 	    }
-	} else {
+	}
+        else {
 	    return true;
 	}
     }
@@ -78,16 +89,16 @@ role JavaScript::Role::TypeConversionAndTesting {
     #
     method toNumber(ClassName $class: JavaScript::Type::Any $input) {
 	if ($input->DOES('JavaScript::Type::Undefined')) {
-	    return nan;
+	    return $class->_numberFactory->nan;
 	}
 	elsif ($input->DOES('JavaScript::Type::Null')) {
-	    return pos_zero;
+	    return $class->_numberFactory->pos_zero;
 	}
 	elsif ($input->DOES('JavaScript::Type::Boolean')) {
 	    if ($input == true) {
 		return 1;
 	    } else {
-		return pos_zero;
+		return $class->_numberFactory->pos_zero;
 	    }
 	}
 	elsif ($input->DOES('JavaScript::Type::Number')) {
@@ -95,7 +106,8 @@ role JavaScript::Role::TypeConversionAndTesting {
 	}
 	elsif ($input->DOES('JavaScript::Type::String')) {
 	    # TO DO
-	} else {
+	}
+        else {
 	    my $primValue = $class->toPrimitive($input, 'Number');
 	    return $class->toNumber($primValue);
 	}
