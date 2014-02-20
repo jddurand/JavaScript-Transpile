@@ -123,7 +123,7 @@ role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::IsType) 
       }
     }
     #
-    # 9.3 ToNumber: static method with type checking done by hand
+    # 9.3 ToNumber
     #
     sub toNumber {
       my ($input) = @_;
@@ -148,6 +148,7 @@ role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::IsType) 
 	    # TO DO
 	}
         else {
+            no warnings 'recursion';              # Well, spec says to be recursive, so who knows
 	    my $primValue = toPrimitive($input, 'Number');
 	    return toNumber($primValue);
 	}
