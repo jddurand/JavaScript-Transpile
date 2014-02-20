@@ -31,11 +31,23 @@ role JavaScript::Role::this {
 }
 
 #
+# A bit painful, but necessary because type constraints in Moose are NOT a type system
+#
+role JavaScript::Role::TypeCheck {
+    use Moose::Util::TypeConstraints;
+
+    my $objectConstraint = find_type_constraint('JavaScript::Type::Object');
+
+    method isObject(ClassName $class: JavaScript::Type::Any $input) {
+	return $objectConstraint->check($input);
+    }
+}
+#
 # A number factory must be the same the whole lifetime of package evaluation.
 # That's why it is considered as a constant, that can be localized in the top
 # package JavaScript::Transpile
 #
-role JavaScript::Role::TypeConversionAndTesting {
+role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::TypeCheck) {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
     use JavaScript::Transpile::Target::Perl5::Engine::Number::Factory;
@@ -47,7 +59,7 @@ role JavaScript::Role::TypeConversionAndTesting {
     # 9.1 ToPrimitive
     #
     method toPrimitive(ClassName $class: JavaScript::Type::Any $input, Str $preferredType?) {
-	if (! $input->DOES('JavaScript::Type::Object')) {
+	if (! $class->isObject($input)) {
 	    return $input;
 	} else {
 	    #
