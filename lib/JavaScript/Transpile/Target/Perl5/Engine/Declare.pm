@@ -34,6 +34,8 @@ role JavaScript::Role::this {
 # A bit painful, but necessary because type constraints in Moose is not a type system
 # This role is special in the sense that it is a runtime substitute for methods
 # that are polymorphic with no explicit type constraint
+# $self is maintainted just to allow overload, but is not used, except that it is the
+# default argument if the later is undef.
 #
 role JavaScript::Role::IsType {
     use Moose::Util::TypeConstraints;
@@ -50,21 +52,24 @@ role JavaScript::Role::IsType {
     # Not declared as methods: we do not want signatures to be redone
     # Per def our caller already did it
     #
-    method _isObjectByType($input, $wantedType) {
-      return $CONSTRAINT{$wantedType}->check($input || $self);
+    sub _isObjectByType {
+      my ($self, $input, $wantedType) = @_;
+      return $CONSTRAINT{$wantedType}->check($input);
     }
 
-    method _isObject($input)    { return $self->_isObjectByType($input, 'OBJECT_TYPE')    }
-    method _isBoolean($input)   { return $self->_isObjectByType($input, 'BOOLEAN_TYPE')   }
-    method _isUndefined($input) { return $self->_isObjectByType($input, 'UNDEFINED_TYPE') }
-    method _isNull($input)      { return $self->_isObjectByType($input, 'NULL_TYPE')      }
-    method _isNumber($input)    { return $self->_isObjectByType($input, 'NUMBER_TYPE')    }
-    method _isString($input)    { return $self->_isObjectByType($input, 'STRING_TYPE')    }
+    sub _isObject    { my ($self, $input) = @_; return $self->_isObjectByType($input, 'OBJECT_TYPE')    }
+    sub _isBoolean   { my ($self, $input) = @_; return $self->_isObjectByType($input, 'BOOLEAN_TYPE')   }
+    sub _isUndefined { my ($self, $input) = @_; return $self->_isObjectByType($input, 'UNDEFINED_TYPE') }
+    sub _isNull      { my ($self, $input) = @_; return $self->_isObjectByType($input, 'NULL_TYPE')      }
+    sub _isNumber    { my ($self, $input) = @_; return $self->_isObjectByType($input, 'NUMBER_TYPE')    }
+    sub _isString    { my ($self, $input) = @_; return $self->_isObjectByType($input, 'STRING_TYPE')    }
 }
 #
 # A number factory must be the same the whole lifetime of package evaluation.
 # That's why it is considered as a constant, that can be localized in the top
 # package JavaScript::Transpile
+# These methods are polymorphic with NO explicit type constraint. That's why they
+# are writen a subs instead of explicit method
 #
 role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::IsType) {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
@@ -76,20 +81,24 @@ role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::IsType) 
     #
     # 9.1 ToPrimitive
     #
-    method toPrimitive($input, $preferredType) {
-	if (! $self->_isObject($input)) {
-	    return $input;
-	} else {
-	    #
-	    # $input->defaultValue() will handle $preferredType being undef
-	    #
-	    return $input->defaultValue($preferredType);
-	}
+    sub toPrimitive {
+      my ($self, $input, $preferredType) = @_;
+
+      if (! $self->_isObject($input)) {
+        return $input;
+      } else {
+        #
+        # $input->defaultValue() will handle $preferredType being undef
+        #
+        return $input->defaultValue($preferredType);
+      }
     }
     #
     # 9.2 ToBoolean
     #
-    method toBoolean($input) {
+    sub toBoolean {
+      my ($self, $input) = @_;
+
       if ($self->_isUndefined($input)) {
         return false;
       }
@@ -120,7 +129,9 @@ role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::IsType) 
     #
     # 9.3 ToNumber: static method with type checking done by hand
     #
-    method toNumber($input) {
+    sub toNumber {
+      my ($self, $input) = @_;
+
       if ($self->_isUndefined($input)) {
 	    return $self->_numberFactory->nan;
 	}

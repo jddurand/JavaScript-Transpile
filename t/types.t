@@ -46,4 +46,4 @@ print STDERR $Child->dump();
 #$Child2->prototype($Object);
 #print STDERR $Child2->dump();
 
-$Child->toNumber;
+$Child->toNumber($Child);
