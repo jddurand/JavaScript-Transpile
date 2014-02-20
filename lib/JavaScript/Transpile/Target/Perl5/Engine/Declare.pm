@@ -31,39 +31,57 @@ role JavaScript::Role::this {
 }
 
 #
-# A bit painful, but necessary because type constraints in Moose are NOT a type system
+# A bit painful, but necessary because type constraints in Moose is not a type system
+# This role is special in the sense that it is a runtime substitute for methods
+# that are polymorphic with no explicit type constraint
 #
-role JavaScript::Role::TypeCheck {
+role JavaScript::Role::IsType {
     use Moose::Util::TypeConstraints;
+    our %CONSTRAINT = (
+                      OBJECT_TYPE    => find_type_constraint('JavaScript::Type::Object'),
+                      BOOLEAN_TYPE   => find_type_constraint('JavaScript::Type::Boolean'),
+                      UNDEFINED_TYPE => find_type_constraint('JavaScript::Type::Undefined'),
+                      NULL_TYPE      => find_type_constraint('JavaScript::Type::Null'),
+                      STRING_TYPE    => find_type_constraint('JavaScript::Type::String'),
+                      NUMBER_TYPE    => find_type_constraint('JavaScript::Type::Number')
+                     );
 
-    my $objectConstraint = find_type_constraint('JavaScript::Type::Object');
-
-    method isObject(ClassName $class: JavaScript::Type::Any $input) {
-	return $objectConstraint->check($input);
+    #
+    # Not declared as methods: we do not want signatures to be redone
+    # Per def our caller already did it
+    #
+    method _isObjectByType($input, $wantedType) {
+      return $CONSTRAINT{$wantedType}->check($input || $self);
     }
+
+    method _isObject($input)    { return $self->_isObjectByType($input, 'OBJECT_TYPE')    }
+    method _isBoolean($input)   { return $self->_isObjectByType($input, 'BOOLEAN_TYPE')   }
+    method _isUndefined($input) { return $self->_isObjectByType($input, 'UNDEFINED_TYPE') }
+    method _isNull($input)      { return $self->_isObjectByType($input, 'NULL_TYPE')      }
+    method _isNumber($input)    { return $self->_isObjectByType($input, 'NUMBER_TYPE')    }
+    method _isString($input)    { return $self->_isObjectByType($input, 'STRING_TYPE')    }
 }
 #
 # A number factory must be the same the whole lifetime of package evaluation.
 # That's why it is considered as a constant, that can be localized in the top
 # package JavaScript::Transpile
 #
-role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::TypeCheck) {
+role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::IsType) {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
     use JavaScript::Transpile::Target::Perl5::Engine::Number::Factory;
-    use MooseX::ClassAttribute;
 
-    class_has '_numberFactory' => (is => 'ro', default => sub { JavaScript::Transpile::Target::Perl5::Engine::Number::Factory->create($JavaScript::Transpile::numberFactory || 'Native') } );
+    has '_numberFactory' => (is => 'ro', default => sub { JavaScript::Transpile::Target::Perl5::Engine::Number::Factory->create($JavaScript::Transpile::numberFactory || 'Native') } );
 
     #
     # 9.1 ToPrimitive
     #
-    method toPrimitive(ClassName $class: JavaScript::Type::Any $input, Str $preferredType?) {
-	if (! $class->isObject($input)) {
+    method toPrimitive($input, $preferredType) {
+	if (! $self->_isObject($input)) {
 	    return $input;
 	} else {
 	    #
-	    # $preferredType will be undef if not present. JavaScript::Type::Object->defaultValue() handles this.
+	    # $input->defaultValue() will handle $preferredType being undef
 	    #
 	    return $input->defaultValue($preferredType);
 	}
@@ -71,60 +89,60 @@ role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::TypeChec
     #
     # 9.2 ToBoolean
     #
-    method toBoolean(ClassName $class: JavaScript::Type::Any $input) {
-	if ($input->DOES('JavaScript::Type::Undefined')) {
-	    return false;
-	}
-	elsif ($input->DOES('JavaScript::Type::Null')) {
-	    return false;
-	}
-	elsif ($input->DOES('JavaScript::Type::Boolean')) {
-	    return $input;
-	}
-	elsif ($input->DOES('JavaScript::Type::Number')) {
-	    if ($class->_numberFactory->is_zero($input) || $class->_numberFactory->is_nan($input)) {
-		return false;
-	    } else {
-		return true;
-	    }
-	}
-	elsif ($input->DOES('JavaScript::Type::String')) {
-	    if ($input->is_empty) {
-		return false;
-	    } else {
-		return true;
-	    }
-	}
-        else {
-	    return true;
-	}
+    method toBoolean($input) {
+      if ($self->_isUndefined($input)) {
+        return false;
+      }
+      elsif ($self->_isNull($input)) {
+        return false;
+      }
+      elsif ($self->_isBoolean($input)) {
+        return $input;
+      }
+      elsif ($self->_isNumber($input)) {
+        if ($self->_numberFactory->is_zero($input) || $self->_numberFactory->is_nan($input)) {
+          return false;
+        } else {
+          return true;
+        }
+      }
+      elsif ($self->_isString($input)) {
+        if ($input->is_empty) {
+          return false;
+        } else {
+          return true;
+        }
+      }
+      else {
+        return true;
+      }
     }
     #
-    # 9.3 ToNumber
+    # 9.3 ToNumber: static method with type checking done by hand
     #
-    method toNumber(ClassName $class: JavaScript::Type::Any $input) {
-	if ($input->DOES('JavaScript::Type::Undefined')) {
-	    return $class->_numberFactory->nan;
+    method toNumber($input) {
+      if ($self->_isUndefined($input)) {
+	    return $self->_numberFactory->nan;
 	}
-	elsif ($input->DOES('JavaScript::Type::Null')) {
-	    return $class->_numberFactory->pos_zero;
+	elsif ($self->_isNull($input)) {
+	    return $self->_numberFactory->pos_zero;
 	}
-	elsif ($input->DOES('JavaScript::Type::Boolean')) {
+	elsif ($self->_isBoolean($input)) {
 	    if ($input == true) {
 		return 1;
 	    } else {
-		return $class->_numberFactory->pos_zero;
+		return $self->_numberFactory->pos_zero;
 	    }
 	}
-	elsif ($input->DOES('JavaScript::Type::Number')) {
+	elsif ($self->_isNumber($input)) {
 	    return $input;
 	}
-	elsif ($input->DOES('JavaScript::Type::String')) {
+	elsif ($self->_isString($input)) {
 	    # TO DO
 	}
         else {
-	    my $primValue = $class->toPrimitive($input, 'Number');
-	    return $class->toNumber($primValue);
+	    my $primValue = $self->toPrimitive($input, 'Number');
+	    return $self->toNumber($primValue);
 	}
     }
 }

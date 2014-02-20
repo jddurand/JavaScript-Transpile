@@ -7,6 +7,7 @@ use MooseX::Declare;
 
 role JavaScript::Roles::Object {
   with 'JavaScript::Roles::Object::Parameterized' => {className => 'Object'};
+  with 'JavaScript::Role::TypeConversionAndTesting';
 }
 
 1;

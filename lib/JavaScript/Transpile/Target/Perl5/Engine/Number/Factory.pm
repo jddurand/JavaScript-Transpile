@@ -20,6 +20,10 @@ role JavaScript::Transpile::Target::Perl5::Engine::Number::Implementation::Requi
 
 class JavaScript::Transpile::Target::Perl5::Engine::Number::Native {
   use parent 'MarpaX::Languages::ECMAScript::AST::Grammar::ECMAScript_262_5::StringNumericLiteral::NativeNumberSemantics';
+
+  method pos_inf(ClassName $class)  { return $self->pos_infinity }
+  method neg_inf(ClassName $class)  { return $self->neg_infinity }
+
 }
 
 class JavaScript::Transpile::Target::Perl5::Engine::Number::BigFloat {

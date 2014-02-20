@@ -46,4 +46,4 @@ print STDERR $Child->dump();
 #$Child2->prototype($Object);
 #print STDERR $Child2->dump();
 
-JavaScript::Role::TypeConversionAndTesting->toNumber($Child);
+$Child->toNumber;
