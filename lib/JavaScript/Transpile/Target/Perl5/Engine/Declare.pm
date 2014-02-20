@@ -2,6 +2,21 @@ use strict;
 use warnings FATAL => 'all';
 
 package JavaScript::Transpile::Target::Perl5::Engine::Declare;
+use Scalar::Util qw/blessed/;
+use JavaScript::Transpile::Target::Perl5::Engine::Number::Factory;
+
+#
+# A number factory must be the same the whole lifetime of package evaluation.
+# That's why it is considered as a constant, that can be localized in the top
+# package JavaScript::Transpile
+#
+# I could have used an import() trick, but if caller says use ... (), this will
+# not be called.
+#
+our $numberFactory = JavaScript::Transpile::Target::Perl5::Engine::Number::Factory->create($JavaScript::Transpile::numberFactory || 'BigFloat');
+our $stringNumericLiteralGrammar = MarpaX::Languages::ECMAScript::AST->new('StringNumericLiteral' => { semantics_package => blessed($numberFactory) })->stringNumericLiteral;
+
+
 
 # ABSTRACT: JavaScript declarations in Perl
 
@@ -39,18 +54,18 @@ role JavaScript::Role::this {
 #
 role JavaScript::Role::IsType {
     use Moose::Util::TypeConstraints;
-    our %CONSTRAINT = (
-                      OBJECT_TYPE    => find_type_constraint('JavaScript::Type::Object'),
-                      BOOLEAN_TYPE   => find_type_constraint('JavaScript::Type::Boolean'),
-                      UNDEFINED_TYPE => find_type_constraint('JavaScript::Type::Undefined'),
-                      NULL_TYPE      => find_type_constraint('JavaScript::Type::Null'),
-                      STRING_TYPE    => find_type_constraint('JavaScript::Type::String'),
-                      NUMBER_TYPE    => find_type_constraint('JavaScript::Type::Number')
+    our %TYPE2CONSTRAINT = (
+                            OBJECT_TYPE    => find_type_constraint('JavaScript::Type::Object'),
+                            BOOLEAN_TYPE   => find_type_constraint('JavaScript::Type::Boolean'),
+                            UNDEFINED_TYPE => find_type_constraint('JavaScript::Type::Undefined'),
+                            NULL_TYPE      => find_type_constraint('JavaScript::Type::Null'),
+                            STRING_TYPE    => find_type_constraint('JavaScript::Type::String'),
+                            NUMBER_TYPE    => find_type_constraint('JavaScript::Type::Number')
                      );
 
     sub _isObjectByType {
       # my ($input, $wantedType) = @_;
-      return $CONSTRAINT{$_[1]}->check($_[0]);
+      return $TYPE2CONSTRAINT{$_[1]}->check($_[0]);
     }
 
     sub _isObject    { return _isObjectByType($_[0], 'OBJECT_TYPE')    }
@@ -61,37 +76,52 @@ role JavaScript::Role::IsType {
     sub _isString    { return _isObjectByType($_[0], 'STRING_TYPE')    }
 }
 #
-# A number factory must be the same the whole lifetime of package evaluation.
-# That's why it is considered as a constant, that can be localized in the top
-# package JavaScript::Transpile
+# This internal class method exit just because coercion from JavaScript::Type::String to Str will
+# happen automagically
+#
+class JavaScript::Role::TypeConversionAndTesting::StringToBoolean {
+  use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
+
+  has 'input' => (isa => 'Str', is => 'ro', coerce => 1);
+
+  method value {
+    my $value;
+    eval{
+      my $parse = $stringNumericLiteralGrammar->{grammar}->parse($self->input, $stringNumericLiteralGrammar->{impl});
+      $value = $stringNumericLiteralGrammar->{grammar}->value($stringNumericLiteralGrammar->{impl});
+    };
+    if ($@) {
+      return $numberFactory->nan;
+    } else {
+      return $value;
+    }
+  }
+}
+#
 # These methods are polymorphic with NO explicit type constraint. That's why they
 # are writen a subs instead of explicit method, with a generic $input instead of $self.
 #
 role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::IsType) {
-    use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
-    use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
-    use JavaScript::Transpile::Target::Perl5::Engine::Number::Factory;
-    use MarpaX::Languages::ECMAScript::AST;
-    use Scalar::Util qw/blessed/;
+  use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
+  use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
+  use JavaScript::Transpile::Target::Perl5::Engine::Number::Factory;
+  use MarpaX::Languages::ECMAScript::AST;
 
-    our $_numberFactory = JavaScript::Transpile::Target::Perl5::Engine::Number::Factory->create($JavaScript::Transpile::numberFactory || 'Native');
-    our $_stringNumericLiteral = MarpaX::Languages::ECMAScript::AST->new('StringNumericLiteral' => { semantics_package => blessed($_numberFactory) })->stringNumericLiteral;
+  #
+  # 9.1 ToPrimitive
+  #
+  sub toPrimitive {
+    my ($input, $preferredType) = @_;
 
-    #
-    # 9.1 ToPrimitive
-    #
-    sub toPrimitive {
-      my ($input, $preferredType) = @_;
-
-      if (! _isObject($input)) {
-        return $input;
-      } else {
-        #
-        # $input->defaultValue() will handle $preferredType being undef
-        #
-        return $input->defaultValue($preferredType);
-      }
+    if (! _isObject($input)) {
+      return $input;
+    } else {
+      #
+      # $input->defaultValue() will handle $preferredType being undef
+      #
+      return $input->defaultValue($preferredType);
     }
+  }
     #
     # 9.2 ToBoolean
     #
@@ -108,7 +138,7 @@ role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::IsType) 
         return $input;
       }
       elsif (_isNumber($input)) {
-        if ($_numberFactory->is_zero($input) || $_numberFactory->is_nan($input)) {
+        if ($numberFactory->is_zero($input) || $numberFactory->is_nan($input)) {
           return false;
         } else {
           return true;
@@ -126,45 +156,29 @@ role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::IsType) 
       }
     }
     #
-    # This internal class method exit just because coercion from JavaScript::Type::String to Str will
-    # happen automagically
-    #
-    method _nativeStringToBoolean(ClassName $class: Str $input) {
-      my $value;
-      eval{
-        my $parse = $_stringNumericLiteral->{grammar}->parse($input, $_stringNumericLiteral->{impl});
-        $value = $_stringNumericLiteral->{grammar}->value($_stringNumericLiteral->{impl});
-      };
-      if ($@) {
-        return $_numberFactory->nan;
-      } else {
-        return $value;
-      }
-    }
-    #
     # 9.3 ToNumber
     #
     sub toNumber {
       my ($input) = @_;
 
       if (_isUndefined($input)) {
-	    return $_numberFactory->nan;
+	    return $numberFactory->nan;
 	}
 	elsif (_isNull($input)) {
-	    return $_numberFactory->pos_zero;
+	    return $numberFactory->pos_zero;
 	}
 	elsif (_isBoolean($input)) {
 	    if ($input == true) {
 		return 1;
 	    } else {
-		return $_numberFactory->pos_zero;
+		return $numberFactory->pos_zero;
 	    }
 	}
 	elsif (_isNumber($input)) {
 	    return $input;
 	}
 	elsif (_isString($input)) {
-          return __PACKAGE__->_nativeStringToBoolean($input);
+          return JavaScript::Role::TypeConversionAndTesting::StringToBoolean->new(input => $input)->value($numberFactory);
 	}
         else {
             no warnings 'recursion';              # Well, spec says to be recursive, so who knows
@@ -172,7 +186,7 @@ role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::IsType) 
 	    return toNumber($primValue);
 	}
     }
-}
+  }
 
 role JavaScript::Role::EnvironmentRecord {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;

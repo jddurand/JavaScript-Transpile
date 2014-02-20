@@ -46,4 +46,9 @@ print STDERR $Child->dump();
 #$Child2->prototype($Object);
 #print STDERR $Child2->dump();
 
-$Child->toNumber($Child);
+#print STDERR "JavaScript::Role::TypeConversionAndTesting::toNumber($Child): " . JavaScript::Role::TypeConversionAndTesting::toNumber($Child) . "\n";
+use Encode qw/encode/;
+my $string = [ unpack('v*', encode('UTF-16LE', '54')) ];
+print STDERR "JavaScript::Role::TypeConversionAndTesting::toNumber('54'): " . JavaScript::Role::TypeConversionAndTesting::toNumber($string) . "\n";
+$string = [ unpack('v*', encode('UTF-16LE', 'test')) ];
+print STDERR "JavaScript::Role::TypeConversionAndTesting::toNumber('test'): " . JavaScript::Role::TypeConversionAndTesting::toNumber($string) . "\n";

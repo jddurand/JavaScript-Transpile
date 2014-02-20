@@ -2,7 +2,6 @@ use strict;
 use warnings FATAL => 'all';
 
 package JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
-
 # ABSTRACT: JavaScript primitive types
 
 # VERSION
@@ -33,6 +32,6 @@ subtype    'JavaScript::Type::Primitive', as 'JavaScript::Type::Boolean|JavaScri
 # To get the unsigned short values out of a UTF-16BE: unpack('n*', ...).
 #
 coerce 'Str',    from 'JavaScript::Type::String', via { pack('W*', @{$_}) };
-coerce 'JavaScript::Type::String', from 'Str',    via { unpack('v*', encode('UTF-16LE', $_)) };
+coerce 'JavaScript::Type::String', from 'Str',    via { [ unpack('v*', encode('UTF-16LE', $_)) ] };
 
 1;
