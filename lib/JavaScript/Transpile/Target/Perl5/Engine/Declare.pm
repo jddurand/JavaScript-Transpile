@@ -71,8 +71,11 @@ role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::IsType) 
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
     use JavaScript::Transpile::Target::Perl5::Engine::Constants qw/:all/;
     use JavaScript::Transpile::Target::Perl5::Engine::Number::Factory;
+    use MarpaX::Languages::ECMAScript::AST;
+    use Scalar::Util qw/blessed/;
 
     our $_numberFactory = JavaScript::Transpile::Target::Perl5::Engine::Number::Factory->create($JavaScript::Transpile::numberFactory || 'Native');
+    our $_stringNumericLiteral = MarpaX::Languages::ECMAScript::AST->new('StringNumericLiteral' => { semantics_package => blessed($_numberFactory) })->stringNumericLiteral;
 
     #
     # 9.1 ToPrimitive
@@ -123,6 +126,22 @@ role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::IsType) 
       }
     }
     #
+    # This internal class method exit just because coercion from JavaScript::Type::String to Str will
+    # happen automagically
+    #
+    method _nativeStringToBoolean(ClassName $class: Str $input) {
+      my $value;
+      eval{
+        my $parse = $_stringNumericLiteral->{grammar}->parse($input, $_stringNumericLiteral->{impl});
+        $value = $_stringNumericLiteral->{grammar}->value($_stringNumericLiteral->{impl});
+      };
+      if ($@) {
+        return $_numberFactory->nan;
+      } else {
+        return $value;
+      }
+    }
+    #
     # 9.3 ToNumber
     #
     sub toNumber {
@@ -145,7 +164,7 @@ role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::IsType) 
 	    return $input;
 	}
 	elsif (_isString($input)) {
-	    # TO DO
+          return __PACKAGE__->_nativeStringToBoolean($input);
 	}
         else {
             no warnings 'recursion';              # Well, spec says to be recursive, so who knows
