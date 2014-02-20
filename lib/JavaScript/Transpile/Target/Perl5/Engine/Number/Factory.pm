@@ -23,6 +23,8 @@ role JavaScript::Transpile::Target::Perl5::Engine::Number::Implementation::Requi
   requires 'is_zero';
   requires 'is_nan';
   requires 'is_inf';
+  requires 'is_pos';
+  requires 'is_neg';
   requires 'host_pos_zero';
   requires 'host_mul';
   requires 'host_round';
@@ -37,21 +39,11 @@ role JavaScript::Transpile::Target::Perl5::Engine::Number::Implementation::Requi
   requires 'host_new_from_length';
   requires 'host_class';
   requires 'host_value';
+  requires 'host_abs';
 }
 
 class JavaScript::Transpile::Target::Perl5::Engine::Number::Native {
   use parent 'MarpaX::Languages::ECMAScript::AST::Grammar::ECMAScript_262_5::StringNumericLiteral::NativeNumberSemantics';
-
-  #
-  # Proxy these class methods
-  #
-  method pos_inf  { return $self->pos_infinity }
-  method neg_inf  { return $self->neg_infinity }
-  #
-  # Proxy these object methods. Take care $value is the host value.
-  #
-  method is_inf($value) { return $self->is_infinite($value) }
-
 }
 
 class JavaScript::Transpile::Target::Perl5::Engine::Number::BigFloat {
@@ -71,6 +63,8 @@ class JavaScript::Transpile::Target::Perl5::Engine::Number::BigFloat {
   method pos_inf  { return Math::BigFloat->binf();    }
   method neg_inf  { return Math::BigFloat->binf('-'); }
   method nan      { return Math::BigFloat->bnan()     }
+  method is_pos   { return Math::BigFloat->is_pos()   }
+  method is_neg   { return Math::BigFloat->is_neg()   }
   #
   # Object methods. Take care $value is the host value, a Math::BigFloat here.
   #
@@ -91,6 +85,7 @@ class JavaScript::Transpile::Target::Perl5::Engine::Number::BigFloat {
   method host_new_from_length { return $self->host_class->new->host_int(sprintf('%s', $self->length)) }
   method host_class           { return $self->blessed; }
   method host_value           { return $self->bigfloat; }
+  method host_abs             { $self->bigfloat->babs();                                                 return $self; }
 }
 
 1;

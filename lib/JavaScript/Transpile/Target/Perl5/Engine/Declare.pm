@@ -122,71 +122,88 @@ role JavaScript::Role::TypeConversionAndTesting with (JavaScript::Role::IsType) 
       return $input->defaultValue($preferredType);
     }
   }
-    #
-    # 9.2 ToBoolean
-    #
-    sub toBoolean {
-      my ($input) = @_;
+  #
+  # 9.2 ToBoolean
+  #
+  sub toBoolean {
+    my ($input) = @_;
 
-      if (_isUndefined($input)) {
+    if (_isUndefined($input)) {
+      return false;
+    }
+    elsif (_isNull($input)) {
+      return false;
+    }
+    elsif (_isBoolean($input)) {
+      return $input;
+    }
+    elsif (_isNumber($input)) {
+      if ($numberFactory->is_zero($input) || $numberFactory->is_nan($input)) {
         return false;
-      }
-      elsif (_isNull($input)) {
-        return false;
-      }
-      elsif (_isBoolean($input)) {
-        return $input;
-      }
-      elsif (_isNumber($input)) {
-        if ($numberFactory->is_zero($input) || $numberFactory->is_nan($input)) {
-          return false;
-        } else {
-          return true;
-        }
-      }
-      elsif (_isString($input)) {
-        if ($input->is_empty) {
-          return false;
-        } else {
-          return true;
-        }
-      }
-      else {
+      } else {
         return true;
       }
     }
-    #
-    # 9.3 ToNumber
-    #
-    sub toNumber {
-      my ($input) = @_;
-
-      if (_isUndefined($input)) {
-	    return $numberFactory->nan;
-	}
-	elsif (_isNull($input)) {
-	    return $numberFactory->pos_zero;
-	}
-	elsif (_isBoolean($input)) {
-	    if ($input == true) {
-		return 1;
-	    } else {
-		return $numberFactory->pos_zero;
-	    }
-	}
-	elsif (_isNumber($input)) {
-	    return $input;
-	}
-	elsif (_isString($input)) {
-          return JavaScript::Role::TypeConversionAndTesting::StringToBoolean->new(input => $input)->value($numberFactory);
-	}
-        else {
-            no warnings 'recursion';              # Well, spec says to be recursive, so who knows
-	    my $primValue = toPrimitive($input, 'Number');
-	    return toNumber($primValue);
-	}
+    elsif (_isString($input)) {
+      if ($input->is_empty) {
+        return false;
+      } else {
+        return true;
+      }
+    }
+    else {
+      return true;
     }
   }
+  #
+  # 9.3 ToNumber
+  #
+  sub toNumber {
+    my ($input) = @_;
+
+    if (_isUndefined($input)) {
+      return $numberFactory->nan;
+    }
+    elsif (_isNull($input)) {
+      return $numberFactory->pos_zero;
+    }
+    elsif (_isBoolean($input)) {
+      if ($input == true) {
+        return 1;
+      } else {
+        return $numberFactory->pos_zero;
+      }
+    }
+    elsif (_isNumber($input)) {
+      return $input;
+    }
+    elsif (_isString($input)) {
+      return JavaScript::Role::TypeConversionAndTesting::StringToBoolean->new(input => $input)->value($numberFactory);
+    }
+    else {
+      no warnings 'recursion';              # Well, spec says to be recursive, so who knows
+      my $primValue = toPrimitive($input, 'Number');
+      return toNumber($primValue);
+    }
+  }
+  #
+  # 9.3 ToInteger
+  #
+  sub toInteger {
+    my ($input) = @_;
+
+    my $number = toNumber($input);
+
+    if ($numberFactory->is_nan($number)) {
+      return $numberFactory->pos_zero;
+    }
+    if ($numberFactory->is_zero($number) || $numberFactory->is_inf($number)) {
+      return $number;
+    }
+    # TO DO
+    return sign($number) * floor(abs($number));
+  }
+}
 
 role JavaScript::Role::EnvironmentRecord {
     use JavaScript::Transpile::Target::Perl5::Engine::PrimitiveTypes;
