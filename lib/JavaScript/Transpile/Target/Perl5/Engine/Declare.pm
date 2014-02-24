@@ -13,7 +13,7 @@ use JavaScript::Transpile::Target::Perl5::Engine::Number::Factory;
 # I could have used an import() trick, but if caller says use ... (), this will
 # not be called.
 #
-our $numberFactory = JavaScript::Transpile::Target::Perl5::Engine::Number::Factory->create($JavaScript::Transpile::numberFactory || 'BigFloat');
+our $numberFactory = JavaScript::Transpile::Target::Perl5::Engine::Number::Factory->create($JavaScript::Transpile::numberFactory || 'Native');
 our $stringNumericLiteralGrammar = MarpaX::Languages::ECMAScript::AST->new('StringNumericLiteral' => { semantics_package => blessed($numberFactory) })->stringNumericLiteral;
 
 
@@ -91,7 +91,7 @@ class JavaScript::Role::TypeConversionAndTesting::StringToBoolean {
       $value = $stringNumericLiteralGrammar->{grammar}->value($stringNumericLiteralGrammar->{impl});
     };
     if ($@) {
-      return $numberFactory->nan;
+      return $numberFactory->nan->host_value;
     } else {
       return $value;
     }

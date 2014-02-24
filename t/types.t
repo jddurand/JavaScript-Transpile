@@ -9,7 +9,7 @@ use Log::Any qw/$log/;
 # Init log
 #
 our $defaultLog4perlConf = '
-    log4perl.rootLogger              = TRACE, Screen
+    log4perl.rootLogger              = WARN, Screen
     log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
     log4perl.appender.Screen.stderr  = 0
     log4perl.appender.Screen.layout  = PatternLayout
@@ -52,3 +52,11 @@ my $string = [ unpack('v*', encode('UTF-16LE', '54')) ];
 print STDERR "JavaScript::Role::TypeConversionAndTesting::toNumber('54'): " . JavaScript::Role::TypeConversionAndTesting::toNumber($string) . "\n";
 $string = [ unpack('v*', encode('UTF-16LE', 'test')) ];
 print STDERR "JavaScript::Role::TypeConversionAndTesting::toNumber('test'): " . JavaScript::Role::TypeConversionAndTesting::toNumber($string) . "\n";
+
+use MarpaX::Languages::ECMAScript::AST::Grammar::ECMAScript_262_5::StringNumericLiteral::NativeNumberSemantics;
+my $test1 = MarpaX::Languages::ECMAScript::AST::Grammar::ECMAScript_262_5::StringNumericLiteral::NativeNumberSemantics->new()->int(19);
+my $test2 = MarpaX::Languages::ECMAScript::AST::Grammar::ECMAScript_262_5::StringNumericLiteral::NativeNumberSemantics->new()->int(3);
+$test1->left_shift($test2);
+print "19 << 3 = " . ($test1->host_value || 'undef') . " (== " . (19 << 3) . " ?\n";
+my $test3 = MarpaX::Languages::ECMAScript::AST::Grammar::ECMAScript_262_5::StringNumericLiteral::NativeNumberSemantics->new()->int(111);
+print "~" . $test3->host_value . " = " . $test3->not->host_value . "\n";
